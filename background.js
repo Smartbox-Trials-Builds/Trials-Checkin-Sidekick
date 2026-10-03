@@ -1,5 +1,5 @@
 // background.js
-importScripts("libs/supabase.min.js", "supabase/connection.js", "workers/queue-window-worker.js");
+importScripts("libs/supabase.min.js", "workers/supabase-connection.js", "workers/queue-window-worker.js");
 
 chrome.runtime.onInstalled.addListener(() => {
   // This makes the side panel open automatically when the user clicks the extension icon.

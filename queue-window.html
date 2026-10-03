@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick — Live Queue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="themes.css" />
+</head>
+<body class="queue-window">
+  <main class="container">
+    <section id="coordinatorQueueSection" aria-labelledby="coordinatorQueueTitle">
+      <div class="queue-heading">
+        <h2 id="coordinatorQueueTitle">Device Prep Queue</h2>
+        <button id="returnCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Return to Sidekick</button>
+      </div>
+      <p class="hint-text">Move this window by its title bar. Drag an edge to resize.</p>
+      <div id="queueWindowStatus" class="status-line" role="status"></div>
+      <div id="coordinatorQueueBody">
+        <div class="queue-actions">
+          <button id="joinCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Join Queue</button>
+          <button id="leaveCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Leave Queue</button>
+        </div>
+        <p id="coordinatorQueueStatus" class="hint-text" role="status">Connecting to the queue…</p>
+        <ol id="coordinatorQueueList" class="coordinator-queue__list" aria-label="Active queue"></ol>
+      </div>
+    </section>
+  </main>
+  <dialog id="prepAssignmentDialog" class="prep-assignment-dialog" aria-labelledby="prepAssignmentTitle">
+    <form id="prepAssignmentForm">
+      <h2 id="prepAssignmentTitle">Assign a prep</h2>
+      <p id="prepAssignmentUser"></p>
+      <label for="prepAssignmentRow">Row number (optional)</label>
+      <input id="prepAssignmentRow" type="number" min="1" max="2147483647" step="1" inputmode="numeric" />
+      <label for="prepAssignmentCrm">CRM ID</label>
+      <input id="prepAssignmentCrm" type="text" maxlength="100" autocomplete="off" required />
+      <label for="prepAssignmentClient">Client name</label>
+      <input id="prepAssignmentClient" type="text" maxlength="200" autocomplete="off" required />
+      <label for="prepAssignmentDevice">Device type</label>
+      <select id="prepAssignmentDevice" required>
+        <option value="">Select device type</option>
+        <option value="Talkpad">Talkpad</option>
+        <option value="Zuvo">Zuvo</option>
+        <option value="Gridpad">Gridpad</option>
+        <option value="Wego">Wego</option>
+      </select>
+      <label for="prepAssignmentPriority">Priority</label>
+      <select id="prepAssignmentPriority" required>
+        <option value="">Select priority</option>
+        <option value="Expedite">Expedite</option>
+        <option value="Funded rental">Funded rental</option>
+        <option value="Ship request">Ship request</option>
+        <option value="Daily queue">Daily queue</option>
+      </select>
+      <p id="prepAssignmentStatus" class="status-line" role="status"></p>
+      <div class="queue-actions">
+        <button id="prepAssignmentSubmit" type="submit">Assign</button>
+        <button id="prepAssignmentCancel" class="toggle-btn" type="button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="window-theme.js"></script>
+  <script src="libs/supabase.min.js"></script>
+  <script src="supabase/connection.js"></script>
+  <script src="supabase/queue-layout.js"></script>
+  <script src="supabase/queue.js"></script>
+</body>
+</html>

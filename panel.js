@@ -89,8 +89,6 @@ const DEVICE_LOOKUP_WORKBOOKS_STORAGE_KEY = "ttmtDeviceLookupWorkbooks";
 const DEVICE_LOOKUP_WORKBOOK_META_STORAGE_KEY = "ttmtDeviceLookupWorkbookMeta";
 const DEVICE_LOOKUP_HANDLE_KEY_PREFIX = "ttmtDeviceLookupWorkbook";
 const GRID_LOCK_CHANGES_STORAGE_KEY = "ttmtGridLockChanges";
-const PRE_PREP_SIDEKICK_ENABLED_STORAGE_KEY = "ttmtPrePrepSidekickEnabled";
-const PRE_PREP_SIDEKICK_PASSCODE = "@ppl3";
 const CRM_ORIGINS = [
   "https://portal.talktometechnologies.com",
   "https://crm.talktometechnologies.com"
@@ -211,7 +209,7 @@ const LANDING_LAYOUT_ITEMS = [
   { id: "crmNavigator", label: "CRM navigator" },
   { id: "checkinTools", label: "Check-in tools button" },
   { id: "prepTools", label: "Prep tools button" },
-  { id: "prePrepTools", label: "Pre-Prep tools button" },
+  { id: "prePrepTools", label: "Device Systems tools button" },
   { id: "qaForm", label: "QA form button" },
   { id: "trialsLinks", label: "Trials links button" },
   { id: "userSettings", label: "User settings button" }
@@ -2914,6 +2912,7 @@ let customThemeConfig = null;
 let customThemeDraft = null;
 let animeQuoteCycleIntervalId = null;
 let currentAnimeQuote = "";
+let landingAnimeQuoteEnabled = false;
 
 function getAnimeQuotesForTheme(themeId) {
   if (!ANIME_THEME_IDS.has(themeId)) return [];
@@ -2934,6 +2933,16 @@ function setThemeVars(vars) {
   Object.entries(vars).forEach(([key, value]) => {
     document.documentElement.style.setProperty(`--${key}`, value);
   });
+}
+
+function publishPopupTheme() {
+  const computed = getComputedStyle(document.body);
+  const names = [
+    ...Object.keys(CUSTOM_THEME_DEFAULT_VARS), "button-text-color", "button-border",
+    "title-color", "header-color", "base-font-family", "custom-container-bg-image"
+  ];
+  const vars = Object.fromEntries(names.map(name => [name, computed.getPropertyValue(`--${name}`).trim()]));
+  void setStoredValue("sidekickPopupTheme", { themeId: document.body.dataset.theme || "ocean", vars });
 }
 
 function clearInlineThemeVars() {
@@ -3241,6 +3250,7 @@ function applyChaosThemeTransition(themeId, theme) {
   setBodyThemeAttribute(themeId);
   setButtonTextColor(themeId, theme);
   saveCrmCustomCssThemeVars(themeId, theme);
+  publishPopupTheme();
   layer.style.backgroundColor = theme.vars["bg-color"] || "";
   document.body.classList.remove("chaos-transitioning");
   void layer.offsetHeight;
@@ -3347,6 +3357,7 @@ function applyTheme(themeId, { persist = true } = {}) {
   }
   setBodyThemeAttribute(resolvedTheme);
   updateThemeSelection(resolvedTheme);
+  publishPopupTheme();
   updateLandingAnimeQuoteVisibility(resolvedTheme);
   const themeSelect = document.getElementById("onboardingThemeSelect");
   if (themeSelect) {
@@ -3822,6 +3833,11 @@ function initSymojiPicker() {
 async function initOnboardingForm() {
   const form = document.getElementById("onboardingForm");
   const firstNameInput = document.getElementById("userFirstName");
+  const roleInput = document.getElementById("userRole");
+  const initialsInput = document.getElementById("userDashboardInitials");
+  const saveButton = document.getElementById("onboardingSaveBtn");
+  const saveStatus = document.getElementById("onboardingSaveStatus");
+  let saving = false;
   const mascotInput = document.getElementById("userMascotInput");
   const symojiPickerBtn = document.getElementById("symojiPickerMascotBtn");
   const mascotSizeInput = document.getElementById("onboardingMascotSize");
@@ -3840,6 +3856,8 @@ async function initOnboardingForm() {
   }
 
   const existingProfile = await getUserProfile();
+  if (roleInput) roleInput.value = existingProfile?.role || "";
+  if (initialsInput) initialsInput.value = existingProfile?.dashboardInitials || "";
   if (existingProfile && firstNameInput) {
     firstNameInput.value = existingProfile.firstName || "";
   }
@@ -3913,6 +3931,7 @@ async function initOnboardingForm() {
   if (!form) return;
   form.addEventListener("submit", async event => {
     event.preventDefault();
+    if (saving || !form.reportValidity()) return;
     const firstName = (firstNameInput?.value || "").trim();
     const lastName = existingProfile?.lastName || "";
     const themeId = themeSelect?.value || "ocean";
@@ -3924,26 +3943,45 @@ async function initOnboardingForm() {
     const mascotSize = mascotSizeInput?.value ?? DEFAULT_MASCOT_SIZE;
 
     if (!firstName) {
-      alert("Please enter your username.");
+      alert("Please enter your name.");
       return;
     }
 
-    await saveUserProfile({ firstName, lastName });
-    if (pendingMascot) {
-      await saveUserMascot(pendingMascot);
-      updateLandingMascot(pendingMascot);
+    const role = roleInput.value;
+    const dashboardInitials = initialsInput.value.trim();
+    if (!dashboardInitials) {
+      saveStatus.textContent = "Please enter your Dashboard Initials.";
+      initialsInput.focus();
+      return;
     }
-    await saveUserMascotSize(mascotSize);
-    applyLandingMascotSize(mascotSize);
-    await setDailyCounterEnabled(dailyCounterEnabled);
-    await setDailyCustomCounterEnabled(customDailyCounterEnabled);
-    await setDailyCustomCounterLabel(customDailyCounterLabel);
-    await setWeeklyCounterEnabled(weeklyCounterEnabled);
-    await setLandingTooltipsEnabled(tooltipsEnabled);
-    applyLandingTooltipsEnabled(tooltipsEnabled);
-    await updateDailyCustomCounterSettings();
-    applyTheme(themeId);
-    showLandingView();
+    saving = true;
+    saveButton.disabled = true;
+    saveStatus.textContent = "Saving your profile…";
+    try {
+      const cloudProfile = await globalThis.sidekickSupabase.saveProfile({ name: firstName, role, dashboardInitials });
+      await saveUserProfile({ firstName, lastName, role, dashboardInitials, supabaseUserId: cloudProfile.user_id });
+      if (pendingMascot) {
+        await saveUserMascot(pendingMascot);
+        updateLandingMascot(pendingMascot);
+      }
+      await saveUserMascotSize(mascotSize);
+      applyLandingMascotSize(mascotSize);
+      await setDailyCounterEnabled(dailyCounterEnabled);
+      await setDailyCustomCounterEnabled(customDailyCounterEnabled);
+      await setDailyCustomCounterLabel(customDailyCounterLabel);
+      await setWeeklyCounterEnabled(weeklyCounterEnabled);
+      await setLandingTooltipsEnabled(tooltipsEnabled);
+      applyLandingTooltipsEnabled(tooltipsEnabled);
+      await updateDailyCustomCounterSettings();
+      applyTheme(themeId);
+      showLandingView();
+      saveStatus.textContent = "Profile saved.";
+      } catch (error) {
+      saveStatus.textContent = `Unable to save your profile. ${error.message}`;
+    } finally {
+      saving = false;
+      saveButton.disabled = false;
+    }
   });
 }
 
@@ -4441,9 +4479,10 @@ void initThemeSystem();
 initOutlookSetupFlow();
 initDailyCounterSetting();
 initLandingTooltipsSetting();
+void initLandingVisibilitySettings();
 initCrmCustomCssThemeSetting();
 initWeeklyAverageSetting();
-initPrePrepSidekickSetting();
+void refreshDeviceSystemsTools();
 initCleanupFolderSetting();
 initLogFolderSetting();
 initTrialFilesFolderSetting();
@@ -4626,6 +4665,7 @@ async function getUserProfile() {
 
 async function saveUserProfile(profile) {
   await setStoredValue(USER_PROFILE_STORAGE_KEY, profile);
+  applyDeviceSystemsTools(profile?.role === "Device Systems Coordinator");
 }
 
 async function getUserMascot() {
@@ -4880,11 +4920,14 @@ function stopLandingAnimeQuoteCycle() {
 function updateLandingAnimeQuoteVisibility(themeId = activeThemeId) {
   const section = document.getElementById("landingAnimeQuoteSection");
   const isAnimeTheme = ANIME_THEME_IDS.has(themeId);
+  const option = document.getElementById("settingsAnimeQuoteOption");
+  if (option) option.style.display = isAnimeTheme ? "" : "none";
+  const showQuote = isAnimeTheme && landingAnimeQuoteEnabled;
   if (section) {
-    section.style.display = isAnimeTheme ? "" : "none";
+    section.style.display = showQuote ? "" : "none";
   }
 
-  if (!isAnimeTheme) {
+  if (!showQuote) {
     stopLandingAnimeQuoteCycle();
     currentAnimeQuote = "";
     const quoteEl = document.getElementById("landingAnimeQuoteText");
@@ -5120,6 +5163,37 @@ async function initLandingTooltipsSetting() {
   });
 }
 
+async function initLandingVisibilitySettings() {
+  const quoteToggle = document.getElementById("settingsAnimeQuoteToggle");
+  const navigatorToggle = document.getElementById("settingsCrmNavigatorToggle");
+  const [quote, navigator] = await Promise.all([
+    getStoredValue("sidekickLandingAnimeQuoteVisible"),
+    getStoredValue("sidekickLandingCrmNavigatorVisible")
+  ]);
+  landingAnimeQuoteEnabled = quote !== false;
+  if (quoteToggle) {
+    quoteToggle.checked = landingAnimeQuoteEnabled;
+    quoteToggle.addEventListener("change", async () => {
+      landingAnimeQuoteEnabled = quoteToggle.checked;
+      updateLandingAnimeQuoteVisibility();
+      await setStoredValue("sidekickLandingAnimeQuoteVisible", landingAnimeQuoteEnabled);
+    });
+  }
+  const applyNavigator = visible => {
+    const controls = document.getElementById("landingCrmNavigatorControls");
+    if (controls) controls.style.display = visible ? "" : "none";
+  };
+  if (navigatorToggle) {
+    navigatorToggle.checked = navigator !== false;
+    navigatorToggle.addEventListener("change", async () => {
+      applyNavigator(navigatorToggle.checked);
+      await setStoredValue("sidekickLandingCrmNavigatorVisible", navigatorToggle.checked);
+    });
+  }
+  applyNavigator(navigator !== false);
+  updateLandingAnimeQuoteVisibility();
+}
+
 async function initCrmCustomCssThemeSetting() {
   const toggle = document.getElementById("settingsCrmCustomCssToggle");
   if (!toggle) return;
@@ -5139,82 +5213,24 @@ async function initWeeklyAverageSetting() {
   });
 }
 
-async function getPrePrepSidekickEnabled() {
-  const stored = await getStoredValue(PRE_PREP_SIDEKICK_ENABLED_STORAGE_KEY);
-  if (stored === null || typeof stored === "undefined") return false;
-  return Boolean(stored);
+async function hasDeviceSystemsRole() {
+  const profile = await getUserProfile();
+  return profile?.role === "Device Systems Coordinator";
 }
 
-async function setPrePrepSidekickEnabled(enabled) {
-  await setStoredValue(PRE_PREP_SIDEKICK_ENABLED_STORAGE_KEY, Boolean(enabled));
-}
-
-function applyPrePrepSidekickEnabled(enabled) {
+function applyDeviceSystemsTools(isSystems) {
   const section = document.getElementById("prePrepToolsSection");
-  if (section) {
-    section.style.display = enabled ? "block" : "none";
+  if (section) section.style.display = isSystems ? "block" : "none";
+  for (const id of ["checkinTools", "prepTools", "qaForm", "trialsLinks"]) {
+    const tool = document.querySelector('#landingLayout [data-layout-item="' + id + '"]');
+    if (tool) tool.style.display = isSystems ? "none" : "";
   }
 }
 
-function updatePrePrepSettingsState(enabled, message = "") {
-  const toggle = document.getElementById("settingsPrePrepToggle");
-  const passcode = document.getElementById("settingsPrePrepPasscode");
-  const status = document.getElementById("settingsPrePrepStatus");
-  if (toggle) toggle.checked = Boolean(enabled);
-  if (passcode) {
-    passcode.value = "";
-    passcode.disabled = Boolean(enabled);
-    passcode.placeholder = enabled ? "Enabled" : "Enter passcode";
-  }
-  if (status) {
-    status.textContent = message || (enabled ? "Pre-prep Sidekick is enabled." : "Enter the passcode to enable Pre-prep Sidekick.");
-  }
+async function refreshDeviceSystemsTools() {
+  applyDeviceSystemsTools(await hasDeviceSystemsRole());
 }
 
-async function refreshPrePrepSidekickEnabled() {
-  const enabled = await getPrePrepSidekickEnabled();
-  applyPrePrepSidekickEnabled(enabled);
-  updatePrePrepSettingsState(enabled);
-}
-
-async function initPrePrepSidekickSetting() {
-  const toggle = document.getElementById("settingsPrePrepToggle");
-  const passcode = document.getElementById("settingsPrePrepPasscode");
-  if (!toggle) return;
-
-  const enabled = await getPrePrepSidekickEnabled();
-  applyPrePrepSidekickEnabled(enabled);
-  updatePrePrepSettingsState(enabled);
-
-  toggle.addEventListener("change", async () => {
-    if (!toggle.checked) {
-      await setPrePrepSidekickEnabled(false);
-      applyPrePrepSidekickEnabled(false);
-      updatePrePrepSettingsState(false, "Pre-prep Sidekick is disabled.");
-      return;
-    }
-
-    if ((passcode?.value || "") !== PRE_PREP_SIDEKICK_PASSCODE) {
-      await setPrePrepSidekickEnabled(false);
-      applyPrePrepSidekickEnabled(false);
-      updatePrePrepSettingsState(false, "Incorrect passcode. Pre-prep Sidekick was not enabled.");
-      passcode?.focus();
-      return;
-    }
-
-    await setPrePrepSidekickEnabled(true);
-    applyPrePrepSidekickEnabled(true);
-    updatePrePrepSettingsState(true, "Pre-prep Sidekick is enabled and will stay enabled on this browser.");
-  });
-
-  passcode?.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      toggle.checked = true;
-      toggle.dispatchEvent(new Event("change"));
-    }
-  });
-}
 
 async function getDailyCounterCollapsed() {
   const stored = await getStoredValue(DAILY_COUNTER_COLLAPSED_STORAGE_KEY);
@@ -5439,7 +5455,7 @@ async function refreshLandingView() {
   await updateDailyCounterCollapseState();
   await updateWeeklyCounterCollapseState();
   await updateLandingTooltipsEnabled();
-  await refreshPrePrepSidekickEnabled();
+  await refreshDeviceSystemsTools();
 }
 
 /* ---------------- Tab + CRM data fetch ---------------- */
@@ -5732,20 +5748,7 @@ function getFormValue(selector) {
 
 /* ---------------- Device lookup sidekick ---------------- */
 
-const DEVICE_LOOKUP_SPECIAL_SERIALS = new Set([
-  "DTP10.009",
-  "DTP10.010",
-  "DTP10.011",
-  "TP10.012",
-  "DTP10.012",
-  "TP10.013",
-  "DTP10.013",
-  "TP10.014",
-  "DTP10.014",
-  "TP10.015",
-  "DTP10.015",
-  "DTP10.016"
-]);
+
 
 const deviceLookupWorkbooks = {
   ltl: null,
@@ -6053,157 +6056,6 @@ function normalizeLookupValue(value) {
   return String(value || "").trim().replace(/[()[\]"']/g, "").toLowerCase();
 }
 
-function extractValidSerial(scanInput) {
-  if (!scanInput) return null;
-  let cleaned = scanInput.replace(/\(01\)\d+/g, "");
-  cleaned = cleaned.replace(/\(21\)/g, "").trim().toUpperCase();
-
-  if (DEVICE_LOOKUP_SPECIAL_SERIALS.has(cleaned)) return cleaned;
-
-  const fourDigitDotPrefixes = ["DTP10", "DTP8"];
-  const sixDigitDotPrefixes = ["DW13", "DW5", "DWM", "DW"];
-  const noDotPrefixes6or7 = ["DGPG", "DTT", "DTZ"];
-  const noDotPrefixes4 = ["Z10D", "Z12D", "Z16D"];
-
-  for (const prefix of fourDigitDotPrefixes) {
-    if (cleaned.startsWith(prefix)) {
-      const digits = cleaned.slice(prefix.length).replace(/\D/g, "");
-      if (/^\d{4}$/.test(digits)) return `${prefix}.${digits}`;
-    }
-  }
-
-  for (const prefix of sixDigitDotPrefixes) {
-    if (cleaned.startsWith(prefix)) {
-      const digits = cleaned.slice(prefix.length).replace(/\D/g, "");
-      if (/^\d{6}$/.test(digits)) return `${prefix}.${digits}`;
-    }
-  }
-
-  for (const prefix of noDotPrefixes6or7) {
-    if (cleaned.startsWith(prefix)) {
-      const digits = cleaned.slice(prefix.length);
-      if (/^\d{6,7}$/.test(digits)) return `${prefix}${digits}`;
-    }
-  }
-
-  const last7 = cleaned.match(/(\d{7})$/);
-  if (last7) {
-    const suffix = last7[1];
-    if (cleaned.includes("5060446901465")) return `DTZ${suffix}`;
-    if (cleaned.includes("5060446901373")) return `DTT${suffix}`;
-  }
-
-  for (const prefix of noDotPrefixes4) {
-    if (cleaned.startsWith(prefix)) {
-      const digits = cleaned.slice(prefix.length);
-      if (/^\d{4}$/.test(digits)) return `${prefix}${digits}`;
-    }
-  }
-
-  return null;
-}
-
-let prePrepRows = [];
-let prePrepEditsLocked = false;
-
-function makePrePrepRowId() {
-  return `pre-prep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function updatePrePrepLockState() {
-  const lockButton = document.getElementById("prePrepLockBtn");
-  if (lockButton) {
-    lockButton.textContent = `Lock edits: ${prePrepEditsLocked ? "On" : "Off"}`;
-    lockButton.setAttribute("aria-pressed", prePrepEditsLocked ? "true" : "false");
-  }
-  document.querySelectorAll("#prePrepRows input").forEach(input => {
-    input.readOnly = prePrepEditsLocked;
-  });
-}
-
-function updatePrePrepEmptyState() {
-  const emptyState = document.getElementById("prePrepEmptyState");
-  if (emptyState) {
-    emptyState.style.display = prePrepRows.length ? "none" : "block";
-  }
-}
-
-function buildPrePrepCopyCell(row, field, label) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "pre-prep-copy-cell";
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "copy-field";
-  input.value = row[field] || "";
-  input.readOnly = prePrepEditsLocked;
-  input.setAttribute("aria-label", label);
-  input.addEventListener("input", () => {
-    row[field] = input.value;
-  });
-
-  const copyButton = document.createElement("button");
-  copyButton.type = "button";
-  copyButton.className = "copy-btn";
-  copyButton.textContent = "Copy";
-  copyButton.addEventListener("click", async () => {
-    const value = input.value.trim();
-    if (!value) return;
-    await navigator.clipboard.writeText(value);
-    const original = copyButton.textContent;
-    copyButton.textContent = "Copied!";
-    setTimeout(() => { copyButton.textContent = original; }, 1200);
-  });
-
-  wrapper.append(input, copyButton);
-  return wrapper;
-}
-
-function renderPrePrepRows() {
-  const rowsEl = document.getElementById("prePrepRows");
-  if (!rowsEl) return;
-  rowsEl.innerHTML = "";
-  prePrepRows.forEach(row => {
-    const rowEl = document.createElement("div");
-    rowEl.className = "pre-prep-table__row";
-    rowEl.dataset.rowId = row.id;
-    rowEl.append(
-      buildPrePrepCopyCell(row, "deviceSerial", "Scanned device number"),
-      buildPrePrepCopyCell(row, "internalSerial", "Internal serial number")
-    );
-    rowsEl.append(rowEl);
-  });
-  updatePrePrepLockState();
-  updatePrePrepEmptyState();
-}
-
-function addPrePrepScan(rawInput) {
-  const corrected = extractValidSerial(rawInput);
-  setText("prePrepRawScan", rawInput || "—");
-  setText("prePrepCorrectedScan", corrected ? `✅ ${corrected}` : "❌ Invalid serial scanned");
-
-  if (!corrected) {
-    setText("prePrepStatus", "Invalid serial number detected. Please enter it manually and try again.");
-    return false;
-  }
-
-  prePrepRows.push({
-    id: makePrePrepRowId(),
-    deviceSerial: corrected,
-    internalSerial: ""
-  });
-  renderPrePrepRows();
-  setText("prePrepStatus", `Added ${corrected}.`);
-  return true;
-}
-
-function clearPrePrepRows() {
-  prePrepRows = [];
-  renderPrePrepRows();
-  setText("prePrepRawScan", "—");
-  setText("prePrepCorrectedScan", "—");
-  setText("prePrepStatus", "Pre-prep list cleared.");
-}
 
 function getSheetRows(workbook, sheetName) {
   if (!workbook?.sheets?.[sheetName]) return [];
@@ -7596,7 +7448,7 @@ async function openCrmRecordTab(crmId) {
   const trimmedId = `${crmId || ""}`.trim();
   if (!trimmedId) return null;
   return chrome.tabs.create({
-    url: `${CRM_LINK_BASE}${encodeURIComponent(trimmedId)}`
+    url: globalThis.sidekickCrmLinks.build(trimmedId)
   });
 }
 
@@ -8879,9 +8731,9 @@ async function setCurrentTimecardPunch(field) {
   });
 
   document.getElementById("prePrepSidekickBtn")?.addEventListener("click", async () => {
-    if (!(await getPrePrepSidekickEnabled())) {
-      alert("Enable Pre-prep Sidekick in user settings first.");
-      await refreshPrePrepSidekickEnabled();
+    if (!(await hasDeviceSystemsRole())) {
+      alert("These tools are available to Device Systems Coordinators.");
+      await refreshDeviceSystemsTools();
       return;
     }
     showPrePrepView();
@@ -8889,9 +8741,9 @@ async function setCurrentTimecardPunch(field) {
   });
 
   document.getElementById("lockDownSidekickBtn")?.addEventListener("click", async () => {
-    if (!(await getPrePrepSidekickEnabled())) {
-      alert("Enable Pre-prep Sidekick in user settings first.");
-      await refreshPrePrepSidekickEnabled();
+    if (!(await hasDeviceSystemsRole())) {
+      alert("These tools are available to Device Systems Coordinators.");
+      await refreshDeviceSystemsTools();
       return;
     }
     setText("lockDownStatus", "");
@@ -9217,31 +9069,6 @@ async function setCurrentTimecardPunch(field) {
       return;
     }
     await runDeviceLookupSearch(raw);
-  });
-
-  document.getElementById("prePrepScanForm")?.addEventListener("submit", event => {
-    event.preventDefault();
-    const input = document.getElementById("prePrepScanInput");
-    const raw = (input?.value || "").trim();
-    if (!raw) {
-      alert("Enter a device serial number to continue.");
-      return;
-    }
-    if (addPrePrepScan(raw) && input) {
-      input.value = "";
-      input.focus();
-    }
-  });
-
-  document.getElementById("prePrepLockBtn")?.addEventListener("click", () => {
-    prePrepEditsLocked = !prePrepEditsLocked;
-    updatePrePrepLockState();
-  });
-
-  document.getElementById("prePrepClearBtn")?.addEventListener("click", () => {
-    if (!prePrepRows.length || confirm("Clear the pre-prep list?")) {
-      clearPrePrepRows();
-    }
   });
 
   document.getElementById("mountReturnConfirmBtn")?.addEventListener("click", confirmMountReturnSelection);

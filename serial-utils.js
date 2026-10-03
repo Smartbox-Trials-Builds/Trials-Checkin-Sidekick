@@ -1,0 +1,63 @@
+const DEVICE_LOOKUP_SPECIAL_SERIALS = new Set([
+  "DTP10.009",
+  "DTP10.010",
+  "DTP10.011",
+  "TP10.012",
+  "DTP10.012",
+  "TP10.013",
+  "DTP10.013",
+  "TP10.014",
+  "DTP10.014",
+  "TP10.015",
+  "DTP10.015",
+  "DTP10.016"
+]);
+function extractValidSerial(scanInput) {
+  if (!scanInput) return null;
+  let cleaned = scanInput.replace(/\(01\)\d+/g, "");
+  cleaned = cleaned.replace(/\(21\)/g, "").trim().toUpperCase();
+
+  if (DEVICE_LOOKUP_SPECIAL_SERIALS.has(cleaned)) return cleaned;
+
+  const fourDigitDotPrefixes = ["DTP10", "DTP8"];
+  const sixDigitDotPrefixes = ["DW13", "DW5", "DWM", "DW"];
+  const noDotPrefixes6or7 = ["DGPG", "DTT", "DTZ"];
+  const noDotPrefixes4 = ["Z10D", "Z12D", "Z16D"];
+
+  for (const prefix of fourDigitDotPrefixes) {
+    if (cleaned.startsWith(prefix)) {
+      const digits = cleaned.slice(prefix.length).replace(/\D/g, "");
+      if (/^\d{4}$/.test(digits)) return `${prefix}.${digits}`;
+    }
+  }
+
+  for (const prefix of sixDigitDotPrefixes) {
+    if (cleaned.startsWith(prefix)) {
+      const digits = cleaned.slice(prefix.length).replace(/\D/g, "");
+      if (/^\d{6}$/.test(digits)) return `${prefix}.${digits}`;
+    }
+  }
+
+  for (const prefix of noDotPrefixes6or7) {
+    if (cleaned.startsWith(prefix)) {
+      const digits = cleaned.slice(prefix.length);
+      if (/^\d{6,7}$/.test(digits)) return `${prefix}${digits}`;
+    }
+  }
+
+  const last7 = cleaned.match(/(\d{7})$/);
+  if (last7) {
+    const suffix = last7[1];
+    if (cleaned.includes("5060446901465")) return `DTZ${suffix}`;
+    if (cleaned.includes("5060446901373")) return `DTT${suffix}`;
+  }
+
+  for (const prefix of noDotPrefixes4) {
+    if (cleaned.startsWith(prefix)) {
+      const digits = cleaned.slice(prefix.length);
+      if (/^\d{4}$/.test(digits)) return `${prefix}${digits}`;
+    }
+  }
+
+  return null;
+}

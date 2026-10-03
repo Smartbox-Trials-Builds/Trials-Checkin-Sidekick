@@ -36,10 +36,19 @@
   <!-- ONBOARDING VIEW -->
   <div class="container onboarding-view" id="onboardingView" style="display:none;">
     <h1>Welcome to CRM Sidekick</h1>
-    <p class="complete-intro">Tell us your username, choose your starting color theme, and confirm your SharePoint workbook access.</p>
+    <p class="complete-intro">Tell us your name, role, and Dashboard Initials, then choose your preferences.</p>
     <form id="onboardingForm">
-      <label for="userFirstName">Create username</label>
-      <input type="text" id="userFirstName" autocomplete="given-name" required />
+      <label for="userFirstName">Your name</label>
+      <input type="text" id="userFirstName" autocomplete="name" maxlength="100" required />
+      <label for="userRole">Select a role</label>
+      <select id="userRole" required>
+        <option value="">Choose your role</option>
+        <option value="Device Coordinator">Device Coordinator</option>
+        <option value="Device Systems Coordinator">Device Systems Coordinator</option>
+      </select>
+      <label for="userDashboardInitials" title="Enter your initials exactly as you use them on the Dashboard.">Dashboard Initials ⓘ</label>
+      <input type="text" id="userDashboardInitials" maxlength="20" required title="Enter your initials exactly as you use them on the Dashboard." aria-describedby="dashboardInitialsHint" />
+      <p id="dashboardInitialsHint" class="hint-text">Enter your initials exactly as you use them on the Dashboard.</p>
 
       <label for="userMascotInput">Profile mascot image</label>
       <input type="file" id="userMascotInput" accept="image/*" />
@@ -116,7 +125,8 @@
         </button>
       </div>
 
-      <button type="submit">Save &amp; Continue</button>
+      <div id="onboardingSaveStatus" class="status-line" role="status" aria-live="polite"></div>
+      <button type="submit" id="onboardingSaveBtn">Save &amp; Continue</button>
     </form>
   </div>
 
@@ -237,12 +247,37 @@
         </div>
       </div>
       <div class="landing-crm-nav" data-layout-item="crmNavigator">
+        <div id="landingCrmNavigatorControls">
         <div class="landing-crm-nav__title">CRM Navigator</div>
         <form id="landingCrmNavigatorForm" class="landing-crm-nav__form">
           <label class="landing-crm-nav__label" for="landingCrmNavigatorInput">CRM ID</label>
           <input type="text" id="landingCrmNavigatorInput" class="landing-crm-nav__input" placeholder="Enter CRM ID" required />
           <button type="submit" class="toggle-btn landing-crm-nav__btn">Go</button>
         </form>
+        </div>
+        <section id="coordinatorQueueSection" class="coordinator-queue" aria-labelledby="coordinatorQueueTitle">
+          <div class="queue-window-actions queue-toolbar">
+            <button id="toggleCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button" aria-expanded="true" aria-controls="coordinatorQueueBody">Hide</button>
+            <button id="popOutCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button" title="Open the live queue in a movable, resizable window">Pop out ↗</button>
+          </div>
+          <div id="coordinatorQueueBody">
+            <h2 id="coordinatorQueueTitle">Device Prep Queue</h2>
+            <div class="queue-actions">
+              <button id="joinCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Join Queue</button>
+              <button id="leaveCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Leave Queue</button>
+            </div>
+            <p id="coordinatorQueueStatus" class="hint-text" role="status">Connecting to the queue…</p>
+            <ol id="coordinatorQueueList" class="coordinator-queue__list" aria-label="Active queue"></ol>
+          </div>
+        </section>
+        <div id="coordinatorQueueDetached" class="queue-detached" hidden>
+          <span class="hint-text">Queue is open in its own window.</span>
+          <div class="queue-window-actions">
+            <button id="focusCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Show window</button>
+            <button id="returnCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Return to Sidekick</button>
+          </div>
+          <div id="queueWindowStatus" class="status-line" role="status"></div>
+        </div>
       </div>
       <div class="landing-section" data-layout-item="checkinTools">
         <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="checkin-tools" aria-expanded="false" data-tooltip="Folder housing check-in tools. Click to reveal the Device Lookup tool and the Check-in form.">
@@ -284,13 +319,13 @@
         </div>
       </div>
       <div class="landing-section" id="prePrepToolsSection" data-layout-item="prePrepTools" style="display:none;">
-        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="pre-prep-tools" aria-expanded="false" data-tooltip="Secure folder for authorized Pre-Prep workflows.">
-          Pre-Prep Tools
+        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="pre-prep-tools" aria-expanded="false" data-tooltip="Tools for Device Systems Coordinators.">
+          Device Systems Tools
           <span class="landing-section__chevron" aria-hidden="true">▾</span>
         </button>
         <div class="landing-section__content" data-collapsible-content="pre-prep-tools" hidden>
           <button id="prePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Build a pre-prep scan list with corrected device serials and internal serial fields.">
-            Pre-prep Sidekick
+            Device Sidekick
           </button>
           <button id="lockDownSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Submit a Lost Mode request note to a CRM record.">
             Lock down Sidekick
@@ -360,6 +395,13 @@
     <p class="complete-intro">Manage your profile details and theme preferences.</p>
     <div class="settings-panel">
       <div class="settings-card">
+        <div class="settings-card__title">Supabase connection</div>
+        <p class="hint-text">Project: Trials CRM Sidekick</p>
+        <p class="hint-text">Check the connection before setting up cloud features.</p>
+        <button id="supabaseTestConnectionBtn" class="toggle-btn settings-card__action" type="button">Test connection</button>
+        <div id="supabaseConnectionStatus" class="status-line" role="status" aria-live="polite">Connection has not been tested.</div>
+      </div>
+      <div class="settings-card">
         <div class="settings-card__title">User profile</div>
         <p class="hint-text">Update your name, daily and weekly counter preferences, and workbook connections.</p>
         <label class="checkbox-row" for="settingsTooltipToggle">
@@ -370,19 +412,18 @@
           <input type="checkbox" id="settingsCrmCustomCssToggle" />
           Enable matching CRM page theme
         </label>
+        <label class="checkbox-row" id="settingsAnimeQuoteOption" for="settingsAnimeQuoteToggle" style="display:none;">
+          <input type="checkbox" id="settingsAnimeQuoteToggle" />
+          Show anime quote spotlight on landing
+        </label>
+        <label class="checkbox-row" for="settingsCrmNavigatorToggle">
+          <input type="checkbox" id="settingsCrmNavigatorToggle" />
+          Show CRM Navigator on landing
+        </label>
         <label class="checkbox-row" for="settingsWeeklyAverageToggle">
           <input type="checkbox" id="settingsWeeklyAverageToggle" />
           Show weekly task average on the landing page
         </label>
-        <div class="settings-passcode-option">
-          <label class="checkbox-row" for="settingsPrePrepToggle">
-            <input type="checkbox" id="settingsPrePrepToggle" />
-            Enable Pre-prep Sidekick
-          </label>
-          <label for="settingsPrePrepPasscode">Pre-prep passcode</label>
-          <input type="password" id="settingsPrePrepPasscode" placeholder="Enter passcode" autocomplete="off" />
-          <div class="status-line" id="settingsPrePrepStatus"></div>
-        </div>
         <button id="editUserProfileBtn" class="toggle-btn settings-card__action" type="button">
           Edit user profile
         </button>
@@ -671,8 +712,13 @@
 
   <!-- PRE-PREP SIDEKICK VIEW -->
   <div class="container pre-prep-view" id="prePrepView" style="display:none;">
-    <h1>Pre-prep Sidekick</h1>
+    <div class="device-sidekick-heading"><h1>Device Sidekick</h1><button id="popOutDeviceSidekickBtn" class="toggle-btn queue-small-btn" type="button" title="Open Device Sidekick in a movable, resizable window">Pop out ↗</button></div>
     <p class="complete-intro">Scan device serial numbers into a prep list, then paste matching internal serial numbers beside them.</p>
+
+    <div class="device-mode-picker">
+      <label for="deviceSidekickMode">Mode</label>
+      <select id="deviceSidekickMode"><option value="wipe">Wipe</option><option value="prep">Prep</option></select>
+    </div>
 
     <form id="prePrepScanForm" class="lookup-form">
       <label for="prePrepScanInput">Device serial number</label>
@@ -698,10 +744,13 @@
 
     <div class="note-preview pre-prep-list-card">
       <div class="note-preview__title">Scanned device list</div>
-      <div class="pre-prep-table" role="table" aria-label="Pre-prep device and internal serial list">
+      <div class="pre-prep-table" id="deviceSidekickTable" data-mode="wipe" role="table" aria-label="Device and internal serial list">
         <div class="pre-prep-table__header" role="row">
           <div role="columnheader">Scanned device numbers</div>
           <div role="columnheader">Internal serial numbers</div>
+          <div role="columnheader" data-device-prep-only hidden>CRM ID</div>
+          <div class="device-gipod-heading" role="columnheader" data-device-prep-only hidden><span>GIPOD Codes</span><button id="bulkAddGipodBtn" class="toggle-btn queue-small-btn" type="button">Bulk add</button></div>
+          <div class="device-row-actions-heading" role="columnheader" aria-label="Row actions">Actions</div>
         </div>
         <div id="prePrepRows" class="pre-prep-table__body"></div>
       </div>
@@ -1305,6 +1354,58 @@
   </div>
 
   <!-- Panel logic -->
+  <dialog id="prepAssignmentDialog" class="prep-assignment-dialog" aria-labelledby="prepAssignmentTitle">
+    <form id="prepAssignmentForm">
+      <h2 id="prepAssignmentTitle">Assign a prep</h2>
+      <p id="prepAssignmentUser"></p>
+      <label for="prepAssignmentRow">Row number (optional)</label>
+      <input id="prepAssignmentRow" type="number" min="1" max="2147483647" step="1" inputmode="numeric" />
+      <label for="prepAssignmentCrm">CRM ID</label>
+      <input id="prepAssignmentCrm" type="text" maxlength="100" autocomplete="off" required />
+      <label for="prepAssignmentClient">Client name</label>
+      <input id="prepAssignmentClient" type="text" maxlength="200" autocomplete="off" required />
+      <label for="prepAssignmentDevice">Device type</label>
+      <select id="prepAssignmentDevice" required>
+        <option value="">Select device type</option>
+        <option value="Talkpad">Talkpad</option>
+        <option value="Zuvo">Zuvo</option>
+        <option value="Gridpad">Gridpad</option>
+        <option value="Wego">Wego</option>
+      </select>
+      <label for="prepAssignmentPriority">Priority</label>
+      <select id="prepAssignmentPriority" required>
+        <option value="">Select priority</option>
+        <option value="Expedite">Expedite</option>
+        <option value="Funded rental">Funded rental</option>
+        <option value="Ship request">Ship request</option>
+        <option value="Daily queue">Daily queue</option>
+      </select>
+      <p id="prepAssignmentStatus" class="status-line" role="status"></p>
+      <div class="queue-actions">
+        <button id="prepAssignmentSubmit" type="submit">Assign</button>
+        <button id="prepAssignmentCancel" class="toggle-btn" type="button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="bulkGipodDialog" class="prep-assignment-dialog" aria-labelledby="bulkGipodTitle">
+    <form id="bulkGipodForm">
+      <h2 id="bulkGipodTitle">Bulk add GIPOD codes</h2>
+      <p class="hint-text">Paste one column from Excel without a header. Codes replace existing GIPOD codes, one per device in list order.</p>
+      <p id="bulkGipodCount" class="hint-text"></p>
+      <label for="bulkGipodInput">GIPOD codes</label>
+      <textarea id="bulkGipodInput" rows="8" placeholder="One code per line" required></textarea>
+      <p id="bulkGipodStatus" class="status-line" role="status" aria-live="polite"></p>
+      <div class="queue-actions"><button type="submit">Apply codes</button><button id="bulkGipodCancel" class="toggle-btn" type="button">Cancel</button></div>
+    </form>
+  </dialog>
+  <script src="libs/supabase.min.js"></script>
+  <script src="supabase/connection.js"></script>
+  <script src="supabase/panel-connection.js"></script>
+  <script src="supabase/queue-layout.js"></script>
+  <script src="supabase/queue.js"></script>
+  <script src="crm-links.js"></script>
+  <script src="serial-utils.js"></script>
+  <script src="device-sidekick.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

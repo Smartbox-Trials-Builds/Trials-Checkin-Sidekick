@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Device Sidekick</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="themes.css" />
+</head>
+<body class="device-window">
+  <div class="container pre-prep-view" id="prePrepView" >
+    <div class="device-sidekick-heading"><h1>Device Sidekick</h1></div>
+    <p class="complete-intro">Scan device serial numbers into a prep list, then paste matching internal serial numbers beside them.</p>
+
+    <div class="device-mode-picker">
+      <label for="deviceSidekickMode">Mode</label>
+      <select id="deviceSidekickMode"><option value="wipe">Wipe</option><option value="prep">Prep</option></select>
+    </div>
+
+    <form id="prePrepScanForm" class="lookup-form">
+      <label for="prePrepScanInput">Device serial number</label>
+      <input type="text" id="prePrepScanInput" placeholder="Scan or type the device serial number" required />
+      <button type="submit" id="prePrepAddBtn">Add device</button>
+      <div class="lookup-meta">
+        <div>
+          <div class="lookup-meta__label">Last raw scan</div>
+          <div id="prePrepRawScan" class="lookup-meta__value">—</div>
+        </div>
+        <div>
+          <div class="lookup-meta__label">Corrected serial</div>
+          <div id="prePrepCorrectedScan" class="lookup-meta__value">—</div>
+        </div>
+      </div>
+      <div id="prePrepStatus" class="status-line"></div>
+    </form>
+
+    <div class="mini-row pre-prep-actions">
+      <button id="prePrepLockBtn" class="toggle-btn" type="button">Lock edits: Off</button>
+      <button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
+    </div>
+
+    <div class="note-preview pre-prep-list-card">
+      <div class="note-preview__title">Scanned device list</div>
+      <div class="pre-prep-table" id="deviceSidekickTable" data-mode="wipe" role="table" aria-label="Device and internal serial list">
+        <div class="pre-prep-table__header" role="row">
+          <div role="columnheader">Scanned device numbers</div>
+          <div role="columnheader">Internal serial numbers</div>
+          <div role="columnheader" data-device-prep-only hidden>CRM ID</div>
+          <div class="device-gipod-heading" role="columnheader" data-device-prep-only hidden><span>GIPOD Codes</span><button id="bulkAddGipodBtn" class="toggle-btn queue-small-btn" type="button">Bulk add</button></div>
+          <div class="device-row-actions-heading" role="columnheader" aria-label="Row actions">Actions</div>
+        </div>
+        <div id="prePrepRows" class="pre-prep-table__body"></div>
+      </div>
+      <p id="prePrepEmptyState" class="hint-text">No devices added yet.</p>
+    </div>
+
+
+  </div>
+
+  <dialog id="bulkGipodDialog" class="prep-assignment-dialog" aria-labelledby="bulkGipodTitle">
+    <form id="bulkGipodForm">
+      <h2 id="bulkGipodTitle">Bulk add GIPOD codes</h2>
+      <p class="hint-text">Paste one column from Excel without a header. Codes replace existing GIPOD codes, one per device in list order.</p>
+      <p id="bulkGipodCount" class="hint-text"></p>
+      <label for="bulkGipodInput">GIPOD codes</label>
+      <textarea id="bulkGipodInput" rows="8" placeholder="One code per line" required></textarea>
+      <p id="bulkGipodStatus" class="status-line" role="status" aria-live="polite"></p>
+      <div class="queue-actions"><button type="submit">Apply codes</button><button id="bulkGipodCancel" class="toggle-btn" type="button">Cancel</button></div>
+    </form>
+  </dialog>
+<script src="window-theme.js"></script>
+<script src="serial-utils.js"></script>
+<script src="device-sidekick.js"></script>
+</body>
+</html>

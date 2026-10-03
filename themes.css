@@ -1,0 +1,1601 @@
+/* =============================================================
+   THEMES.CSS — CSS variable blocks for every built-in theme.
+   Each body[data-theme="x"] block sets only the palette vars;
+   derived vars (--button-border, --title-color, etc.) are
+   computed from these in :root inside panel.css.
+   ============================================================= */
+
+/* ── NFL: shared overrides ─────────────────────────────────── */
+body[data-theme^="nfl"] {
+  --accent: var(--container-border);
+  --muted-text: var(--container-border);
+  --title-color: var(--container-border);
+  --header-color: var(--container-border);
+  --button-text-color: var(--text-color);
+}
+
+/* ============================================================
+   SINGLE COLOR THEMES
+   ============================================================ */
+
+/* Smartbox Blue */
+body[data-theme="ocean"] {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --muted-text: #d5e9ff;
+  --container-bg: #1e1e2f;
+  --container-border: #81cfff;
+  --container-shadow: 0 0 20px rgba(0, 128, 255, 0.25);
+  --accent: #81cfff;
+  --accent-strong: #003366;
+  --accent-strong-hover: #005599;
+  --input-bg: #2a2a3a;
+  --input-border: #555;
+  --note-bg: #0f1b2b;
+  --note-border: #2f4b6f;
+  --error-color: #ff7b7b;
+}
+
+/* Sunset Ember */
+body[data-theme="sunset"] {
+  --bg-color: #141010;
+  --text-color: #f3e9e4;
+  --muted-text: #f8c9b4;
+  --container-bg: #2a1917;
+  --container-border: #ff9f68;
+  --container-shadow: 0 0 20px rgba(255, 159, 104, 0.28);
+  --accent: #ff9f68;
+  --accent-strong: #6b2b1f;
+  --accent-strong-hover: #8b3a2b;
+  --input-bg: #33201d;
+  --input-border: #6b3b30;
+  --note-bg: #201312;
+  --note-border: #5f3a33;
+  --error-color: #ff8f8f;
+}
+
+/* Forest Glow */
+body[data-theme="forest"] {
+  --bg-color: #0d1512;
+  --text-color: #e7f8f1;
+  --muted-text: #b8f3dc;
+  --container-bg: #14211c;
+  --container-border: #6ee7b7;
+  --container-shadow: 0 0 20px rgba(110, 231, 183, 0.25);
+  --accent: #6ee7b7;
+  --accent-strong: #0f4d37;
+  --accent-strong-hover: #14614a;
+  --input-bg: #1e2d26;
+  --input-border: #3b5c4e;
+  --note-bg: #0f1a15;
+  --note-border: #2b4a3d;
+  --error-color: #ff9f9f;
+}
+
+/* Plum Night */
+body[data-theme="plum"] {
+  --bg-color: #120f18;
+  --text-color: #f2e9ff;
+  --muted-text: #dbc7ff;
+  --container-bg: #1f1930;
+  --container-border: #c084fc;
+  --container-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+  --accent: #c084fc;
+  --accent-strong: #4b1e6b;
+  --accent-strong-hover: #5e2a87;
+  --input-bg: #2a2140;
+  --input-border: #5b4b73;
+  --note-bg: #151021;
+  --note-border: #3b2f52;
+  --error-color: #ff9ccf;
+}
+
+/* Slate Storm */
+body[data-theme="slate"] {
+  --bg-color: #101317;
+  --text-color: #e6ecf2;
+  --muted-text: #c0cad8;
+  --container-bg: #18202a;
+  --container-border: #94a3b8;
+  --container-shadow: 0 0 20px rgba(148, 163, 184, 0.25);
+  --accent: #94a3b8;
+  --accent-strong: #273449;
+  --accent-strong-hover: #33445e;
+  --input-bg: #222b36;
+  --input-border: #4b5a6b;
+  --note-bg: #111821;
+  --note-border: #2a3646;
+  --error-color: #ff9f9f;
+}
+
+/* Aurora Mint */
+body[data-theme="aurora"] {
+  --bg-color: #0b1413;
+  --text-color: #e7fffb;
+  --muted-text: #b6f7ea;
+  --container-bg: #12201e;
+  --container-border: #5eead4;
+  --container-shadow: 0 0 20px rgba(94, 234, 212, 0.25);
+  --accent: #5eead4;
+  --accent-strong: #0f4b45;
+  --accent-strong-hover: #146056;
+  --input-bg: #1a2b29;
+  --input-border: #355a55;
+  --note-bg: #0c1716;
+  --note-border: #284946;
+  --error-color: #ff9fb0;
+}
+
+/* Citrus Pop */
+body[data-theme="citrus"] {
+  --bg-color: #14130a;
+  --text-color: #fff5d7;
+  --muted-text: #fde68a;
+  --container-bg: #2a250e;
+  --container-border: #facc15;
+  --container-shadow: 0 0 20px rgba(250, 204, 21, 0.28);
+  --accent: #facc15;
+  --accent-strong: #7a5a00;
+  --accent-strong-hover: #946b00;
+  --input-bg: #332c11;
+  --input-border: #6d5a14;
+  --note-bg: #1b1708;
+  --note-border: #574a13;
+  --error-color: #ff9f9f;
+}
+
+/* Desert Sand */
+body[data-theme="sand"] {
+  --bg-color: #14100d;
+  --text-color: #fdf4e7;
+  --muted-text: #f7d8b4;
+  --container-bg: #2a2019;
+  --container-border: #f5d0a9;
+  --container-shadow: 0 0 20px rgba(245, 208, 169, 0.25);
+  --accent: #f5d0a9;
+  --accent-strong: #7a4a2c;
+  --accent-strong-hover: #955935;
+  --input-bg: #332720;
+  --input-border: #6d5443;
+  --note-bg: #1b140f;
+  --note-border: #584234;
+  --error-color: #ff9aa2;
+}
+
+/* Midnight Violet */
+body[data-theme="midnight"] {
+  --bg-color: #0c0b16;
+  --text-color: #f2edff;
+  --muted-text: #cfc9ff;
+  --container-bg: #1a1830;
+  --container-border: #8b5cf6;
+  --container-shadow: 0 0 20px rgba(139, 92, 246, 0.28);
+  --accent: #8b5cf6;
+  --accent-strong: #3b2470;
+  --accent-strong-hover: #4b2f8f;
+  --input-bg: #241f3f;
+  --input-border: #514177;
+  --note-bg: #120f22;
+  --note-border: #3a2f5c;
+  --error-color: #ff9ccf;
+}
+
+/* Rose Quartz */
+body[data-theme="rose"] {
+  --bg-color: #150f14;
+  --text-color: #ffeaf4;
+  --muted-text: #f9c4db;
+  --container-bg: #2a1822;
+  --container-border: #f472b6;
+  --container-shadow: 0 0 20px rgba(244, 114, 182, 0.28);
+  --accent: #f472b6;
+  --accent-strong: #7a2a4d;
+  --accent-strong-hover: #95325f;
+  --input-bg: #33202c;
+  --input-border: #6d4054;
+  --note-bg: #1c0f17;
+  --note-border: #573245;
+  --error-color: #ff8fab;
+}
+
+/* Snow Day */
+body[data-theme="snow"] {
+  --bg-color: #f8fafc;
+  --text-color: #0f172a;
+  --muted-text: #475569;
+  --container-bg: #ffffff;
+  --container-border: #cbd5f5;
+  --container-shadow: 0 0 24px rgba(148, 163, 184, 0.35);
+  --accent: #4f46e5;
+  --accent-strong: #1e1b4b;
+  --accent-strong-hover: #312e81;
+  --input-bg: #f1f5f9;
+  --input-border: #cbd5e1;
+  --note-bg: #eef2ff;
+  --note-border: #c7d2fe;
+  --error-color: #dc2626;
+}
+
+/* Black Ice */
+body[data-theme="blackIce"] {
+  --bg-color: #05070a;
+  --text-color: #f8fafc;
+  --muted-text: #d6dbe1;
+  --container-bg: #0d1117;
+  --container-border: #f8fafc;
+  --container-shadow: 0 0 24px rgba(248, 250, 252, 0.2);
+  --accent: #ffffff;
+  --accent-strong: #1f2937;
+  --accent-strong-hover: #111827;
+  --input-bg: #0f172a;
+  --input-border: #e2e8f0;
+  --note-bg: #111827;
+  --note-border: #cbd5f5;
+  --error-color: #f87171;
+}
+
+/* ============================================================
+   MULTI COLOR THEMES
+   ============================================================ */
+
+/* Coral Reef */
+body[data-theme="coral"] {
+  --bg-color: #0b1416;
+  --text-color: #e6fffb;
+  --muted-text: #b4f3ef;
+  --container-bg: #102126;
+  --container-border: #ff8fa3;
+  --container-shadow: 0 0 20px rgba(255, 143, 163, 0.25);
+  --accent: #ff8fa3;
+  --accent-strong: #5e2a3a;
+  --accent-strong-hover: #7a3547;
+  --input-bg: #1b2c31;
+  --input-border: #3d5a63;
+  --note-bg: #0f1d20;
+  --note-border: #2f4b52;
+  --error-color: #ff7b7b;
+}
+
+/* Lagoon Glow */
+body[data-theme="lagoon"] {
+  --bg-color: #0a1412;
+  --text-color: #eafff5;
+  --muted-text: #b8f5e0;
+  --container-bg: #13241f;
+  --container-border: #34d399;
+  --container-shadow: 0 0 20px rgba(52, 211, 153, 0.24);
+  --accent: #22d3ee;
+  --accent-strong: #0f4c5c;
+  --accent-strong-hover: #126277;
+  --input-bg: #1c2f2a;
+  --input-border: #3f5f55;
+  --note-bg: #0f1d1a;
+  --note-border: #2e4c43;
+  --error-color: #ff9aa2;
+}
+
+/* Prism Party */
+body[data-theme="prism"] {
+  --bg-color: #12111a;
+  --text-color: #f5f0ff;
+  --muted-text: #d7c7ff;
+  --container-bg: #1d1b2f;
+  --container-border: #f472b6;
+  --container-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  --accent: #38bdf8;
+  --accent-strong: #1e3a8a;
+  --accent-strong-hover: #1d4ed8;
+  --input-bg: #2a2640;
+  --input-border: #514773;
+  --note-bg: #181427;
+  --note-border: #3a3456;
+  --error-color: #f97316;
+}
+
+/* Neon Circuit */
+body[data-theme="neon"] {
+  --bg-color: #0a0d14;
+  --text-color: #eaf6ff;
+  --muted-text: #9dd6ff;
+  --container-bg: #121a26;
+  --container-border: #22d3ee;
+  --container-shadow: 0 0 20px rgba(14, 165, 233, 0.28);
+  --accent: #f472b6;
+  --accent-strong: #5b1e3d;
+  --accent-strong-hover: #7c2552;
+  --input-bg: #1c2634;
+  --input-border: #36485c;
+  --note-bg: #0e1620;
+  --note-border: #2a3b4d;
+  --error-color: #fb7185;
+}
+
+/* Tropical Punch */
+body[data-theme="tropic"] {
+  --bg-color: #111109;
+  --text-color: #fff7e6;
+  --muted-text: #ffd7a0;
+  --container-bg: #241f10;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(249, 115, 22, 0.25);
+  --accent: #22c55e;
+  --accent-strong: #14532d;
+  --accent-strong-hover: #166534;
+  --input-bg: #2f2815;
+  --input-border: #65522d;
+  --note-bg: #191407;
+  --note-border: #4f3b17;
+  --error-color: #f43f5e;
+}
+
+/* Aurora Burst */
+body[data-theme="auroraBurst"] {
+  --bg-color: #0b0f18;
+  --text-color: #f1f5ff;
+  --muted-text: #b9c6ff;
+  --container-bg: #141a2b;
+  --container-border: #a78bfa;
+  --container-shadow: 0 0 20px rgba(167, 139, 250, 0.26);
+  --accent: #34d399;
+  --accent-strong: #0f4d3d;
+  --accent-strong-hover: #14664f;
+  --input-bg: #1f273a;
+  --input-border: #42526d;
+  --note-bg: #111624;
+  --note-border: #303b54;
+  --error-color: #f87171;
+}
+
+/* Retro Wave */
+body[data-theme="retroWave"] {
+  --bg-color: #140b1a;
+  --text-color: #ffe9fb;
+  --muted-text: #f5b7e5;
+  --container-bg: #24112f;
+  --container-border: #f472b6;
+  --container-shadow: 0 0 20px rgba(244, 114, 182, 0.28);
+  --accent: #22d3ee;
+  --accent-strong: #0e4f5e;
+  --accent-strong-hover: #136378;
+  --input-bg: #2f193b;
+  --input-border: #5a2f6a;
+  --note-bg: #1b1023;
+  --note-border: #4a2b59;
+  --error-color: #fb7185;
+}
+
+/* Peacock Parade */
+body[data-theme="peacock"] {
+  --bg-color: #0a1316;
+  --text-color: #e9faff;
+  --muted-text: #b7efff;
+  --container-bg: #102126;
+  --container-border: #60a5fa;
+  --container-shadow: 0 0 20px rgba(96, 165, 250, 0.24);
+  --accent: #f59e0b;
+  --accent-strong: #7a3f00;
+  --accent-strong-hover: #955100;
+  --input-bg: #1b2d33;
+  --input-border: #3f5b63;
+  --note-bg: #0e1b20;
+  --note-border: #2d4b52;
+  --error-color: #f97316;
+}
+
+/* Ember Sky */
+body[data-theme="emberSky"] {
+  --bg-color: #0c1017;
+  --text-color: #f1f7ff;
+  --muted-text: #b7c9e6;
+  --container-bg: #161f2b;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(248, 113, 113, 0.25);
+  --accent: #38bdf8;
+  --accent-strong: #0f3b57;
+  --accent-strong-hover: #125170;
+  --input-bg: #1f2b39;
+  --input-border: #425466;
+  --note-bg: #111822;
+  --note-border: #2d3b4a;
+  --error-color: #fb7185;
+}
+
+/* Electric Meadow */
+body[data-theme="electricMeadow"] {
+  --bg-color: #0b120d;
+  --text-color: #effff3;
+  --muted-text: #b6f7cb;
+  --container-bg: #142117;
+  --container-border: #34d399;
+  --container-shadow: 0 0 20px rgba(59, 130, 246, 0.24);
+  --accent: #60a5fa;
+  --accent-strong: #0f3b57;
+  --accent-strong-hover: #125170;
+  --input-bg: #1d2b20;
+  --input-border: #3d5a46;
+  --note-bg: #0f1a14;
+  --note-border: #2e4a37;
+  --error-color: #fb7185;
+}
+
+/* Solar Bloom */
+body[data-theme="solarBloom"] {
+  --bg-color: #141009;
+  --text-color: #fff7e1;
+  --muted-text: #fdd9a4;
+  --container-bg: #241c10;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(234, 179, 8, 0.25);
+  --accent: #eab308;
+  --accent-strong: #7a4a0b;
+  --accent-strong-hover: #935a10;
+  --input-bg: #2e2412;
+  --input-border: #6b5321;
+  --note-bg: #191306;
+  --note-border: #4b3a18;
+  --error-color: #f43f5e;
+}
+
+/* Galaxy Trail */
+body[data-theme="galaxyTrail"] {
+  --bg-color: #0b0c16;
+  --text-color: #f4f3ff;
+  --muted-text: #c5c0ff;
+  --container-bg: #141528;
+  --container-border: #8b5cf6;
+  --container-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+  --accent: #38bdf8;
+  --accent-strong: #1e3a8a;
+  --accent-strong-hover: #1d4ed8;
+  --input-bg: #1f1f38;
+  --input-border: #46406b;
+  --note-bg: #111126;
+  --note-border: #342e56;
+  --error-color: #fb7185;
+}
+
+/* Cobalt Sunset */
+body[data-theme="cobaltSunset"] {
+  --bg-color: #0b1118;
+  --text-color: #eef6ff;
+  --muted-text: #b8cceb;
+  --container-bg: #152030;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(14, 116, 144, 0.25);
+  --accent: #0ea5e9;
+  --accent-strong: #0f3b57;
+  --accent-strong-hover: #125170;
+  --input-bg: #1f2b3d;
+  --input-border: #3e546b;
+  --note-bg: #101723;
+  --note-border: #2b3b4d;
+  --error-color: #fb7185;
+}
+
+/* Frostfire */
+body[data-theme="frostfire"] {
+  --bg-color: #0c1013;
+  --text-color: #f5fbff;
+  --muted-text: #bdddf8;
+  --container-bg: #141d22;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(14, 165, 233, 0.25);
+  --accent: #38bdf8;
+  --accent-strong: #0e4f5e;
+  --accent-strong-hover: #136378;
+  --input-bg: #1c2730;
+  --input-border: #3a4e5e;
+  --note-bg: #0f171d;
+  --note-border: #2b3e4a;
+  --error-color: #f97316;
+}
+
+/* Berry Blitz */
+body[data-theme="berryBlitz"] {
+  --bg-color: #140c14;
+  --text-color: #ffeefc;
+  --muted-text: #f6b5ea;
+  --container-bg: #251326;
+  --container-border: #f472b6;
+  --container-shadow: 0 0 20px rgba(99, 102, 241, 0.24);
+  --accent: #6366f1;
+  --accent-strong: #312e81;
+  --accent-strong-hover: #3730a3;
+  --input-bg: #311a34;
+  --input-border: #5e3a63;
+  --note-bg: #1c101f;
+  --note-border: #47304f;
+  --error-color: #fb7185;
+}
+
+/* Canyon Lights */
+body[data-theme="canyonLights"] {
+  --bg-color: #14110c;
+  --text-color: #fff3e3;
+  --muted-text: #f7c9a1;
+  --container-bg: #261a12;
+  --container-border: #fb7185;
+  --container-shadow: 0 0 20px rgba(245, 158, 11, 0.24);
+  --accent: #f59e0b;
+  --accent-strong: #7a4a0b;
+  --accent-strong-hover: #935a10;
+  --input-bg: #2f2215;
+  --input-border: #6d4a29;
+  --note-bg: #1a130a;
+  --note-border: #4f3920;
+  --error-color: #f87171;
+}
+
+/* Holo Wave */
+body[data-theme="holoWave"] {
+  --bg-color: #0b1016;
+  --text-color: #eef9ff;
+  --muted-text: #b6e6ff;
+  --container-bg: #13202b;
+  --container-border: #22d3ee;
+  --container-shadow: 0 0 20px rgba(168, 85, 247, 0.24);
+  --accent: #a855f7;
+  --accent-strong: #4c1d95;
+  --accent-strong-hover: #5b21b6;
+  --input-bg: #1c2b39;
+  --input-border: #3f5a6f;
+  --note-bg: #0f1821;
+  --note-border: #2f4456;
+  --error-color: #fb7185;
+}
+
+/* Jade Flare */
+body[data-theme="jadeFlare"] {
+  --bg-color: #0b1211;
+  --text-color: #e9fff8;
+  --muted-text: #b7f5e4;
+  --container-bg: #14211f;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(34, 197, 94, 0.24);
+  --accent: #22c55e;
+  --accent-strong: #14532d;
+  --accent-strong-hover: #166534;
+  --input-bg: #1c2b28;
+  --input-border: #3c5a52;
+  --note-bg: #0f1a17;
+  --note-border: #2d4b43;
+  --error-color: #f97316;
+}
+
+/* Lava Pool */
+body[data-theme="lavaPool"] {
+  --bg-color: #120c0a;
+  --text-color: #fff1e6;
+  --muted-text: #f7c4a4;
+  --container-bg: #251410;
+  --container-border: #22d3ee;
+  --container-shadow: 0 0 20px rgba(248, 113, 113, 0.25);
+  --accent: #f97316;
+  --accent-strong: #7a2f0b;
+  --accent-strong-hover: #93370f;
+  --input-bg: #2f1a15;
+  --input-border: #6b3a2a;
+  --note-bg: #1a0f0c;
+  --note-border: #4a2a20;
+  --error-color: #38bdf8;
+}
+
+/* Moonlit Surf */
+body[data-theme="moonlitSurf"] {
+  --bg-color: #0a1115;
+  --text-color: #e9faff;
+  --muted-text: #b7dff2;
+  --container-bg: #132028;
+  --container-border: #a3e635;
+  --container-shadow: 0 0 20px rgba(56, 189, 248, 0.24);
+  --accent: #38bdf8;
+  --accent-strong: #0f3b57;
+  --accent-strong-hover: #125170;
+  --input-bg: #1c2b35;
+  --input-border: #3b5668;
+  --note-bg: #0f1820;
+  --note-border: #2d4454;
+  --error-color: #f97316;
+}
+
+/* Nova Punch */
+body[data-theme="novaPunch"] {
+  --bg-color: #120f16;
+  --text-color: #f8f3ff;
+  --muted-text: #d4c4ff;
+  --container-bg: #1f1b2e;
+  --container-border: #f472b6;
+  --container-shadow: 0 0 20px rgba(34, 211, 238, 0.24);
+  --accent: #22d3ee;
+  --accent-strong: #0e4f5e;
+  --accent-strong-hover: #136378;
+  --input-bg: #2a2540;
+  --input-border: #524a73;
+  --note-bg: #181427;
+  --note-border: #3a3456;
+  --error-color: #f97316;
+}
+
+/* Orchid Ice */
+body[data-theme="orchidIce"] {
+  --bg-color: #0f111a;
+  --text-color: #f4f0ff;
+  --muted-text: #c7c1ff;
+  --container-bg: #1b1e30;
+  --container-border: #f9a8d4;
+  --container-shadow: 0 0 20px rgba(129, 140, 248, 0.25);
+  --accent: #818cf8;
+  --accent-strong: #3730a3;
+  --accent-strong-hover: #4338ca;
+  --input-bg: #27263f;
+  --input-border: #4d4a73;
+  --note-bg: #151626;
+  --note-border: #34324f;
+  --error-color: #f472b6;
+}
+
+/* Pulse Rift */
+body[data-theme="pulseRift"] {
+  --bg-color: #0b0f14;
+  --text-color: #eaf6ff;
+  --muted-text: #a9d6ff;
+  --container-bg: #121a26;
+  --container-border: #f472b6;
+  --container-shadow: 0 0 20px rgba(14, 165, 233, 0.24);
+  --accent: #0ea5e9;
+  --accent-strong: #0f3b57;
+  --accent-strong-hover: #125170;
+  --input-bg: #1c2634;
+  --input-border: #36485c;
+  --note-bg: #0e1620;
+  --note-border: #2a3b4d;
+  --error-color: #f472b6;
+}
+
+/* Rainbow Road */
+body[data-theme="rainbowRoad"] {
+  --bg-color: #0c0f18;
+  --text-color: #f2f7ff;
+  --muted-text: #c1d4ff;
+  --container-bg: #151c2e;
+  --container-border: #22c55e;
+  --container-shadow: 0 0 20px rgba(236, 72, 153, 0.24);
+  --accent: #ec4899;
+  --accent-strong: #831843;
+  --accent-strong-hover: #9d174d;
+  --input-bg: #1f273b;
+  --input-border: #42506b;
+  --note-bg: #111624;
+  --note-border: #303b54;
+  --error-color: #f59e0b;
+}
+
+/* Saffron Tide */
+body[data-theme="saffronTide"] {
+  --bg-color: #0f120d;
+  --text-color: #f9ffe9;
+  --muted-text: #d6f5b7;
+  --container-bg: #1b2416;
+  --container-border: #38bdf8;
+  --container-shadow: 0 0 20px rgba(250, 204, 21, 0.24);
+  --accent: #facc15;
+  --accent-strong: #7a5a00;
+  --accent-strong-hover: #946b00;
+  --input-bg: #263020;
+  --input-border: #4f5f3b;
+  --note-bg: #151d12;
+  --note-border: #3a4a2b;
+  --error-color: #38bdf8;
+}
+
+/* Skyline Glow */
+body[data-theme="skylineGlow"] {
+  --bg-color: #0b1016;
+  --text-color: #eef6ff;
+  --muted-text: #b7cbe8;
+  --container-bg: #141d2b;
+  --container-border: #facc15;
+  --container-shadow: 0 0 20px rgba(99, 102, 241, 0.24);
+  --accent: #6366f1;
+  --accent-strong: #312e81;
+  --accent-strong-hover: #3730a3;
+  --input-bg: #1f2b3c;
+  --input-border: #3e5166;
+  --note-bg: #111825;
+  --note-border: #2d3b4a;
+  --error-color: #facc15;
+}
+
+/* Spectrum Noir */
+body[data-theme="spectrumNoir"] {
+  --bg-color: #080a12;
+  --text-color: #f1f5ff;
+  --muted-text: #c3c9ff;
+  --container-bg: #12182b;
+  --container-border: #60a5fa;
+  --container-shadow: 0 0 20px rgba(244, 114, 182, 0.24);
+  --accent: #f472b6;
+  --accent-strong: #7a2a4d;
+  --accent-strong-hover: #95325f;
+  --input-bg: #1a223a;
+  --input-border: #3b4666;
+  --note-bg: #0f1525;
+  --note-border: #2b3352;
+  --error-color: #f59e0b;
+}
+
+/* Vivid Harbor */
+body[data-theme="vividHarbor"] {
+  --bg-color: #0a1216;
+  --text-color: #e9fbff;
+  --muted-text: #b7e8f2;
+  --container-bg: #14222a;
+  --container-border: #f59e0b;
+  --container-shadow: 0 0 20px rgba(34, 211, 238, 0.24);
+  --accent: #22d3ee;
+  --accent-strong: #0e4f5e;
+  --accent-strong-hover: #136378;
+  --input-bg: #1c2c36;
+  --input-border: #3e5a6b;
+  --note-bg: #0f1a20;
+  --note-border: #2d4552;
+  --error-color: #f59e0b;
+}
+
+/* Zenith Mix */
+body[data-theme="zenithMix"] {
+  --bg-color: #0f1116;
+  --text-color: #f6f3ff;
+  --muted-text: #d2c9ff;
+  --container-bg: #1a1e2d;
+  --container-border: #34d399;
+  --container-shadow: 0 0 20px rgba(168, 85, 247, 0.24);
+  --accent: #a855f7;
+  --accent-strong: #4c1d95;
+  --accent-strong-hover: #5b21b6;
+  --input-bg: #26263f;
+  --input-border: #4b4a6b;
+  --note-bg: #151525;
+  --note-border: #34324f;
+  --error-color: #34d399;
+}
+
+/* ============================================================
+   ANIME THEMES
+   ============================================================ */
+
+/* Naruto Orange Leaf */
+body[data-theme="animeNaruto"] {
+  --bg-color: #14100b;
+  --text-color: #fff4e6;
+  --muted-text: #ffd7a6;
+  --container-bg: #25190f;
+  --container-border: #f97316;
+  --container-shadow: 0 0 20px rgba(249, 115, 22, 0.28);
+  --accent: #f97316;
+  --accent-strong: #7c2d12;
+  --accent-strong-hover: #9a3412;
+  --input-bg: #2f2014;
+  --input-border: #7c4a2a;
+  --note-bg: #1f140d;
+  --note-border: #6b3b1a;
+  --error-color: #fb7185;
+}
+
+/* One Piece Grand Line */
+body[data-theme="animeOnePiece"] {
+  --bg-color: #091521;
+  --text-color: #ecf7ff;
+  --muted-text: #b8dcf6;
+  --container-bg: #122235;
+  --container-border: #38bdf8;
+  --container-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+  --accent: #facc15;
+  --accent-strong: #1e3a8a;
+  --accent-strong-hover: #1d4ed8;
+  --input-bg: #1a3044;
+  --input-border: #3f6178;
+  --note-bg: #102031;
+  --note-border: #2f5168;
+  --error-color: #fb7185;
+}
+
+/* Dragon Ball Saiyan */
+body[data-theme="animeDragonBall"] {
+  --bg-color: #0a1220;
+  --text-color: #f4f8ff;
+  --muted-text: #c7d7f7;
+  --container-bg: #13233b;
+  --container-border: #f59e0b;
+  --container-shadow: 0 0 20px rgba(245, 158, 11, 0.28);
+  --accent: #f97316;
+  --accent-strong: #1e3a8a;
+  --accent-strong-hover: #1d4ed8;
+  --input-bg: #1b2d47;
+  --input-border: #4b6285;
+  --note-bg: #101d31;
+  --note-border: #31486b;
+  --error-color: #ef4444;
+}
+
+/* Attack on Titan Scout */
+body[data-theme="animeAttackOnTitan"] {
+  --bg-color: #0f1214;
+  --text-color: #f3f4f6;
+  --muted-text: #d0d2d6;
+  --container-bg: #1a2128;
+  --container-border: #84cc16;
+  --container-shadow: 0 0 20px rgba(132, 204, 22, 0.24);
+  --accent: #84cc16;
+  --accent-strong: #365314;
+  --accent-strong-hover: #4d7c0f;
+  --input-bg: #242d35;
+  --input-border: #56626d;
+  --note-bg: #151b21;
+  --note-border: #3a444f;
+  --error-color: #f87171;
+}
+
+/* Demon Slayer Hinokami */
+body[data-theme="animeDemonSlayer"] {
+  --bg-color: #120e10;
+  --text-color: #fff1f2;
+  --muted-text: #fecdd3;
+  --container-bg: #21171b;
+  --container-border: #fb7185;
+  --container-shadow: 0 0 20px rgba(251, 113, 133, 0.3);
+  --accent: #ef4444;
+  --accent-strong: #7f1d1d;
+  --accent-strong-hover: #991b1b;
+  --input-bg: #2b1e23;
+  --input-border: #74414d;
+  --note-bg: #1b1317;
+  --note-border: #5f343f;
+  --error-color: #fda4af;
+}
+
+/* Jujutsu Kaisen Cursed */
+body[data-theme="animeJujutsuKaisen"] {
+  --bg-color: #0d0b14;
+  --text-color: #f6f1ff;
+  --muted-text: #d9ccff;
+  --container-bg: #18142a;
+  --container-border: #a78bfa;
+  --container-shadow: 0 0 20px rgba(167, 139, 250, 0.28);
+  --accent: #8b5cf6;
+  --accent-strong: #4c1d95;
+  --accent-strong-hover: #5b21b6;
+  --input-bg: #221c36;
+  --input-border: #584b7e;
+  --note-bg: #161127;
+  --note-border: #43355f;
+  --error-color: #f472b6;
+}
+
+/* My Hero Plus Ultra */
+body[data-theme="animeMyHero"] {
+  --bg-color: #08130f;
+  --text-color: #ebfff7;
+  --muted-text: #b7f2db;
+  --container-bg: #11231b;
+  --container-border: #22c55e;
+  --container-shadow: 0 0 20px rgba(34, 197, 94, 0.26);
+  --accent: #eab308;
+  --accent-strong: #166534;
+  --accent-strong-hover: #15803d;
+  --input-bg: #1a3126;
+  --input-border: #3f6a56;
+  --note-bg: #0f1d17;
+  --note-border: #315344;
+  --error-color: #f97316;
+}
+
+/* Sailor Moon Prism */
+body[data-theme="animeSailorMoon"] {
+  --bg-color: #130f1a;
+  --text-color: #fff2fd;
+  --muted-text: #f9c8ec;
+  --container-bg: #241831;
+  --container-border: #f9a8d4;
+  --container-shadow: 0 0 20px rgba(249, 168, 212, 0.28);
+  --accent: #f472b6;
+  --accent-strong: #7e1f5c;
+  --accent-strong-hover: #9d2f71;
+  --input-bg: #301f3e;
+  --input-border: #7a4f86;
+  --note-bg: #1c1226;
+  --note-border: #633a70;
+  --error-color: #facc15;
+}
+
+/* Death Note Shinigami */
+body[data-theme="animeDeathNote"] {
+  --bg-color: #0a0a0d;
+  --text-color: #f4f4f5;
+  --muted-text: #d4d4d8;
+  --container-bg: #14141a;
+  --container-border: #a1a1aa;
+  --container-shadow: 0 0 20px rgba(161, 161, 170, 0.24);
+  --accent: #e4e4e7;
+  --accent-strong: #27272a;
+  --accent-strong-hover: #3f3f46;
+  --input-bg: #1c1c24;
+  --input-border: #52525b;
+  --note-bg: #12121a;
+  --note-border: #3f3f4d;
+  --error-color: #fb7185;
+}
+
+/* Fullmetal Alchemist */
+body[data-theme="animeFullmetal"] {
+  --bg-color: #151010;
+  --text-color: #fff3ef;
+  --muted-text: #f8d0c5;
+  --container-bg: #261817;
+  --container-border: #f87171;
+  --container-shadow: 0 0 20px rgba(248, 113, 113, 0.26);
+  --accent: #f97316;
+  --accent-strong: #7f1d1d;
+  --accent-strong-hover: #991b1b;
+  --input-bg: #31201f;
+  --input-border: #7b4a47;
+  --note-bg: #1f1414;
+  --note-border: #603735;
+  --error-color: #fca5a5;
+}
+
+/* ============================================================
+   NFL THEMES
+   ============================================================ */
+
+/* Arizona Cardinals */
+body[data-theme="nflCardinals"] {
+  --bg-color: #160c10;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #22121a;
+  --container-border: #ffb612;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #97233f;
+  --accent-strong: #5b1426;
+  --accent-strong-hover: #6f1b2f;
+  --input-bg: #1d131a;
+  --input-border: #ffb612;
+  --note-bg: #120a0e;
+  --note-border: #ffb612;
+  --error-color: #ffb612;
+}
+
+/* Atlanta Falcons */
+body[data-theme="nflFalcons"] {
+  --bg-color: #160b0f;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #221015;
+  --container-border: #a5acaf;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #a71930;
+  --accent-strong: #5c0d1a;
+  --accent-strong-hover: #731022;
+  --input-bg: #1d1217;
+  --input-border: #a5acaf;
+  --note-bg: #120a0d;
+  --note-border: #a5acaf;
+  --error-color: #a5acaf;
+}
+
+/* Baltimore Ravens */
+body[data-theme="nflRavens"] {
+  --bg-color: #100d1c;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #1a1428;
+  --container-border: #9e7c0c;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #241773;
+  --accent-strong: #120c3a;
+  --accent-strong-hover: #1a1153;
+  --input-bg: #181126;
+  --input-border: #9e7c0c;
+  --note-bg: #0d0a18;
+  --note-border: #9e7c0c;
+  --error-color: #9e7c0c;
+}
+
+/* Buffalo Bills */
+body[data-theme="nflBills"] {
+  --bg-color: #0b111f;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141d31;
+  --container-border: #c60c30;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #00338d;
+  --accent-strong: #001c50;
+  --accent-strong-hover: #00286b;
+  --input-bg: #1a2438;
+  --input-border: #c60c30;
+  --note-bg: #0d1523;
+  --note-border: #c60c30;
+  --error-color: #c60c30;
+}
+
+/* Carolina Panthers */
+body[data-theme="nflPanthers"] {
+  --bg-color: #0b1218;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141f28;
+  --container-border: #bfc0bf;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #0085ca;
+  --accent-strong: #004c74;
+  --accent-strong-hover: #006096;
+  --input-bg: #1a2732;
+  --input-border: #bfc0bf;
+  --note-bg: #0d161d;
+  --note-border: #bfc0bf;
+  --error-color: #bfc0bf;
+}
+
+/* Chicago Bears */
+body[data-theme="nflBears"] {
+  --bg-color: #0b1018;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141b26;
+  --container-border: #c83803;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #0b162a;
+  --accent-strong: #060c18;
+  --accent-strong-hover: #0a1222;
+  --input-bg: #1a2230;
+  --input-border: #c83803;
+  --note-bg: #0d121b;
+  --note-border: #c83803;
+  --error-color: #c83803;
+}
+
+/* Cincinnati Bengals */
+body[data-theme="nflBengals"] {
+  --bg-color: #180d09;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #241311;
+  --container-border: #fb4f14;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #fb4f14;
+  --accent-strong: #a4320c;
+  --accent-strong-hover: #c33c0f;
+  --input-bg: #1f140f;
+  --input-border: #fb4f14;
+  --note-bg: #120b08;
+  --note-border: #fb4f14;
+  --error-color: #fb4f14;
+}
+
+/* Cleveland Browns */
+body[data-theme="nflBrowns"] {
+  --bg-color: #140f0a;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #1f160f;
+  --container-border: #ff3c00;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #311d00;
+  --accent-strong: #1b1000;
+  --accent-strong-hover: #241500;
+  --input-bg: #1b140c;
+  --input-border: #ff3c00;
+  --note-bg: #120d08;
+  --note-border: #ff3c00;
+  --error-color: #ff3c00;
+}
+
+/* Dallas Cowboys */
+body[data-theme="nflCowboys"] {
+  --bg-color: #0b111f;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141d31;
+  --container-border: #869397;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #003594;
+  --accent-strong: #001f56;
+  --accent-strong-hover: #002c73;
+  --input-bg: #1a2438;
+  --input-border: #869397;
+  --note-bg: #0d1523;
+  --note-border: #869397;
+  --error-color: #869397;
+}
+
+/* Denver Broncos */
+body[data-theme="nflBroncos"] {
+  --bg-color: #180d09;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #241311;
+  --container-border: #c33c0f;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #fb4f14;
+  --accent-strong: #a4320c;
+  --accent-strong-hover: #c33c0f;
+  --input-bg: #1f140f;
+  --input-border: #c33c0f;
+  --note-bg: #120b08;
+  --note-border: #c33c0f;
+  --error-color: #c33c0f;
+}
+
+/* Detroit Lions */
+body[data-theme="nflLions"] {
+  --bg-color: #0b1118;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141f2b;
+  --container-border: #b0b7bc;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #0076b6;
+  --accent-strong: #00456b;
+  --accent-strong-hover: #005b88;
+  --input-bg: #1a2634;
+  --input-border: #b0b7bc;
+  --note-bg: #0d151d;
+  --note-border: #b0b7bc;
+  --error-color: #b0b7bc;
+}
+
+/* Green Bay Packers */
+body[data-theme="nflPackers"] {
+  --bg-color: #0d1312;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #17201d;
+  --container-border: #ffb612;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #203731;
+  --accent-strong: #12201c;
+  --accent-strong-hover: #182a26;
+  --input-bg: #1b2622;
+  --input-border: #ffb612;
+  --note-bg: #0f1513;
+  --note-border: #ffb612;
+  --error-color: #ffb612;
+}
+
+/* Houston Texans */
+body[data-theme="nflTexans"] {
+  --bg-color: #0b1116;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141d26;
+  --container-border: #a71930;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #03202f;
+  --accent-strong: #011018;
+  --accent-strong-hover: #021824;
+  --input-bg: #1a242f;
+  --input-border: #a71930;
+  --note-bg: #0d151d;
+  --note-border: #a71930;
+  --error-color: #a71930;
+}
+
+/* Indianapolis Colts */
+body[data-theme="nflColts"] {
+  --bg-color: #0b111f;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141d31;
+  --container-border: #a5acaf;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #002c5f;
+  --accent-strong: #001936;
+  --accent-strong-hover: #002447;
+  --input-bg: #1a2438;
+  --input-border: #a5acaf;
+  --note-bg: #0d1523;
+  --note-border: #a5acaf;
+  --error-color: #a5acaf;
+}
+
+/* Jacksonville Jaguars */
+body[data-theme="nflJaguars"] {
+  --bg-color: #0b1416;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #142126;
+  --container-border: #9f792c;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #006778;
+  --accent-strong: #003c45;
+  --accent-strong-hover: #00505d;
+  --input-bg: #1a2730;
+  --input-border: #9f792c;
+  --note-bg: #0d171b;
+  --note-border: #9f792c;
+  --error-color: #9f792c;
+}
+
+/* Kansas City Chiefs */
+body[data-theme="nflChiefs"] {
+  --bg-color: #160b10;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #221218;
+  --container-border: #ffb81c;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #e31837;
+  --accent-strong: #8c0e21;
+  --accent-strong-hover: #b0122b;
+  --input-bg: #1c1317;
+  --input-border: #ffb81c;
+  --note-bg: #120a0d;
+  --note-border: #ffb81c;
+  --error-color: #ffb81c;
+}
+
+/* Las Vegas Raiders */
+body[data-theme="nflRaiders"] {
+  --bg-color: #0c0c0e;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #16161a;
+  --container-border: #a5acaf;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #000000;
+  --accent-strong: #1a1a1a;
+  --accent-strong-hover: #2a2a2a;
+  --input-bg: #1e1e24;
+  --input-border: #a5acaf;
+  --note-bg: #111114;
+  --note-border: #a5acaf;
+  --error-color: #a5acaf;
+}
+
+/* Los Angeles Chargers */
+body[data-theme="nflChargers"] {
+  --bg-color: #0b1118;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141f2b;
+  --container-border: #ffc20e;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #0080c6;
+  --accent-strong: #004a74;
+  --accent-strong-hover: #006091;
+  --input-bg: #1a2634;
+  --input-border: #ffc20e;
+  --note-bg: #0d151d;
+  --note-border: #ffc20e;
+  --error-color: #ffc20e;
+}
+
+/* Los Angeles Rams */
+body[data-theme="nflRams"] {
+  --bg-color: #0b111f;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141d31;
+  --container-border: #ffa300;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #003594;
+  --accent-strong: #001f56;
+  --accent-strong-hover: #002c73;
+  --input-bg: #1a2438;
+  --input-border: #ffa300;
+  --note-bg: #0d1523;
+  --note-border: #ffa300;
+  --error-color: #ffa300;
+}
+
+/* Miami Dolphins */
+body[data-theme="nflDolphins"] {
+  --bg-color: #0b1416;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #142126;
+  --container-border: #fc4c02;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #008e97;
+  --accent-strong: #00535a;
+  --accent-strong-hover: #006b73;
+  --input-bg: #1a2730;
+  --input-border: #fc4c02;
+  --note-bg: #0d171b;
+  --note-border: #fc4c02;
+  --error-color: #fc4c02;
+}
+
+/* Minnesota Vikings */
+body[data-theme="nflVikings"] {
+  --bg-color: #120b1b;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #1c1428;
+  --container-border: #ffc62f;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #4f2683;
+  --accent-strong: #2d154a;
+  --accent-strong-hover: #3b1c62;
+  --input-bg: #1e1629;
+  --input-border: #ffc62f;
+  --note-bg: #120b19;
+  --note-border: #ffc62f;
+  --error-color: #ffc62f;
+}
+
+/* New England Patriots */
+body[data-theme="nflPatriots"] {
+  --bg-color: #0b1118;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141f2b;
+  --container-border: #c60c30;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #002244;
+  --accent-strong: #001327;
+  --accent-strong-hover: #001b36;
+  --input-bg: #1a2634;
+  --input-border: #c60c30;
+  --note-bg: #0d151d;
+  --note-border: #c60c30;
+  --error-color: #c60c30;
+}
+
+/* New Orleans Saints */
+body[data-theme="nflSaints"] {
+  --bg-color: #0b0f12;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #161a20;
+  --container-border: #d3bc8d;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #101820;
+  --accent-strong: #0a0f14;
+  --accent-strong-hover: #0d131a;
+  --input-bg: #1c2027;
+  --input-border: #d3bc8d;
+  --note-bg: #11151b;
+  --note-border: #d3bc8d;
+  --error-color: #d3bc8d;
+}
+
+/* New York Giants */
+body[data-theme="nflGiants"] {
+  --bg-color: #0b111d;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141a2b;
+  --container-border: #a71930;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #0b2265;
+  --accent-strong: #06143a;
+  --accent-strong-hover: #081b4c;
+  --input-bg: #1a2234;
+  --input-border: #a71930;
+  --note-bg: #0d121e;
+  --note-border: #a71930;
+  --error-color: #a71930;
+}
+
+/* New York Jets */
+body[data-theme="nflJets"] {
+  --bg-color: #0b1411;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #14201c;
+  --container-border: #ffffff;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #125740;
+  --accent-strong: #0a3225;
+  --accent-strong-hover: #0f4331;
+  --input-bg: #1a2622;
+  --input-border: #0f4331;
+  --note-bg: #0d1714;
+  --note-border: #0f4331;
+  --error-color: #0f4331;
+}
+
+/* Philadelphia Eagles */
+body[data-theme="nflEagles"] {
+  --bg-color: #0b1315;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #142023;
+  --container-border: #a5acaf;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #004c54;
+  --accent-strong: #002c31;
+  --accent-strong-hover: #003d44;
+  --input-bg: #1a262a;
+  --input-border: #a5acaf;
+  --note-bg: #0d1619;
+  --note-border: #a5acaf;
+  --error-color: #a5acaf;
+}
+
+/* Pittsburgh Steelers */
+body[data-theme="nflSteelers"] {
+  --bg-color: #14100a;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #1f1a10;
+  --container-border: #c28a00;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #ffb612;
+  --accent-strong: #9a6d00;
+  --accent-strong-hover: #c28a00;
+  --input-bg: #1b1710;
+  --input-border: #c28a00;
+  --note-bg: #120f0a;
+  --note-border: #c28a00;
+  --error-color: #c28a00;
+}
+
+/* San Francisco 49ers */
+body[data-theme="nfl49ers"] {
+  --bg-color: #160b0b;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #221212;
+  --container-border: #b3995d;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #aa0000;
+  --accent-strong: #660000;
+  --accent-strong-hover: #840000;
+  --input-bg: #1c1313;
+  --input-border: #b3995d;
+  --note-bg: #120a0a;
+  --note-border: #b3995d;
+  --error-color: #b3995d;
+}
+
+/* Seattle Seahawks */
+body[data-theme="nflSeahawks"] {
+  --bg-color: #0b1118;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141f2b;
+  --container-border: #69be28;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #002244;
+  --accent-strong: #001327;
+  --accent-strong-hover: #001b36;
+  --input-bg: #1a2634;
+  --input-border: #69be28;
+  --note-bg: #0d151d;
+  --note-border: #69be28;
+  --error-color: #69be28;
+}
+
+/* Tampa Bay Buccaneers */
+body[data-theme="nflBuccaneers"] {
+  --bg-color: #160a0a;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #221111;
+  --container-border: #ff7900;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #d50a0a;
+  --accent-strong: #7f0606;
+  --accent-strong-hover: #a00808;
+  --input-bg: #1d1212;
+  --input-border: #34302b;
+  --note-bg: #120909;
+  --note-border: #ff7900;
+  --error-color: #ff7900;
+}
+
+/* Tennessee Titans */
+body[data-theme="nflTitans"] {
+  --bg-color: #0b1118;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #141f2b;
+  --container-border: #c8102e;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #4b92db;
+  --accent-strong: #2a5d94;
+  --accent-strong-hover: #3575b8;
+  --input-bg: #1a2634;
+  --input-border: #c8102e;
+  --note-bg: #0d151d;
+  --note-border: #c8102e;
+  --error-color: #c8102e;
+}
+
+/* Washington Commanders */
+body[data-theme="nflCommanders"] {
+  --bg-color: #150b0b;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #201212;
+  --container-border: #ffb612;
+  --container-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  --accent: #5a1414;
+  --accent-strong: #330b0b;
+  --accent-strong-hover: #461010;
+  --input-bg: #1c1313;
+  --input-border: #ffb612;
+  --note-bg: #120a0a;
+  --note-border: #ffb612;
+  --error-color: #ffb612;
+}
+
+/* ============================================================
+   SPECIAL THEMES
+   ============================================================ */
+
+/* Chaos Goblin */
+body[data-theme="chaos"] {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --muted-text: #d5e9ff;
+  --container-bg: #1e1e2f;
+  --container-border: #f9a8d4;
+  --container-shadow: 0 0 20px rgba(249, 168, 212, 0.28);
+  --accent: #f9a8d4;
+  --accent-strong: #7a2a4d;
+  --accent-strong-hover: #95325f;
+  --input-bg: #2a2a3a;
+  --input-border: #555;
+  --note-bg: #0f1b2b;
+  --note-border: #2f4b6f;
+  --error-color: #ff8fab;
+}
+
+/* Surprise Party */
+body[data-theme="surpriseParty"] {
+  --bg-color: #160b24;
+  --text-color: #f9f0ff;
+  --muted-text: #e7c6ff;
+  --container-bg: #241338;
+  --container-border: #ffb8f0;
+  --container-shadow: 0 0 22px rgba(255, 184, 240, 0.32);
+  --accent: #ffd166;
+  --accent-strong: #9333ea;
+  --accent-strong-hover: #a855f7;
+  --input-bg: #2d1c44;
+  --input-border: #704c91;
+  --note-bg: #1c102c;
+  --note-border: #5b3a7d;
+  --error-color: #ff9ad5;
+}
+
+/* Starship Command */
+body[data-theme="sciFiCommand"] {
+  --bg-color: #020b12;
+  --text-color: #c8f0ff;
+  --muted-text: #5fb8d8;
+  --container-bg: #061220;
+  --container-border: #00c8ff;
+  --container-shadow: 0 0 30px rgba(0, 200, 255, 0.35);
+  --accent: #00c8ff;
+  --accent-strong: #003d5c;
+  --accent-strong-hover: #005278;
+  --input-bg: #071828;
+  --input-border: #1a5070;
+  --note-bg: #050f18;
+  --note-border: #164060;
+  --error-color: #ff4060;
+}
+
+/* Rainbow Party */
+body[data-theme="rainbowParty"] {
+  --bg-color: #0b0b16;
+  --text-color: #ffffff;
+  --muted-text: #ffffff;
+  --container-bg: #151527;
+  --container-border: #ffffff;
+  --container-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+  --accent: #ffffff;
+  --accent-strong: #1a1a2a;
+  --accent-strong-hover: #24243a;
+  --input-bg: #1a1a2e;
+  --input-border: #4c4c6a;
+  --note-bg: #121226;
+  --note-border: #3a3a54;
+  --error-color: #ffffff;
+}

@@ -1,0 +1,651 @@
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap");
+
+/* Aspnet form */
+#aspnetForm{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Footertxt */
+.pageContent tr .footertxt{
+ transform:translatex(0px) translatey(0px);
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ font-family:'Quicksand', sans-serif;
+}
+
+/* Table Data */
+.pageContent > table > tbody > tr > td > table > tbody > tr > td{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Label */
+#Content div label{
+ color:var(--ttmt-crm-text);
+}
+
+/* Heading */
+#Content h1{
+ color:var(--ttmt-crm-heading);
+}
+
+/* Image */
+.pageContent tr img{
+ transform:scale(1.26);
+ filter: brightness(0.4) invert(1) hue-rotate(215deg) saturate(10);
+}
+
+/* Table Data */
+.pageContent > table > tbody > tr > td{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Input */
+#Content div input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+#Content div input[type=password]{
+ background-color:var(--ttmt-crm-bg);
+ border-color:var(--ttmt-crm-accent);
+ color:var(--ttmt-crm-text);
+}
+
+/* Paragraph */
+#Content div p{
+ color:var(--ttmt-crm-text);
+}
+
+/* Page content */
+#aspnetForm .pageContent{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+}
+
+/* Table Data */
+.pageContent > table > tbody > tr > td{
+ background-color:var(--ttmt-crm-bg) !important;
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Division */
+#ctl00_MainContent_FormView1_lblBody div:nth-child(4){
+ letter-spacing:0.7px;
+ color:var(--ttmt-crm-text);
+ display:block;
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Division */
+#ctl00_MainContent_FormView1_lblBody div:nth-child(8){
+ background-color:var(--ttmt-crm-bg);
+ line-height:19px;
+}
+
+/* Image */
+div > a img{
+ filter: brightness(0.35) invert(1) hue-rotate(176deg);
+}
+
+/* Link */
+td > div > table .ctl00_TreeView1_2 a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+div div table:nth-child(1) tbody tr .ctl00_TreeView1_2:nth-child(3) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm table:nth-child(2) .ctl00_TreeView1_2:nth-child(3) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+div div table:nth-child(1) tbody tr .ctl00_TreeView1_2:nth-child(4) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm table:nth-child(2) .ctl00_TreeView1_2:nth-child(4) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+td div div div div:nth-child(3) table:nth-child(1) tbody tr .ctl00_TreeView1_2 a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+td div div div div:nth-child(3) table:nth-child(2) tbody tr .ctl00_TreeView1_2 a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm table:nth-child(4) .ctl00_TreeView1_2:nth-child(4) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm div:nth-child(5) table:nth-child(1) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm div:nth-child(5) table:nth-child(2) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm table:nth-child(3) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+td div div div div table:nth-child(4) tbody tr .ctl00_TreeView1_2 a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm table:nth-child(5) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+td div div div div table:nth-child(6) tbody tr .ctl00_TreeView1_2 a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+#aspnetForm table:nth-child(6) .ctl00_TreeView1_2:nth-child(4) a{
+ color:var(--ttmt-crm-text);
+}
+
+/* Heading */
+#ContentAdmin h1{
+ color:var(--ttmt-crm-text);
+}
+
+/* Span Tag */
+#ctl00_MainContent_FormView1_lblBody > div > span{
+ background-color:var(--ttmt-crm-bg) !important;
+}
+
+/* Underline text tag */
+#ctl00_MainContent_FormView1_lblBody div > span > u{
+ background-color:var(--ttmt-crm-bg) !important;
+}
+
+/* Span Tag */
+#ctl00_MainContent_FormView1_lblBody div > span span{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Font */
+#ctl00_MainContent_FormView1_lblBody > div > font{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text) !important;
+}
+
+/* Span Tag */
+#ctl00_MainContent_FormView1_lblBody div font > span{
+ background-color:var(--ttmt-crm-bg) !important;
+}
+
+/* Division */
+#ctl00_MainContent_FormView1_lblBody div font > div{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Strong Tag */
+#ctl00_MainContent_FormView1_lblBody > div > strong{
+ background-color:var(--ttmt-crm-bg) !important;
+}
+
+/* Login name */
+.pageContent tr .loginName{
+ color:var(--ttmt-crm-text);
+}
+
+/* Link */
+.pageContent .loginName a{
+ color:var(--ttmt-crm-link);
+}
+
+/* Underline text tag */
+#ctl00_MainContent_FormView1_lblBody div > u{
+ background-color:var(--ttmt-crm-bg) !important;
+}
+
+/* Image */
+td div div div div table tbody tr td img{
+ filter: invert(1);
+}
+
+/* Content admin */
+#ContentAdmin{
+ background-color:var(--ttmt-crm-bg);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Heading */
+#ctl00_MainContent_FormView1_lblBody h3{
+ background-color:var(--ttmt-crm-bg);
+}
+
+
+/* Ajax tab body */
+#ContentAdmin div div .ajax__tab_body{
+ background-color:var(--ttmt-crm-bg);
+ border-color:var(--ttmt-crm-accent);
+ border-width:2px;
+ color:var(--ttmt-crm-text);
+}
+
+/* Ajax tab body */
+#ContentAdmin > div > .ajax__tab_body{
+ background-color:var(--ttmt-crm-bg);
+ border-width:2px;
+ border-color:var(--ttmt-crm-accent);
+ color:var(--ttmt-crm-text);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Div alphabet */
+#divAlphabet{
+ border-top-left-radius:25px;
+ border-top-right-radius:25px;
+ border-bottom-left-radius:25px;
+ border-bottom-right-radius:25px;
+ background-color:var(--ttmt-crm-accent);
+}
+
+/* Card body */
+.ajax__tab_panel div .ajax__tab_body .ajax__tab_panel .container-fluid .row .col-md-6 .card .card-body{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-width:2px;
+}
+
+/* Card header */
+.ajax__tab_panel div .ajax__tab_body .ajax__tab_panel .container-fluid .row .col-md-6 .card .card-header{
+ background-color:var(--ttmt-crm-accent);
+ border-width:0px;
+}
+
+/* Input */
+.ajax__tab_panel div .ajax__tab_body .ajax__tab_panel .container-fluid .row .col-md-6 .card .card-body .row .col-md-9 input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Select */
+.ajax__tab_panel div .ajax__tab_body .ajax__tab_panel .container-fluid .row .col-md-6 .card .card-body .row .col-md-9 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Text Area */
+.card .card-body .row .col-md-9 textarea{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+.card .card-body .row .col-md-10 input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Select */
+.col-md-6 .card .card-body .row .col-md-10 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Select */
+#ContentAdmin div .ajax__tab_body .ajax__tab_panel div .ajax__tab_body .ajax__tab_panel .container-fluid .row .col-md-6 .card .card-body .row .col-md-10 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Input */
+.col-md-6 .card .card-body .row .col-md-6 input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Text Area */
+.col-md-6 .card .card-body .row .col-md-6 textarea{
+ color:var(--ttmt-crm-text);
+ background-color:var(--ttmt-crm-bg);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+.col-md-4 .row .col-7 .d-flex input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+.col-md-4 .row .col-md-7 .d-flex input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Column 6/12 */
+.ajax__tab_panel div .ajax__tab_body .ajax__tab_panel .container-fluid > .row > .col-md-6{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Ajax tab tab */
+#ContentAdmin .ajax__tab_body .ajax__tab_tab{
+ background-color:transparent;
+}
+
+/* Ajax tab inner */
+#ContentAdmin .ajax__tab_body .ajax__tab_inner{
+ background-color:transparent;
+}
+
+/* Card header */
+#ContentAdmin > div > .ajax__tab_body > .ajax__tab_panel > div > .container-fluid > .row > .col-md-6 > .card > .card-header{
+ background-color:var(--ttmt-crm-accent);
+}
+
+/* Card header */
+.col-md-6 .card .card-body .card .card-header{
+ background-color:var(--ttmt-crm-accent);
+}
+
+/* Card body */
+#ContentAdmin > div > .ajax__tab_body > .ajax__tab_panel > div > .container-fluid > .row > .col-md-6 > .card > .card-body{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Table Data */
+.col-md-6 .card .card-body div div .table-striped tbody tr td{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+}
+
+/* Th */
+.col-md-6 .card .card-body div div .table-striped tbody tr th{
+ background-color:var(--ttmt-crm-accent);
+}
+
+/* Card body */
+.col-md-6 .card .card-body div .card .card-body{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Select */
+#ContentAdmin div .ajax__tab_body .ajax__tab_panel div .container-fluid .row .col-md-6 .card .card-body div .card .card-body .row .col-md-9 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Select */
+.card-body div .card .card-body .row .col-md-9 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Card body */
+.col-md-6 .card .card-body .card .card-body{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Text Area */
+#ContentAdmin .card .card textarea{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Column 3/12 */
+.col-md-6 .card .card-body .card .card-body .row .col-md-3{
+ color:var(--ttmt-crm-text);
+}
+
+/* Select */
+#ContentAdmin div .ajax__tab_body .ajax__tab_panel div .container-fluid .row .col-md-6 .card .card-body .row .col-md-8 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Select */
+.card .card-body .row .col-md-8 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Input */
+.ajax__tab_panel > div > .container-fluid > .row > .col-md-6 > .card > .card-body > .row .col-md-8 .d-flex input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+#ContentAdmin .vocabfile-search input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Column 9/12 */
+.col-md-6 .card .card-body .card .card-body .row .col-md-9{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Select */
+#ContentAdmin div .ajax__tab_body .ajax__tab_panel div .container-fluid .row .col-md-6 .card .card-body .card .card-body .row .col-md-9 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Select */
+.card-body .card .card-body .row .col-md-9 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Input */
+.card-body .card .card-body .row .col-md-9 .d-flex input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Text Area */
+.card .card-body .row .col-md-8 textarea{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+.ajax__tab_panel > div > .container-fluid > .row > .col-md-6 > .card > .card-body > .row .col-md-8 input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Card body */
+.ajax__tab_panel > div > .card .card-body{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Form label */
+.ajax__tab_panel > div > .card .col-md-3 .form-label{
+ color:var(--ttmt-crm-text);
+}
+
+/* Card header */
+.ajax__tab_panel > div > .card .card-header{
+ background-color:var(--ttmt-crm-accent);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Select */
+.pageContent table tbody tr td #ContentAdmin div .ajax__tab_body .ajax__tab_panel div .card .card-body .container-fluid .row .col-md-9 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Select */
+.card-body .container-fluid .row .col-md-9 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Th */
+.col-12 div .table-striped tbody tr th{
+ background-color:var(--ttmt-crm-accent);
+ border-top-right-radius:0px;
+}
+
+/* Table Data */
+.ajax__tab_panel > div > .card .col-12 > div .table-striped > tbody > tr > td{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+ border-width:1px;
+ border-top-color:var(--ttmt-crm-muted-border);
+}
+
+/* Text Area */
+#ContentAdmin tr textarea{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Select */
+.pageContent table tbody tr td #ContentAdmin div .ajax__tab_body .ajax__tab_panel > div > .card .card-body .mb-3 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Select */
+.ajax__tab_panel > div > .card .mb-3 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Text Area */
+.card-body .container-fluid .row .col-md-10 textarea{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Form label */
+.ajax__tab_panel > div > .card .col-md-2 .form-label{
+ color:var(--ttmt-crm-text);
+}
+
+/* Select */
+.pageContent table tbody tr td #ContentAdmin div .ajax__tab_body .ajax__tab_panel div .card .card-body .container-fluid .row .col-md-10 select{
+ background-color:var(--ttmt-crm-bg) !important;
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Select */
+.card-body .container-fluid .row .col-md-10 select{
+ color:var(--ttmt-crm-text);
+}
+
+/* Input */
+.ajax__tab_panel > div > .card input[type=text]{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Input */
+.timeSelector tr input{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-color:var(--ttmt-crm-accent) !important;
+}
+
+/* Ajax tab body */
+#ContentAdmin > div > .ajax__tab_body{
+ background-color:var(--ttmt-crm-bg);
+ transform:translatex(0px) translatey(0px);
+}
+
+/* Card header */
+.ajax__tab_panel > .card .card-header{
+ background-color:var(--ttmt-crm-accent);
+}
+
+
+/* Card body */
+#aspnetForm .ajax__tab_panel:nth-child(7) .card:nth-child(1) .card-body{
+ background-color:var(--ttmt-crm-bg);
+}
+
+/* Card header */
+#aspnetForm .ajax__tab_panel:nth-child(7) .card:nth-child(1) .card-header{
+ background-color:var(--ttmt-crm-accent);
+}
+
+/* Body Of Table */
+.card-body div .table-striped > tbody{
+ background-color:var(--ttmt-crm-accent);
+}
+
+/* Body Of Table */
+#aspnetForm table tbody tr td #ContentAdmin div .ajax__tab_body .ajax__tab_panel:nth-child(7) .card .card-body div .table-striped tbody{
+ transform:translatex(0px) translatey(0px) !important;
+}
+
+/* Card body */
+#aspnetForm .ajax__tab_panel:nth-child(7) .card:nth-child(2) .card-body{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+}
+
+/* Form control */
+#aspnetForm tr input[type=file].form-control{
+ background-color:var(--ttmt-crm-bg);
+ color:var(--ttmt-crm-text);
+ border-style:solid;
+ border-color:var(--ttmt-crm-accent);
+}
+
+/* Form control */
+.card-body .container-fluid .row:nth-child(1) .col-md-9 input[type=text].form-control{
+ background-color:var(--ttmt-crm-input-bg);
+ border-color:var(--ttmt-crm-accent);
+ color:var(--ttmt-crm-text);
+}
+
+/* Column 9/12 */
+.card-body div .container-fluid .row:nth-child(2) .col-md-9{
+ background-color:var(--ttmt-crm-row-highlight);
+}
+
+/* Card header */
+#aspnetForm .ajax__tab_panel:nth-child(7) .card:nth-child(2) .card-header{
+ background-color:var(--ttmt-crm-accent);
+}

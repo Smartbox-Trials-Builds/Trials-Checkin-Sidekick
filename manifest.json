@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Smartbox CRM Sidekick",
+  "version": "2.0.0",
+  "description": "Side panel check-in form for TTMT CRM pages. Auto-fills client data and copies a summary to clipboard.",
+  "permissions": ["sidePanel", "activeTab", "tabs", "scripting", "downloads", "storage", "hid"],
+  "host_permissions": [
+    "https://portal.talktometechnologies.com/*",
+    "https://crm.talktometechnologies.com/*",
+    "https://talktometechnologies2com.sharepoint.com/*",
+    "https://smartboxassistivetnam.sharepoint.com/*",
+    "https://forms.office.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "icons": {
+    "16": "assets/SB logo.png",
+    "32": "assets/SB logo.png",
+    "48": "assets/SB logo.png",
+    "128": "assets/SB logo.png"
+  },
+  "action": {
+    "default_title": "Open Check-in Panel",
+    "default_icon": {
+      "16": "assets/SB logo.png",
+      "32": "assets/SB logo.png",
+      "48": "assets/SB logo.png",
+      "128": "assets/SB logo.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://portal.talktometechnologies.com/*",
+        "https://crm.talktometechnologies.com/*",
+        "https://talktometechnologies2com.sharepoint.com/*",
+        "https://smartboxassistivetnam.sharepoint.com/*",
+        "https://forms.office.com/*"
+      ],
+      "js": ["crm-custom-css-worker.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["crm-css-themes/custom-crm-theme.css", "themes.css"],
+      "matches": [
+        "https://portal.talktometechnologies.com/*",
+        "https://crm.talktometechnologies.com/*",
+        "https://talktometechnologies2com.sharepoint.com/*",
+        "https://smartboxassistivetnam.sharepoint.com/*",
+        "https://forms.office.com/*"
+      ]
+    }
+  ]
+}

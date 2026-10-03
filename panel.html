@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Check-in Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="themes.css" />
+  <script src="libs/jszip.min.js"></script>
+</head>
+<body>
+
+  <!-- WELCOME VIEW -->
+  <div class="container welcome-view" id="welcomeView" style="display:none;">
+    <h1>Welcome to the CRM Sidekick!</h1>
+    <p class="welcome-intro">
+      Before you get started, here’s a quick overview of what this tool is and how it can help you.
+    </p>
+    <p class="welcome-intro">
+      CRM Sidekick is a browser extension designed to streamline your daily tasks with a set of helpful, easy-to-use tools. While
+      it’s not a full automation platform like Power Automate and still requires some user interaction, it removes many of the
+      time-consuming steps you deal with every day.
+    </p>
+    <p class="welcome-intro">Instead of one-click check-ins, CRM Sidekick guides you through the process and takes care of repetitive work such as:</p>
+    <ul class="welcome-list">
+      <li>Naming and zipping files</li>
+      <li>Formatting and submitting your CRM notes</li>
+      <li>Eliminating common manual entry tasks</li>
+    </ul>
+    <p class="welcome-intro">If you have any questions or need help, feel free to reach out to Jordan.</p>
+    <button class="toggle-btn welcome-continue" id="welcomeContinueBtn" type="button">Continue to setup</button>
+  </div>
+
+  <!-- ONBOARDING VIEW -->
+  <div class="container onboarding-view" id="onboardingView" style="display:none;">
+    <h1>Welcome to CRM Sidekick</h1>
+    <p class="complete-intro">Tell us your username, choose your starting color theme, and confirm your SharePoint workbook access.</p>
+    <form id="onboardingForm">
+      <label for="userFirstName">Create username</label>
+      <input type="text" id="userFirstName" autocomplete="given-name" required />
+
+      <label for="userMascotInput">Profile mascot image</label>
+      <input type="file" id="userMascotInput" accept="image/*" />
+      <img id="userMascotPreview" class="onboarding-mascot-preview" src="assets/SB logo.png" alt="Spark mascot preview" />
+      <button class="toggle-btn symoji-picker__toggle" id="symojiPickerMascotBtn" type="button">
+        Choose from Symojis
+      </button>
+      <p class="hint-text">Choose an image to replace the Spark mascot on the landing page.</p>
+      <label for="onboardingMascotSize">Mascot size</label>
+      <div class="onboarding-mascot-size-row">
+        <input type="range" id="onboardingMascotSize" min="64" max="160" step="4" />
+        <span class="onboarding-mascot-size-value" id="onboardingMascotSizeValue">96px</span>
+      </div>
+      <p class="hint-text">Adjust the size of your profile mascot on the landing page.</p>
+
+      <label for="onboardingThemeSelect">Starting color theme</label>
+      <select id="onboardingThemeSelect" required></select>
+
+      <label class="checkbox-row" for="onboardingDailyCounterToggle">
+        <input type="checkbox" id="onboardingDailyCounterToggle" />
+        Show daily task counter on the landing page
+      </label>
+      <label class="checkbox-row" for="onboardingCustomDailyCounterToggle">
+        <input type="checkbox" id="onboardingCustomDailyCounterToggle" />
+        Enable custom daily counter
+      </label>
+      <label for="onboardingCustomDailyCounterName">Custom daily counter name</label>
+      <input type="text" id="onboardingCustomDailyCounterName" placeholder="e.g. Calls" />
+      <label class="checkbox-row" for="onboardingWeeklyCounterToggle">
+        <input type="checkbox" id="onboardingWeeklyCounterToggle" />
+        Show weekly task counter on the landing page
+      </label>
+      <label class="checkbox-row" for="onboardingTooltipToggle">
+        <input type="checkbox" id="onboardingTooltipToggle" />
+        Show tooltips on landing buttons
+      </label>
+
+      <div class="note-preview">
+        <div class="note-preview__title">SharePoint workbook links (auto-loaded)</div>
+        <div class="lookup-file">
+          <div>
+            <div class="lookup-file__title">RWL &amp; LTL Update</div>
+            <p class="hint-text">Expected: OneDrive\Trials SharePoint (Do not email) - Trials Operations\Python\RWL and LTL Update.xlsx</p>
+          </div>
+          <button type="button" class="toggle-btn" data-workbook-connect="ltl">Refresh workbook</button>
+          <button type="button" class="toggle-btn" data-workbook-open="ltl">Open workbook</button>
+          <div id="onboardingLtlFileStatus" data-workbook-status="ltl" class="status-line">Auto-loaded from SharePoint.</div>
+        </div>
+        <div class="lookup-file">
+          <div>
+            <div class="lookup-file__title">MountLog</div>
+            <p class="hint-text">Expected: OneDrive\Trials SharePoint (Do not email) - Trials Operations\Loan Libraries\MountLog.xlsx</p>
+          </div>
+          <button type="button" class="toggle-btn" data-workbook-connect="mount">Refresh workbook</button>
+          <button type="button" class="toggle-btn" data-workbook-open="mount">Open workbook</button>
+          <div id="onboardingMountFileStatus" data-workbook-status="mount" class="status-line">Auto-loaded from SharePoint.</div>
+        </div>
+        <div class="lookup-file">
+          <div>
+            <div class="lookup-file__title">Loan Library CRM Check</div>
+            <p class="hint-text">Expected: OneDrive\Trials SharePoint (Do not email) - Trials Operations\Loan Libraries\Loan Library CRM Check V3.xlsm</p>
+          </div>
+          <button type="button" class="toggle-btn" data-workbook-connect="crm">Refresh workbook</button>
+          <button type="button" class="toggle-btn" data-workbook-open="crm">Open workbook</button>
+          <div id="onboardingCrmFileStatus" data-workbook-status="crm" class="status-line">Auto-loaded from SharePoint.</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card__title">Outlook setup</div>
+        <p class="hint-text">Open Outlook in a new tab and walk through the setup checklist.</p>
+        <button class="toggle-btn settings-card__action" id="beginOutlookSetupBtn" type="button">
+          Begin Outlook setup
+        </button>
+      </div>
+
+      <button type="submit">Save &amp; Continue</button>
+    </form>
+  </div>
+
+  <!-- OUTLOOK SETUP VIEW -->
+  <div class="container outlook-setup-view" id="outlookSetupView" style="display:none;">
+    <h1>Outlook Setup</h1>
+    <p class="complete-intro">We opened Outlook in a new tab. Sign in there, then follow these steps.</p>
+    <ol class="outlook-setup-steps">
+      <li>Once you're logged in, click <strong>File</strong>, then <strong>Settings</strong>.</li>
+      <li>In the new window, click <strong>Mail</strong> on the left side.</li>
+      <li>In the next column, select <strong>Compose and reply</strong>.</li>
+      <li>Under <strong>Message format</strong>, enable the checkbox labeled <strong>Always show From</strong>.</li>
+      <li>Close the settings window, then return here.</li>
+    </ol>
+
+    <div class="outlook-setup-finish">
+      <img class="outlook-setup-thumb" src="assets/Symojis/Thumbs-Up.png" alt="Thumbs up Symoji" />
+      <button id="finishOutlookSetupBtn" class="toggle-btn outlook-setup-finish-btn" type="button">
+        Finish Outlook setup
+      </button>
+    </div>
+  </div>
+
+  <!-- LANDING VIEW -->
+  <div class="container landing-view" id="landingView">
+    <div class="landing-content">
+      <div class="landing-header">
+        <h1 class="landing-title">CRM Sidekick</h1>
+      </div>
+      <img class="landing-symojo" id="landingMascot" src="assets/SB logo.png" alt="Spark mascot" />
+      <p class="landing-greeting" id="landingGreeting"></p>
+      <p class="landing-subtitle">Pick a workflow to get started.</p>
+      <section class="landing-anime-quotes" id="landingAnimeQuoteSection" aria-live="polite" style="display:none;">
+        <div class="landing-anime-quotes__title">Anime quote spotlight</div>
+        <blockquote class="landing-anime-quotes__quote" id="landingAnimeQuoteText"></blockquote>
+      </section>
+      <div class="landing-layout" id="landingLayout">
+      <div class="daily-counter" id="dailyCounterSection" data-layout-item="dailyCounter" aria-label="Daily task counter">
+        <div class="daily-counter__header">
+          <span>Daily task counter</span>
+          <div class="daily-counter__actions">
+            <button id="clearDailyCountersBtn" class="daily-counter__clear" type="button" aria-label="Clear daily counters">
+              Clear
+            </button>
+            <button id="toggleDailyCounterBtn" class="daily-counter__toggle" type="button" aria-expanded="true" aria-controls="dailyCounterContent">
+              <span class="daily-counter__toggle-text">Hide</span>
+              <span class="daily-counter__chevron" aria-hidden="true">▾</span>
+            </button>
+          </div>
+        </div>
+        <div class="daily-counter__content" id="dailyCounterContent">
+          <div class="daily-counter__grid">
+          <div class="daily-counter__item">
+            <span class="daily-counter__label">Checkins</span>
+            <div class="daily-counter__controls">
+              <button class="daily-counter__btn" type="button" data-counter="checkins" data-delta="-1" aria-label="Decrease checkins count">-</button>
+              <span class="daily-counter__value" id="dailyCheckinsCount">0</span>
+              <button class="daily-counter__btn" type="button" data-counter="checkins" data-delta="1" aria-label="Increase checkins count">+</button>
+            </div>
+          </div>
+          <div class="daily-counter__item">
+            <span class="daily-counter__label">QA's</span>
+            <div class="daily-counter__controls">
+              <button class="daily-counter__btn" type="button" data-counter="qas" data-delta="-1" aria-label="Decrease QA count">-</button>
+              <span class="daily-counter__value" id="dailyQasCount">0</span>
+              <button class="daily-counter__btn" type="button" data-counter="qas" data-delta="1" aria-label="Increase QA count">+</button>
+            </div>
+          </div>
+          <div class="daily-counter__item">
+            <span class="daily-counter__label">Preps</span>
+            <div class="daily-counter__controls">
+              <button class="daily-counter__btn" type="button" data-counter="preps" data-delta="-1" aria-label="Decrease prep count">-</button>
+              <span class="daily-counter__value" id="dailyPrepsCount">0</span>
+              <button class="daily-counter__btn" type="button" data-counter="preps" data-delta="1" aria-label="Increase prep count">+</button>
+            </div>
+          </div>
+          <div class="daily-counter__item" id="dailyCustomCounterItem">
+            <span class="daily-counter__label" id="dailyCustomLabel">Custom</span>
+            <div class="daily-counter__controls">
+              <button class="daily-counter__btn" type="button" data-counter="custom" data-delta="-1" aria-label="Decrease custom count">-</button>
+              <span class="daily-counter__value" id="dailyCustomCount">0</span>
+              <button class="daily-counter__btn" type="button" data-counter="custom" data-delta="1" aria-label="Increase custom count">+</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+      <div class="daily-counter" id="weeklyCounterSection" data-layout-item="weeklyCounter" aria-label="Weekly task counter">
+        <div class="daily-counter__header">
+          <span>Weekly task counter</span>
+          <div class="daily-counter__actions">
+            <button id="clearWeeklyCountersBtn" class="daily-counter__clear" type="button" aria-label="Clear weekly counter">
+              Clear
+            </button>
+            <button id="toggleWeeklyCounterBtn" class="daily-counter__toggle" type="button" aria-expanded="true" aria-controls="weeklyCounterContent">
+              <span class="daily-counter__toggle-text">Hide</span>
+              <span class="daily-counter__chevron" aria-hidden="true">▾</span>
+            </button>
+          </div>
+        </div>
+        <div class="daily-counter__content" id="weeklyCounterContent">
+          <div class="daily-counter__grid weekly-counter__grid">
+            <div class="daily-counter__item">
+              <span class="daily-counter__label">Total</span>
+              <div class="daily-counter__controls">
+                <button class="daily-counter__btn" type="button" data-weekly-delta="-1" aria-label="Decrease weekly total">-</button>
+                <span class="daily-counter__value" id="weeklyTotalCount">0</span>
+                <button class="daily-counter__btn" type="button" data-weekly-delta="1" aria-label="Increase weekly total">+</button>
+              </div>
+            </div>
+            <div class="daily-counter__item weekly-average" id="weeklyAverageItem">
+              <label class="daily-counter__label" for="weeklyDaysWorkedInput">Days worked</label>
+              <input class="weekly-average__input" type="number" id="weeklyDaysWorkedInput" min="1" max="7" step="1" inputmode="numeric" />
+              <span class="daily-counter__label">Average/day</span>
+              <span class="daily-counter__value" id="weeklyAverageCount">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="landing-crm-nav" data-layout-item="crmNavigator">
+        <div class="landing-crm-nav__title">CRM Navigator</div>
+        <form id="landingCrmNavigatorForm" class="landing-crm-nav__form">
+          <label class="landing-crm-nav__label" for="landingCrmNavigatorInput">CRM ID</label>
+          <input type="text" id="landingCrmNavigatorInput" class="landing-crm-nav__input" placeholder="Enter CRM ID" required />
+          <button type="submit" class="toggle-btn landing-crm-nav__btn">Go</button>
+        </form>
+      </div>
+      <div class="landing-section" data-layout-item="checkinTools">
+        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="checkin-tools" aria-expanded="false" data-tooltip="Folder housing check-in tools. Click to reveal the Device Lookup tool and the Check-in form.">
+          Check-in Tools
+          <span class="landing-section__chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="landing-section__content" data-collapsible-content="checkin-tools" hidden>
+          <button id="deviceLookupBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Full device lookup tool with CRM navigation and check-in auto-fill.">
+            Device Number Lookup Sidekick
+          </button>
+          <button id="startCheckinBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Check-in form that auto-fills name and AAC from the current CRM.">
+            Check-in Sidekick
+          </button>
+          <button id="startLtlUpdateBtn" class="toggle-btn landing-btn" type="button" data-tooltip="LTL Update check-in form without camera and mount sections.">
+            LTL Update Sidekick
+            <span class="landing-btn__tag">Beta</span>
+          </button>
+        </div>
+      </div>
+      <div class="landing-section" data-layout-item="prepTools">
+        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="prep-tools" aria-expanded="false" data-tooltip="Folder housing prep tools. Click to reveal Grid Sidekick, TalkPad Prep Sidekick, and GridPad Prep Sidekick.">
+          Prep Tools
+          <span class="landing-section__chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="landing-section__content" data-collapsible-content="prep-tools" hidden>
+          <button id="gridSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Builds Grid email/password from the current CRM (CL or LTL) with copy fields.">
+            Grid Sidekick
+          </button>
+          <button id="ageCalculatorBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Calculates age from a birthdate by comparing it against today's date.">
+            Age Calculator
+          </button>
+          <button id="talkPadPrepBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Basic TalkPad prep checklist (more features coming soon).">
+            TalkPad Prep Sidekick
+          </button>
+          <button id="gridPadPrepBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Categorized GridPad Go prep checklist with reorderable categories.">
+            GridPad &amp; GridPad Go Prep Side Kicik
+            <span class="landing-btn__tag">Beta</span>
+          </button>
+        </div>
+      </div>
+      <div class="landing-section" id="prePrepToolsSection" data-layout-item="prePrepTools" style="display:none;">
+        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="pre-prep-tools" aria-expanded="false" data-tooltip="Secure folder for authorized Pre-Prep workflows.">
+          Pre-Prep Tools
+          <span class="landing-section__chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="landing-section__content" data-collapsible-content="pre-prep-tools" hidden>
+          <button id="prePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Build a pre-prep scan list with corrected device serials and internal serial fields.">
+            Pre-prep Sidekick
+          </button>
+          <button id="lockDownSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Submit a Lost Mode request note to a CRM record.">
+            Lock down Sidekick
+          </button>
+        </div>
+      </div>
+      <button id="qaFormBtn" class="toggle-btn landing-btn" data-layout-item="qaForm" type="button" data-tooltip="Opens the QA form.">
+        QA Form
+      </button>
+      <div class="landing-section" data-layout-item="trialsLinks">
+        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="trials-links" aria-expanded="false" data-tooltip="Folder of useful links like CRM Navigator, APP override codes, and KG request form.">
+          Trials Links
+          <span class="landing-section__chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="landing-section__content" data-collapsible-content="trials-links" hidden>
+          <button id="appOverridesBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Opens a window with our app override codes.">
+            APP Overrides
+          </button>
+          <button id="kgRequestsBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Opens the KG request form.">
+            KG Requests
+          </button>
+          <button id="timecardSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Track and copy Monday-Friday time entries.">
+            Timecard Sidekick
+          </button>
+        </div>
+      </div>
+      <button id="themeMenuBtn" class="toggle-btn landing-settings-btn" data-layout-item="userSettings" type="button">
+        <span class="landing-settings-icon" aria-hidden="true">⚙</span>
+        <span>User settings</span>
+      </button>
+      </div>
+    </div>
+    <div class="landing-version" id="landingVersion"></div>
+    <button class="landing-corner-symojo-btn" id="landingCornerSymojiBtn" type="button" aria-label="Change corner Symoji">
+      <img class="landing-corner-symojo" id="landingCornerSymoji" src="assets/symoji.png" alt="Symoji mascot" />
+    </button>
+  </div>
+
+  <!-- TIMECARD SIDEKICK VIEW -->
+  <div class="container timecard-view" id="timecardView" style="display:none;">
+    <h1>Timecard Sidekick</h1>
+    <p class="complete-intro">Clock in and out, edit this week's Monday-Friday entries, and use the totals to enter your time in ADP.</p>
+
+    <div class="timecard-actions">
+      <button id="timecardClockInBtn" class="toggle-btn" type="button">Clock In</button>
+      <button id="timecardClockOutBtn" class="toggle-btn" type="button">Clock Out</button>
+      <button id="timecardOpenAdpBtn" class="toggle-btn" type="button">Open ADP</button>
+    </div>
+    <div id="timecardStatus" class="status-line" aria-live="polite"></div>
+
+    <div class="timecard-week" id="timecardWeekRows"></div>
+
+    <div class="timecard-summary">
+      <strong>Total Monday-Friday hours:</strong>
+      <span id="timecardTotalHours">0.00</span>
+    </div>
+
+    <div class="timecard-actions">
+      <button id="timecardClearWeekBtn" class="toggle-btn" type="button">Clear Week's Hours</button>
+      <button id="timecardReturnBtn" class="toggle-btn" type="button">Return to main menu</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div class="container settings-view" id="settingsView" style="display:none;">
+    <h1>User settings</h1>
+    <p class="complete-intro">Manage your profile details and theme preferences.</p>
+    <div class="settings-panel">
+      <div class="settings-card">
+        <div class="settings-card__title">User profile</div>
+        <p class="hint-text">Update your name, daily and weekly counter preferences, and workbook connections.</p>
+        <label class="checkbox-row" for="settingsTooltipToggle">
+          <input type="checkbox" id="settingsTooltipToggle" />
+          Show tooltips on landing buttons
+        </label>
+        <label class="checkbox-row" for="settingsCrmCustomCssToggle">
+          <input type="checkbox" id="settingsCrmCustomCssToggle" />
+          Enable matching CRM page theme
+        </label>
+        <label class="checkbox-row" for="settingsWeeklyAverageToggle">
+          <input type="checkbox" id="settingsWeeklyAverageToggle" />
+          Show weekly task average on the landing page
+        </label>
+        <div class="settings-passcode-option">
+          <label class="checkbox-row" for="settingsPrePrepToggle">
+            <input type="checkbox" id="settingsPrePrepToggle" />
+            Enable Pre-prep Sidekick
+          </label>
+          <label for="settingsPrePrepPasscode">Pre-prep passcode</label>
+          <input type="password" id="settingsPrePrepPasscode" placeholder="Enter passcode" autocomplete="off" />
+          <div class="status-line" id="settingsPrePrepStatus"></div>
+        </div>
+        <button id="editUserProfileBtn" class="toggle-btn settings-card__action" type="button">
+          Edit user profile
+        </button>
+      </div>
+      <div class="settings-card">
+        <div class="settings-card__title">Theme picker</div>
+        <div class="theme-menu" aria-live="polite">
+          <div class="theme-menu__title">Pick a theme</div>
+          <div id="themeCurrentLabel" class="theme-current">Current theme: —</div>
+          <div id="themeOptions" class="theme-options"></div>
+          <div class="theme-menu__title">Import a theme key</div>
+          <p class="hint-text">Paste a theme key to add it to your custom themes.</p>
+          <div class="theme-menu__row">
+            <input type="text" id="themeMenuKeyInput" placeholder="Paste a theme key" />
+            <button id="themeMenuKeyApplyBtn" class="toggle-btn" type="button">
+              Import key
+            </button>
+          </div>
+          <div class="status-line" id="themeMenuKeyStatus"></div>
+          <button id="openThemeBuilderBtn" class="toggle-btn theme-menu__action" type="button">
+            Build your own theme
+          </button>
+          <div id="chaosControls" class="chaos-controls" style="display:none;">
+            <label for="chaosRotationInput">Chaos rotation timing (seconds)</label>
+            <input type="number" id="chaosRotationInput" min="5" step="1" />
+            <p class="chaos-hint">Chaos rotates through the non-chaos themes on a timer.</p>
+          </div>
+          <div id="surprisePartyControls" class="surprise-controls" style="display:none;">
+            <div class="surprise-controls__title">Surprise Party</div>
+            <p class="surprise-hint">Hit the button to swap into a random theme on demand.</p>
+            <button id="surprisePartyBtn" class="toggle-btn surprise-btn" type="button">
+              Surprise me
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="crm-nav-footer">
+      <button id="settingsReturnBtn" class="toggle-btn" type="button">
+        Return to CRM Sidekick
+      </button>
+    </div>
+  </div>
+
+  <!-- THEME BUILDER VIEW -->
+  <div class="container theme-builder-view" id="themeBuilderView" style="display:none;">
+    <h1>Build your own theme</h1>
+    <p class="complete-intro">Customize every color and preview your theme before saving.</p>
+    <div class="theme-builder-grid">
+      <div class="theme-builder-controls">
+        <div class="theme-builder-controls__title">Theme colors</div>
+        <div id="themeBuilderControls" class="theme-builder-controls__list"></div>
+        <div class="theme-builder-controls__title">Preview options</div>
+        <div class="theme-builder-layout">
+          <label class="checkbox-row" for="themeBuilderMascotToggle">
+            <input type="checkbox" id="themeBuilderMascotToggle" />
+            Show profile mascot
+          </label>
+          <label class="checkbox-row" for="themeBuilderSymojiToggle">
+            <input type="checkbox" id="themeBuilderSymojiToggle" />
+            Show corner Symoji
+          </label>
+        </div>
+        <div class="theme-builder-upload">
+          <label for="themeBuilderImageInput">Container background image (optional)</label>
+          <input type="file" id="themeBuilderImageInput" accept="image/*" />
+          <button id="themeBuilderClearImageBtn" class="toggle-btn theme-builder-upload__btn" type="button">
+            Remove image
+          </button>
+          <div class="status-line" id="themeBuilderImageStatus">No image uploaded.</div>
+        </div>
+      </div>
+      <div class="theme-builder-preview" id="themeBuilderPreview">
+        <div class="theme-builder-preview__container container">
+          <div class="landing-content">
+            <div class="landing-header">
+              <h1 class="landing-title">CRM Sidekick</h1>
+            </div>
+            <img class="landing-symojo theme-preview-mascot" data-preview-element="mascot" src="assets/SB logo.png" alt="Profile mascot preview" />
+            <p class="landing-greeting">Welcome back, Jordan!</p>
+            <p class="landing-subtitle">Theme preview layout</p>
+            <div class="landing-layout" id="themeBuilderLayout">
+            <div class="daily-counter" data-layout-item="dailyCounter" aria-label="Daily task counter">
+              <div class="daily-counter__header">
+                <span>Daily task counter</span>
+              </div>
+              <div class="daily-counter__content">
+                <div class="daily-counter__grid">
+                  <div class="daily-counter__item">
+                    <span class="daily-counter__label">Checkins</span>
+                    <span class="daily-counter__value">2</span>
+                  </div>
+                  <div class="daily-counter__item">
+                    <span class="daily-counter__label">QA's</span>
+                    <span class="daily-counter__value">1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="daily-counter" data-layout-item="weeklyCounter" aria-label="Weekly task counter">
+              <div class="daily-counter__header">
+                <span>Weekly task counter</span>
+              </div>
+              <div class="daily-counter__content">
+                <div class="daily-counter__grid weekly-counter__grid">
+                  <div class="daily-counter__item">
+                    <span class="daily-counter__label">Total</span>
+                    <span class="daily-counter__value">12</span>
+                  </div>
+                  <div class="daily-counter__item weekly-average">
+                    <span class="daily-counter__label">Days worked</span>
+                    <span class="daily-counter__value">4</span>
+                    <span class="daily-counter__label">Average/day</span>
+                    <span class="daily-counter__value">3</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="landing-section" data-layout-item="checkinTools">
+              <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="theme-preview-actions" aria-expanded="true">
+                Check-in Tools
+                <span class="landing-section__chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="landing-section__content" data-collapsible-content="theme-preview-actions">
+                <button class="toggle-btn landing-btn" type="button">
+                  Device Number Lookup Sidekick
+                </button>
+                <button class="toggle-btn landing-btn" type="button">
+                  Check-in Sidekick
+                </button>
+              </div>
+            </div>
+            <div class="landing-section" data-layout-item="prepTools">
+              <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="theme-preview-prep" aria-expanded="true">
+                Prep Tools
+                <span class="landing-section__chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="landing-section__content" data-collapsible-content="theme-preview-prep">
+                <button class="toggle-btn landing-btn" type="button">
+                  Grid Sidekick
+                </button>
+                <button class="toggle-btn landing-btn" type="button">
+                  TalkPad Prep Sidekick
+                </button>
+                <button class="toggle-btn landing-btn" type="button">
+                  GridPad &amp; GridPad Go Prep Side Kicik
+                  <span class="landing-btn__tag">Beta</span>
+                </button>
+              </div>
+            </div>
+            <button class="toggle-btn landing-btn" data-layout-item="qaForm" type="button">QA Form</button>
+            <div class="landing-section" data-layout-item="trialsLinks">
+              <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="theme-preview-links" aria-expanded="true">
+                Trials Links
+                <span class="landing-section__chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="landing-section__content" data-collapsible-content="theme-preview-links">
+                <button class="toggle-btn landing-btn" type="button">CRM Navigator</button>
+                <button class="toggle-btn landing-btn" type="button">APP Overrides</button>
+              </div>
+            </div>
+            <button class="toggle-btn landing-settings-btn" data-layout-item="userSettings" type="button">
+              <span class="landing-settings-icon" aria-hidden="true">⚙</span>
+              <span>User settings</span>
+            </button>
+            </div>
+          </div>
+          <button class="landing-corner-symojo-btn theme-preview-symojo" data-preview-element="symoji" type="button" aria-label="Corner Symoji preview">
+            <img class="landing-corner-symojo" src="assets/symoji.png" alt="Corner Symoji preview" />
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="theme-builder-save">
+      <label for="themeBuilderNameInput">Theme name</label>
+      <input type="text" id="themeBuilderNameInput" placeholder="Name your theme" />
+      <button id="themeBuilderSaveBtn" class="toggle-btn" type="button">
+        Save theme
+      </button>
+      <div class="status-line" id="themeBuilderSaveStatus"></div>
+    </div>
+    <div class="theme-builder-share">
+      <div class="theme-builder-share__title">Share your theme</div>
+      <p class="hint-text">Generate a theme key to share or load a key from someone else.</p>
+      <label for="themeBuilderKeyOutput">Theme key</label>
+      <div class="theme-builder-share__row theme-builder-share__row--triple">
+        <input type="text" id="themeBuilderKeyOutput" readonly />
+        <button id="themeBuilderKeyGenerateBtn" class="toggle-btn" type="button">
+          Generate key
+        </button>
+        <button id="themeBuilderKeyCopyBtn" class="toggle-btn" type="button">
+          Copy key
+        </button>
+      </div>
+      <label for="themeBuilderKeyInput">Import a theme key</label>
+      <div class="theme-builder-share__row">
+        <input type="text" id="themeBuilderKeyInput" placeholder="Paste a theme key" />
+        <button id="themeBuilderKeyApplyBtn" class="toggle-btn" type="button">
+          Load key
+        </button>
+      </div>
+      <div class="status-line" id="themeBuilderKeyStatus"></div>
+    </div>
+    <div class="theme-builder-actions">
+      <button id="themeBuilderDeleteBtn" class="toggle-btn theme-builder-delete" type="button">
+        Delete custom theme
+      </button>
+      <div class="status-line" id="themeBuilderDeleteStatus"></div>
+    </div>
+    <div class="crm-nav-footer">
+      <button id="themeBuilderReturnBtn" class="toggle-btn" type="button">
+        Back to user settings
+      </button>
+    </div>
+  </div>
+
+  <!-- QA COMPLETE VIEW -->
+  <div class="container qa-complete-view" id="qaCompleteView" style="display:none;">
+    <h1>QA Complete</h1>
+    <p class="complete-intro">
+      Finish the QA form, then return here to log it.
+    </p>
+
+    <div class="qa-crm-nav">
+      <div class="qa-crm-nav__title">CRM Navigator</div>
+      <p class="qa-crm-nav__hint">Open a CRM client record in a new tab.</p>
+      <form id="qaCrmNavigatorForm">
+        <label for="qaCrmNavigatorInput">CRM ID</label>
+        <input type="text" id="qaCrmNavigatorInput" placeholder="Enter CRM ID" required />
+        <button type="submit" id="qaCrmNavigatorGoBtn">Go!</button>
+      </form>
+      <div class="qa-client-copy">
+        <label for="qaClientNameField">Client name</label>
+        <div class="copy-row">
+          <input type="text" id="qaClientNameField" class="copy-field" placeholder="Client name will appear here" readonly />
+          <button id="qaClientNameRefreshBtn" class="copy-btn qa-refresh-btn" type="button">↻ Refresh</button>
+          <button id="qaClientNameCopyBtn" class="copy-btn" type="button" disabled>Copy name</button>
+        </div>
+      </div>
+      <div class="qa-client-copy">
+        <label for="qaCrmIdField">CRM ID</label>
+        <div class="copy-row">
+          <input type="text" id="qaCrmIdField" class="copy-field" placeholder="CRM ID will appear here" readonly />
+          <button id="qaCrmIdCopyBtn" class="copy-btn" type="button" disabled>Copy CRM ID</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="qaReturnBtn" class="toggle-btn" type="button" style="margin-top:16px;">
+      Back to CRM Sidekick
+    </button>
+    <button id="qaFinishedBtn" class="toggle-btn" type="button" style="margin-top:16px;">
+      Finished QA
+    </button>
+  </div>
+
+  <div class="symoji-modal" id="symojiPicker" aria-hidden="true">
+    <div class="symoji-modal__content" role="dialog" aria-modal="true" aria-labelledby="symojiPickerTitle">
+      <div class="symoji-modal__header">
+        <h2 id="symojiPickerTitle">Choose a Symoji</h2>
+        <button class="toggle-btn symoji-modal__close" id="symojiPickerCloseBtn" type="button">Close</button>
+      </div>
+      <p class="hint-text" id="symojiPickerHint">Pick a Symoji from the built-in set.</p>
+      <div class="symoji-grid" id="symojiPickerGrid"></div>
+    </div>
+  </div>
+
+
+  <!-- LOCK DOWN SIDEKICK VIEW -->
+  <div class="container lock-down-view" id="lockDownView" style="display:none;">
+    <h1>Lock down Sidekick</h1>
+    <p class="complete-intro">Add each CRM link beside its device number. Every paired request is tracked separately while the Lost Mode notes are submitted.</p>
+    <form id="lockDownForm" class="lock-down-form" novalidate>
+      <div class="lock-down-list" id="lockDownList"></div>
+      <div class="lock-down-actions">
+        <button type="button" id="lockDownAddBtn" class="toggle-btn">+ Add another device</button>
+        <button type="submit" id="lockDownSubmitBtn">Submit all</button>
+      </div>
+      <div id="lockDownStatus" class="status-line lock-down-summary" role="status" aria-live="polite"></div>
+    </form>
+    <div class="crm-nav-footer">
+      <button id="lockDownReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+  </div>
+
+  <!-- PRE-PREP SIDEKICK VIEW -->
+  <div class="container pre-prep-view" id="prePrepView" style="display:none;">
+    <h1>Pre-prep Sidekick</h1>
+    <p class="complete-intro">Scan device serial numbers into a prep list, then paste matching internal serial numbers beside them.</p>
+
+    <form id="prePrepScanForm" class="lookup-form">
+      <label for="prePrepScanInput">Device serial number</label>
+      <input type="text" id="prePrepScanInput" placeholder="Scan or type the device serial number" required />
+      <button type="submit" id="prePrepAddBtn">Add device</button>
+      <div class="lookup-meta">
+        <div>
+          <div class="lookup-meta__label">Last raw scan</div>
+          <div id="prePrepRawScan" class="lookup-meta__value">—</div>
+        </div>
+        <div>
+          <div class="lookup-meta__label">Corrected serial</div>
+          <div id="prePrepCorrectedScan" class="lookup-meta__value">—</div>
+        </div>
+      </div>
+      <div id="prePrepStatus" class="status-line"></div>
+    </form>
+
+    <div class="mini-row pre-prep-actions">
+      <button id="prePrepLockBtn" class="toggle-btn" type="button">Lock edits: Off</button>
+      <button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
+    </div>
+
+    <div class="note-preview pre-prep-list-card">
+      <div class="note-preview__title">Scanned device list</div>
+      <div class="pre-prep-table" role="table" aria-label="Pre-prep device and internal serial list">
+        <div class="pre-prep-table__header" role="row">
+          <div role="columnheader">Scanned device numbers</div>
+          <div role="columnheader">Internal serial numbers</div>
+        </div>
+        <div id="prePrepRows" class="pre-prep-table__body"></div>
+      </div>
+      <p id="prePrepEmptyState" class="hint-text">No devices added yet.</p>
+    </div>
+
+    <div class="crm-nav-footer">
+      <button id="prePrepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+  </div>
+
+  <!-- DEVICE LOOKUP VIEW -->
+  <div class="container device-lookup-view" id="deviceLookupView" style="display:none;">
+    <h1>Device Number Lookup Sidekick</h1>
+    <p class="complete-intro">Lookup device, mount, and camera info using auto-loaded SharePoint workbooks.</p>
+
+    <form id="deviceLookupForm" class="lookup-form">
+      <label for="deviceLookupInput">Device serial number</label>
+      <input type="text" id="deviceLookupInput" placeholder="Scan or type the serial number" required />
+      <div class="lookup-meta">
+        <div>
+          <div class="lookup-meta__label">Raw scan</div>
+          <div id="deviceLookupRaw" class="lookup-meta__value">—</div>
+        </div>
+        <div>
+          <div class="lookup-meta__label">Extracted serial</div>
+          <div id="deviceLookupExtracted" class="lookup-meta__value">—</div>
+        </div>
+      </div>
+      <button type="submit" id="deviceLookupSearchBtn">Search</button>
+    </form>
+
+    <div class="lookup-results">
+      <div class="note-preview lookup-result" id="lookupSerialCard">
+        <div class="note-preview__title">Serial number result</div>
+        <pre id="lookupSerialResult" class="note-preview__body"></pre>
+      </div>
+      <div class="note-preview lookup-result" id="lookupMountCard">
+        <div class="note-preview__title">Mount result</div>
+        <pre id="lookupMountResult" class="note-preview__body"></pre>
+      </div>
+      <div class="note-preview lookup-result lookup-result--wide" id="lookupActionCard">
+        <div class="note-preview__title">Action required</div>
+        <pre id="lookupActionResult" class="note-preview__body"></pre>
+      </div>
+    </div>
+
+    <div class="note-preview">
+      <div class="note-preview__title">Quick copy</div>
+      <div class="lookup-copy-grid">
+        <button class="copy-btn" type="button" id="copyDeviceSnBtn" disabled>Copy device SN</button>
+        <button class="copy-btn" type="button" id="copyCameraSnBtn" disabled>Copy camera SNs</button>
+        <button class="copy-btn" type="button" id="copyLuminSnBtn" disabled>Copy Lumin-I SNs</button>
+        <button class="copy-btn" type="button" id="copyEvoSnBtn" disabled>Copy Evo SNs</button>
+        <button class="copy-btn" type="button" id="copyCrmBtn" disabled>Copy CRM #</button>
+        <button class="copy-btn" type="button" id="copyClampBtn" disabled>Copy clamp mount</button>
+        <button class="copy-btn" type="button" id="copyTableBtn" disabled>Copy table mount</button>
+        <button class="copy-btn" type="button" id="copyRollingBtn" disabled>Copy rolling mount</button>
+      </div>
+      <div id="lookupCopyStatus" class="status-line"></div>
+    </div>
+
+    <div class="mini-row">
+      <button id="lookupOpenCrmBtn" class="toggle-btn" type="button">Open CRM</button>
+      <button id="lookupOpenWorkbookBtn" class="toggle-btn" type="button">Open LTL/RWL workbook</button>
+      <button id="lookupBeginLtlUpdateBtn" class="toggle-btn hidden-section" type="button">Begin LTL update</button>
+    </div>
+
+    <div class="crm-nav-footer">
+      <button id="deviceLookupReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+  </div>
+
+  <div class="mount-return-modal" id="mountReturnModal" aria-hidden="true">
+    <div class="mount-return-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="mountReturnModalTitle">
+      <div class="mount-return-modal__header">
+        <div>
+          <p class="mount-return-modal__eyebrow">Mount return check</p>
+          <h2 id="mountReturnModalTitle">Mounts found for this device</h2>
+        </div>
+      </div>
+      <p class="mount-return-modal__message">
+        Go find the following mounts and see if they were retuned with the device:
+      </p>
+      <div class="mount-return-modal__list" id="mountReturnChecklist"></div>
+      <p class="mount-return-modal__hint">
+        Selected mounts will be added to the check-in form. Any mounts left unchecked will be listed in the CRM note as not found with the device return.
+      </p>
+      <div class="mount-return-modal__actions">
+        <button class="toggle-btn" id="mountReturnConfirmBtn" type="button">Confirm selection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP OVERRIDES VIEW -->
+  <div class="container app-overrides-view" id="appOverridesView" style="display:none;">
+    <h1>APP Overrides</h1>
+    <p class="complete-intro">Quick reference for app override credentials and paths.</p>
+    <div class="note-preview">
+      <div class="note-preview__title">Overrides</div>
+      <div class="note-preview__body">
+        <p><strong>Touchchat:</strong> <button id="touchchatOverrideBtn" class="toggle-btn" type="button">Show IPAD Scannable Text</button> 72584556</p>
+        <p><strong>P2G:</strong> <button id="p2gOverrideBtn" class="toggle-btn" type="button">Show IPAD Scannable Text</button> vygh-phi-rhy-mo</p>
+        <p><strong>Lamp:</strong> IOS &rarr; LAMP &rarr; Settings</p>
+      </div>
+    </div>
+    <div class="crm-nav-footer">
+      <button id="appOverridesReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+  </div>
+
+  <!-- GRID SIDEKICK VIEW -->
+  <div class="container" id="gridView" style="display:none;">
+    <h1>Grid Sidekick</h1>
+    <p class="complete-intro">Generate Grid credentials for the selected CRM client.</p>
+
+    <div class="mini-row grid-actions-row">
+      <button id="gridRefreshBtn" class="toggle-btn" type="button">↻ Refresh from CRM</button>
+      <button id="gridRegisterLicenseBtn" class="toggle-btn" type="button">Register Grid License</button>
+      <button id="gridLockChangesBtn" class="toggle-btn" type="button">Lock Changes: Off</button>
+      <button id="gridReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+
+    <div class="grid-form">
+      <label>Client First Name</label>
+      <input type="text" id="gridFirstName" />
+
+      <label>Client Last Name</label>
+      <input type="text" id="gridLastName" />
+
+      <label>CRM ID</label>
+      <input type="text" id="gridCrmId" />
+
+      <div class="grid-toggle">
+        <label class="grid-toggle__option">
+          <input type="radio" name="gridType" value="CL" checked />
+          CL
+        </label>
+        <label class="grid-toggle__option">
+          <input type="radio" name="gridType" value="LTL" />
+          LTL
+        </label>
+      </div>
+    </div>
+
+    <div class="note-preview">
+      <div class="note-preview__title">Grid credentials</div>
+      <label class="copy-label" for="gridFullNameField">Client full name</label>
+      <div class="copy-row">
+        <input type="text" id="gridFullNameField" class="copy-field" readonly placeholder="Generated client full name" />
+        <button id="gridFullNameCopyBtn" class="copy-btn" type="button" disabled>Copy</button>
+      </div>
+      <label class="copy-label" for="gridEmailField">Grid email</label>
+      <div class="copy-row">
+        <input type="text" id="gridEmailField" class="copy-field" placeholder="Generated Grid email" />
+        <button id="gridEmailCopyBtn" class="copy-btn" type="button" disabled>Copy</button>
+      </div>
+      <label class="copy-label" for="gridPasswordField">Grid password</label>
+      <div class="copy-row">
+        <input type="text" id="gridPasswordField" class="copy-field" readonly placeholder="Xqxq77##" />
+        <button id="gridPasswordCopyBtn" class="copy-btn" type="button">Copy</button>
+      </div>
+      <label class="copy-label" for="gridCrmInfoField">CRM Grid info</label>
+      <div class="copy-row">
+        <input type="text" id="gridCrmInfoField" class="copy-field" readonly placeholder="Grid: generated email | Xqxq77##" />
+        <button id="gridCrmInfoCopyBtn" class="copy-btn" type="button" disabled>Copy</button>
+      </div>
+      <div id="gridStatus" class="status-line"></div>
+    </div>
+
+  </div>
+
+  <!-- TALKPAD PREP SIDEKICK VIEW -->
+  <div class="container" id="prepTypeView" style="display:none;">
+    <h1>TalkPad Prep Sidekick</h1>
+    <p class="complete-intro">Is this a Service Loan (SL) or a CL/LTL (Regular Prep)?</p>
+    <div class="mini-row">
+      <button id="prepTypeSlBtn" class="toggle-btn" type="button">Service Loan (SL)</button>
+      <button id="prepTypeClBtn" class="toggle-btn" type="button">CL/LTL (Regular Prep)</button>
+    </div>
+    <div class="crm-nav-footer">
+      <button id="prepTypeReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+  </div>
+
+  <div class="container" id="prepSlCrmView" style="display:none;">
+    <h1>Service Loan CRM Navigator</h1>
+    <p class="complete-intro">Please input the user's original loan CRM ID and hit go.</p>
+    <form id="prepSlCrmForm">
+      <label for="prepSlCrmInput">Original loan CRM ID</label>
+      <input type="text" id="prepSlCrmInput" placeholder="Enter CRM ID" required />
+      <button type="submit" id="prepSlCrmGoBtn">Go!</button>
+    </form>
+    <div class="crm-nav-footer">
+      <button id="prepSlCrmReturnBtn" class="toggle-btn" type="button">Back</button>
+    </div>
+  </div>
+
+  <div class="container prep-view" id="prepView" style="display:none;">
+    <h1>TalkPad Prep Sidekick</h1>
+    <p class="complete-intro">Work through the prep checklist and mark items off as you go.</p>
+
+    <div class="mini-row">
+      <button id="prepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="prepReorderBtn" class="toggle-btn" type="button">Reorder categories</button>
+    </div>
+
+    <div class="note-preview prep-checklist">
+      <div class="note-preview__title">Prep checklist</div>
+      <div class="prep-checklist__list" id="prepChecklistContainer"></div>
+    </div>
+
+    <div class="crm-nav-footer">
+      <button id="prepFinishBtn" class="toggle-btn" type="button">Finish prep</button>
+    </div>
+  </div>
+
+  <div class="container prep-order-view" id="prepChecklistOrderView" style="display:none;">
+    <h1>TalkPad Prep Checklist Order</h1>
+    <p class="complete-intro">Reorder the checklist categories to match your workflow.</p>
+
+    <div class="mini-row">
+      <button id="prepOrderReturnBtn" class="toggle-btn" type="button">Back to checklist</button>
+    </div>
+
+    <div class="note-preview prep-checklist">
+      <div class="note-preview__title">Checklist categories</div>
+      <div class="prep-checklist__order-list" id="prepChecklistOrderList"></div>
+    </div>
+
+    <div class="crm-nav-footer">
+      <button id="prepOrderSaveBtn" class="toggle-btn" type="button">Save order</button>
+    </div>
+  </div>
+
+
+
+  <div class="container prep-view" id="gridPadPrepView" style="display:none;">
+    <h1>GridPad Go Prep Sidekick</h1>
+    <p class="complete-intro">Work through the GridPad Go prep checklist and mark items off as you go.</p>
+
+    <div class="mini-row">
+      <button id="gridPadPrepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="gridPadPrepReorderBtn" class="toggle-btn" type="button">Reorder categories</button>
+    </div>
+
+    <div class="note-preview prep-checklist">
+      <div class="note-preview__title">GridPad Go prep checklist</div>
+      <div class="prep-checklist__list" id="gridPadChecklistContainer"></div>
+    </div>
+
+    <div class="crm-nav-footer">
+      <button id="gridPadPrepFinishBtn" class="toggle-btn" type="button">Finish prep</button>
+    </div>
+  </div>
+
+  <div class="container prep-order-view" id="gridPadChecklistOrderView" style="display:none;">
+    <h1>GridPad Go Prep Checklist Order</h1>
+    <p class="complete-intro">Reorder the checklist categories to match your workflow.</p>
+
+    <div class="mini-row">
+      <button id="gridPadOrderReturnBtn" class="toggle-btn" type="button">Back to checklist</button>
+    </div>
+
+    <div class="note-preview prep-checklist">
+      <div class="note-preview__title">Checklist categories</div>
+      <div class="prep-checklist__order-list" id="gridPadChecklistOrderList"></div>
+    </div>
+
+    <div class="crm-nav-footer">
+      <button id="gridPadOrderSaveBtn" class="toggle-btn" type="button">Save order</button>
+    </div>
+  </div>
+
+  <div class="container" id="ageCalculatorView" style="display:none;">
+    <h1>Age Calculator</h1>
+    <p class="complete-intro">Enter a birthdate and compare it against today's date to calculate age in years.</p>
+    <form id="ageCalculatorForm">
+      <label for="ageBirthdateInput">Birthdate</label>
+      <input type="date" id="ageBirthdateInput" required />
+      <button type="submit" id="ageCalculateBtn">Calculate age</button>
+    </form>
+    <div class="note-preview">
+      <div class="note-preview__title">Result</div>
+      <p id="ageCalculatorResult" class="note-preview__body">Enter a birthdate to calculate age.</p>
+    </div>
+    <div class="crm-nav-footer">
+      <button id="ageCalculatorReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div class="container" id="formView" style="display:none;">
+    <h1 id="checkinFormTitle">Trials Automated Check-in SideKick</h1>
+
+    <div class="mini-row">
+      <button id="refreshBtn" class="toggle-btn" type="button">↻ Refresh from CRM</button>
+      <button id="returnToLandingBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    </div>
+
+    <form id="checkinForm">
+
+      <!-- Device number -->
+      <label id="deviceNumberLabel">Device Number (Put an X if only Checking in Mount) *</label>
+      <input type="text" id="deviceNumberInput" required />
+
+      <div id="ltlUpdateRowSection" class="note-preview hidden-section">
+        <div class="note-preview__title">LTL Update Row</div>
+        <pre id="ltlUpdateRowResult" class="note-preview__body"></pre>
+      </div>
+
+      <!-- Device condition -->
+      <div id="conditionContainer">
+        <label>Device Condition *</label>
+        <select id="conditionSelect" required>
+          <option value="">Select condition...</option>
+          <option value="Working">Working</option>
+          <option value="Needs Repair">Needs Repair</option>
+        </select>
+      </div>
+
+      <!-- Repairs -->
+      <div id="repairSection" class="hidden-section">
+        <label>Repairs Needed</label>
+        <div class="repair-buttons">
+          <button type="button" class="repair-btn">Loose or broken handle</button>
+          <button type="button" class="repair-btn">Loose or broken kickstand</button>
+          <button type="button" class="repair-btn">Replace screen protector</button>
+          <button type="button" class="repair-btn">Missing buttons</button>
+          <button type="button" class="repair-btn">Broken display</button>
+          <button type="button" class="repair-btn" id="otherRepairBtn">Other</button>
+        </div>
+
+        <textarea id="repairsTextBox" placeholder="Selected repairs will appear here..."></textarea>
+        <textarea id="otherRepairInput" placeholder="Describe other repair..." style="display:none;"></textarea>
+      </div>
+
+      <!-- LTL Updates -->
+      <div id="ltlUpdatesSection" class="hidden-section">
+        <label>Updates Made (Select all that apply):</label>
+        <div class="checkbox-group">
+          <label class="checkbox-row" for="ltlUpdateFixedHandle">
+            <input type="checkbox" id="ltlUpdateFixedHandle" name="ltlUpdates" value="Fixed Handle" />
+            Fixed Handle
+          </label>
+          <label class="checkbox-row" for="ltlUpdateFixedStand">
+            <input type="checkbox" id="ltlUpdateFixedStand" name="ltlUpdates" value="Fixed Stand" />
+            Fixed Stand
+          </label>
+          <label class="checkbox-row" for="ltlUpdateReplacedScreenProtector">
+            <input type="checkbox" id="ltlUpdateReplacedScreenProtector" name="ltlUpdates" value="Replaced Screen Protector" />
+            Replaced Screen Protector
+          </label>
+          <label class="checkbox-row" for="ltlUpdateReplacedDevice">
+            <input type="checkbox" id="ltlUpdateReplacedDevice" name="ltlUpdates" value="Replaced Device" />
+            Replaced Device
+          </label>
+          <label class="checkbox-row" for="ltlUpdateReplacedCase">
+            <input type="checkbox" id="ltlUpdateReplacedCase" name="ltlUpdates" value="Replaced Case" />
+            Replaced Case
+          </label>
+          <label class="checkbox-row" for="ltlUpdateNa">
+            <input type="checkbox" id="ltlUpdateNa" name="ltlUpdates" value="N/A" />
+            N/A
+          </label>
+          <label class="checkbox-row" for="ltlUpdateOther">
+            <input type="checkbox" id="ltlUpdateOther" name="ltlUpdates" value="Other" />
+            Other
+          </label>
+        </div>
+        <div id="ltlUpdateOtherField" class="hidden-section">
+          <label for="ltlUpdateOtherText">Other updates</label>
+          <input type="text" id="ltlUpdateOtherText" placeholder="Describe other updates..." />
+        </div>
+        <div id="ltlUpdateNewSerialField" class="hidden-section">
+          <label for="ltlUpdateNewSerialNumber">New serial number</label>
+          <input type="text" id="ltlUpdateNewSerialNumber" placeholder="Enter new serial number..." />
+        </div>
+      </div>
+
+      <!-- Client info -->
+      <label>Client First Name</label>
+      <input type="text" id="firstName" />
+
+      <label>Client Last Name</label>
+      <input type="text" id="lastName" />
+
+      <label>AAC</label>
+      <input type="text" id="aac" />
+
+      <label>CRM ID</label>
+      <input type="text" id="crmId" />
+
+      <!-- Vocab checkbox -->
+      <label class="checkbox-row" for="vocabNotReturned">
+        <input type="checkbox" id="vocabNotReturned" />
+        Vocab NOT returned
+      </label>
+
+      <!-- Vocab selection -->
+      <label>What Vocabs did you pull off the device?</label>
+      <div class="checkbox-group">
+        <label class="checkbox-row" for="vocabGrid">
+          <input type="checkbox" id="vocabGrid" name="vocabTypes" value="Grid" />
+          Grid
+        </label>
+        <label class="checkbox-row" for="vocabP2g">
+          <input type="checkbox" id="vocabP2g" name="vocabTypes" value="P2G" />
+          P2G
+        </label>
+        <label class="checkbox-row" for="vocabTc">
+          <input type="checkbox" id="vocabTc" name="vocabTypes" value="TC" />
+          TC
+        </label>
+        <label class="checkbox-row" for="vocabLamp">
+          <input type="checkbox" id="vocabLamp" name="vocabTypes" value="LAMP" />
+          LAMP
+        </label>
+        <label class="checkbox-row" for="vocabDialogue">
+          <input type="checkbox" id="vocabDialogue" name="vocabTypes" value="Dialogue" />
+          Dialogue
+        </label>
+      </div>
+
+      <!-- Camera / Lumin -->
+      <button type="button" class="toggle-btn" id="cameraToggle">+ Add Camera & Lumin-I Info</button>
+      <div id="cameraLuminSection" class="hidden-section">
+        <label>Camera Number</label>
+        <input type="text" name="cameraNumber" />
+
+        <label>Lumin-I Number (GPL.XXXXXXX)</label>
+        <input type="text" name="luminNumber" />
+      </div>
+
+      <!-- Mounts -->
+      <button type="button" class="toggle-btn" id="mountToggle">+ Add Mount Info</button>
+      <div id="mountSection" class="hidden-section">
+        <label>Clamp Mount Number</label>
+        <input type="text" name="clampMount" />
+
+        <label>Table Mount Number</label>
+        <input type="text" name="tableMount" />
+
+        <label>Rolling Mount Number</label>
+        <input type="text" name="rollingMount" />
+      </div>
+
+      <!-- Accessories -->
+      <button type="button" class="toggle-btn" id="accessoryToggle">+ Add Trial Accessories</button>
+      <div id="accessorySection" class="hidden-section">
+        <label>Trial Accessories (Switches, KGs)</label>
+        <input type="text" name="accessories" />
+      </div>
+
+      <!-- Saved zip files -->
+      <div class="upload-block">
+        <label>Saved zips folder</label>
+        <button class="toggle-btn" id="trialFilesFolderPickBtn" type="button">
+          Choose saved zips folder
+        </button>
+        <button class="toggle-btn" id="trialFilesFolderRefreshBtn" type="button">
+          Refresh folder access
+        </button>
+        <div id="trialFilesFolderStatus" class="status-line">No saved zips folder selected yet.</div>
+        <div class="hint-text">
+          Sidekick will rename <strong>Current Checkin.zip</strong> and <strong>Current Grid user.zip</strong>
+          in this folder when you click Next Step.
+        </div>
+        <div id="trialFilesStatus" class="status-line">Waiting to rename saved zip files.</div>
+        <div id="renameWorkflowStatusBar" class="workflow-progress" style="display:none;" aria-live="polite">
+          <div id="renameWorkflowStatusFill" class="workflow-progress__fill"></div>
+        </div>
+        <div id="renameWorkflowStatusText" class="workflow-progress__text" style="display:none;"></div>
+      </div>
+
+      <button type="submit" id="submitBtn">Next Step</button>
+    </form>
+
+    <div id="thankYouMessage">✅ Check-in completed.</div>
+  </div>
+
+  <!-- COMPLETE VIEW -->
+  <div class="container" id="completeView" style="display:none;">
+    <h1>Next Steps</h1>
+    <p id="completeIntro" class="complete-intro"></p>
+
+    <div class="note-preview" id="renamedFilesCopySection" style="display:none;">
+      <div class="note-preview__title">Renamed files (copy for Documents tab)</div>
+      <div id="renamedFilesCopyRows"></div>
+    </div>
+
+    <div class="note-preview">
+      <div class="note-preview__title">CRM note submitted</div>
+      <pre id="notePreviewText" class="note-preview__body"></pre>
+    </div>
+
+    <button id="startAnotherBtn" class="toggle-btn" type="button" style="margin-top:16px;">
+      Next Step
+    </button>
+  </div>
+
+  <!-- LTL COMPLETION VIEW -->
+  <div class="container" id="ltlCompletionView" style="display:none;">
+    <h1>LTL Update</h1>
+    <p class="complete-intro">Review the row below, then press the button to open Excel and paste it into the Completed LTL Update List.</p>
+    <div class="note-preview">
+      <div class="note-preview__title">Row to paste</div>
+      <div class="note-preview__body" id="ltlCompletionRowDetails">No LTL row captured yet.</div>
+    </div>
+    <div class="mini-row">
+      <button class="toggle-btn" id="ltlCompletionRunBtn" type="button">Open workbook &amp; paste row</button>
+      <button class="toggle-btn" id="ltlCompletionReturnBtn" type="button">Return to landing</button>
+    </div>
+    <div class="status-line" id="ltlCompletionStatus"></div>
+  </div>
+
+  <!-- SMARTBOX REPAIR VIEW -->
+  <div class="container" id="smartboxRepairView" style="display:none;">
+    <h1>Smartbox Repair Tracker</h1>
+    <p class="complete-intro">
+      This Talk Pad/Grid Pad needs repair. Please complete the Smartbox Repair Tracker before running inventory.
+    </p>
+
+    <div class="note-preview">
+      <div class="note-preview__title">Smartbox Repair Tracker form</div>
+      <p class="note-preview__body">
+        <a href="https://forms.office.com/Pages/ResponsePage.aspx?id=txectoEY6kmMRs76oAasuMauVYrkfDhDmQiSzP-xq45UOEFWM0RKODk4RFdKTzFPQ1pNRFRSOVo4MC4u" target="_blank" rel="noopener noreferrer">
+          Open the Smartbox Repair Tracker
+        </a>
+      </p>
+    </div>
+
+    <button id="openSmartboxRepairBtn" class="toggle-btn" type="button" style="margin-top:16px;">
+      Open Smartbox Repair Tracker
+    </button>
+    <button id="smartboxContinueBtn" class="toggle-btn" type="button" style="margin-top:10px;">
+      Continue to Inventory
+    </button>
+  </div>
+
+  <!-- INVENTORY VIEW -->
+  <div class="container" id="inventoryView" style="display:none;">
+    <h1>Manage Inventory</h1>
+
+    <div class="note-preview">
+      <div class="note-preview__title">Search Complete for:</div>
+      <pre id="inventorySearchValue" class="note-preview__body"></pre>
+      <div id="inventoryStatus" class="status-line"></div>
+    </div>
+
+    <button id="inventoryNextStepBtn" class="toggle-btn" type="button" style="margin-top:16px;">
+      Next Step
+    </button>
+  </div>
+
+  <!-- DAF recap VIEW -->
+  <div class="container" id="dafRecapView" style="display:none;">
+    <h1>DAF Recap</h1>
+    <p class="complete-intro">
+      We opened the DAF form in a new tab. Review the returned check-in details below and use the copy buttons for any manual paste steps.
+    </p>
+
+    <div class="note-preview">
+      <div class="note-preview__title">Check-in details</div>
+      <div id="dafRecapFields" class="daf-fields"></div>
+      <div id="dafRecapEmpty" class="hint-text"></div>
+      <div id="dafRecapStatus" class="status-line"></div>
+    </div>
+
+    <button id="finishCheckinBtn" class="toggle-btn" type="button" style="margin-top:16px;">
+      Final Step
+    </button>
+  </div>
+
+  <!-- Outlook email VIEW -->
+  <div class="container" id="emailView" style="display:none;">
+    <h1>Final Step</h1>
+    <p class="complete-intro">
+      Make sure you send this email as trialsoperations.us@smartboxaac.com.
+    </p>
+
+    <div class="note-preview">
+      <div class="note-preview__title">Email fallback (copy/paste)</div>
+      <p class="hint-text email-fallback-description">
+        Just in case the Outlook email fails to populate, copy and paste this subject and body into a new email.
+      </p>
+
+      <label class="copy-label" for="emailSubjectField">Subject</label>
+      <div class="copy-row">
+        <input type="text" id="emailSubjectField" class="copy-field" readonly placeholder="Email subject" />
+        <button type="button" class="copy-btn" data-copy-target="emailSubjectField">Copy</button>
+      </div>
+
+      <label class="copy-label" for="emailBodyField">Body</label>
+      <div class="copy-row copy-row--stack">
+        <textarea id="emailBodyField" class="copy-field copy-field--multiline" rows="8" readonly placeholder="Email body"></textarea>
+        <button type="button" class="copy-btn" data-copy-target="emailBodyField">Copy</button>
+      </div>
+      <div id="emailStatus" class="status-line" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- Panel logic -->
+  <script src="panel.js"></script>
+</body>
+</html>

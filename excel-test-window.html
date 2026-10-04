@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick — Bulk Queue Sidekick</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="themes.css" />
+</head>
+<body class="excel-test-window">
+  <div class="container excel-test-view" id="excelTestToolView" >
+    <div class="device-sidekick-heading"><h1>Bulk Queue Sidekick</h1></div>
+    <p class="hint-text">Copy cells H–I from Excel and paste below. Manual device fields stay out of Copy for Excel.</p>
+    <div class="excel-test-toolbar"><label for="excelTestPasteMode">Paste</label><select id="excelTestPasteMode"><option value="replace">Replace rows</option><option value="append">Add rows</option></select><button id="excelTestCopy" class="toggle-btn queue-small-btn" type="button" disabled>Copy for Excel</button><button id="excelTestMarkX" class="toggle-btn queue-small-btn" type="button" title="Set column H to X">Mark Ready</button><button id="excelTestNotes" class="toggle-btn queue-small-btn" type="button">Enter notes</button><button id="excelTestClear" class="toggle-btn queue-small-btn" type="button">Clear</button></div>
+    <div class="excel-test-toolbar">
+      <button id="excelTestClaim" class="toggle-btn queue-small-btn" type="button">Bulk add queue initials</button>
+      <button id="excelTestSend" class="toggle-btn queue-small-btn" type="button">Send prep notifications</button>
+      <button id="excelTestRelease" class="toggle-btn queue-small-btn" type="button">Release reservations</button>
+      <label for="excelTestPriority">Priority</label><select id="excelTestPriority"><option value="auto">Default: Daily queue</option><option>Expedite</option><option>Funded rental</option><option>Ship request</option><option>Daily queue</option></select>
+    </div>
+    <p class="hint-text">Queue users are reserved for 15 minutes, one per empty DC cell. Enter client name, CRM ID, device and priority in the notification review menu. Client names are sent live only.</p>
+    <textarea id="excelTestPaste" rows="2" aria-label="Paste Excel cells H to I" placeholder="Paste one or more Excel rows here (Ctrl+V)."></textarea>
+    <div id="excelTestStatus" class="status-line" role="status" aria-live="polite"></div>
+    <div id="excelTestGrid" class="excel-test-grid"></div>
+    
+  </div>
+<script src="workers/window-theme.js"></script>
+<script src="libs/supabase.min.js"></script>
+<script src="workers/supabase-connection.js"></script>
+<script src="workers/serial-utils.js"></script>
+<script src="workers/excel-test-tool.js"></script>
+</body>
+</html>

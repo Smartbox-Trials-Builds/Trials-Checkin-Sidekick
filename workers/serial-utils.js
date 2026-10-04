@@ -61,3 +61,37 @@ function extractValidSerial(scanInput) {
 
   return null;
 }
+
+function detectDeviceModel(deviceNumberRaw) {
+  const s = (deviceNumberRaw || "").trim().toUpperCase();
+  if (s === "X") return "Mount Only";
+
+  const rules = [
+    { prefix: "DTP10", model: "Talk Pad 10" },
+    { prefix: "DTP8", model: "Talk Pad 8" },
+    { prefix: "Z16", model: "Zuvo 16" },
+    { prefix: "Z12", model: "Zuvo 12" },
+    { prefix: "Z10", model: "Zuvo 10" },
+    { prefix: "DW5", model: "Wego 5A" },
+    { prefix: "DWM", model: "Wego 7A" },
+    { prefix: "DW13", model: "Wego 13A" },
+    { prefix: "DW", model: "Wego 10A" },
+    { prefix: "DGPG", model: "Grid Pad Go" },
+    { prefix: "DTT", model: "Grid Pad 13" },
+    { prefix: "DTZ", model: "Grid Pad 16" }
+  ];
+
+  for (const r of rules) {
+    if (s.startsWith(r.prefix)) return r.model;
+  }
+  return "Device";
+}
+
+function detectQueueDeviceType(serial) {
+  const model = detectDeviceModel(extractValidSerial(serial) || serial);
+  if (model.startsWith('Talk Pad')) return 'Talkpad';
+  if (model.startsWith('Grid Pad')) return 'Gridpad';
+  if (model.startsWith('Zuvo')) return 'Zuvo';
+  if (model.startsWith('Wego')) return 'Wego';
+  return '';
+}

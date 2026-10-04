@@ -20,11 +20,11 @@
       <p class="hint-text">Move this window by its title bar. Drag an edge to resize.</p>
       <div id="queueWindowStatus" class="status-line" role="status"></div>
       <div id="coordinatorQueueBody">
-        <div class="queue-actions">
-          <button id="joinCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Join Queue</button>
-          <button id="leaveCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Leave Queue</button>
+        <div class="queue-actions queue-membership-controls">
+          <button id="joinCoordinatorQueueBtn" class="toggle-btn queue-small-btn queue-membership-btn" type="button" title="Open daily 7 AM–8 PM Central time (including daylight saving). Queue clears at 8 PM." disabled>Join Queue</button>
+              <span id="coordinatorQueueIndicator" class="queue-status-light" data-state="disconnected" role="status" aria-label="Queue connecting" title="Queue connecting"></span>
         </div>
-        <p id="coordinatorQueueStatus" class="hint-text" role="status">Connecting to the queue…</p>
+        <p id="coordinatorQueueStatus" class="hint-text queue-error-status" role="status"></p>
         <ol id="coordinatorQueueList" class="coordinator-queue__list" aria-label="Active queue"></ol>
       </div>
     </section>

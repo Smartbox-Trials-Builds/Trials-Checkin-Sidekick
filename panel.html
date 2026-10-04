@@ -262,11 +262,11 @@
           </div>
           <div id="coordinatorQueueBody">
             <h2 id="coordinatorQueueTitle">Device Prep Queue</h2>
-            <div class="queue-actions">
-              <button id="joinCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Join Queue</button>
-              <button id="leaveCoordinatorQueueBtn" class="toggle-btn" type="button" disabled>Leave Queue</button>
+            <div class="queue-actions queue-membership-controls">
+              <button id="joinCoordinatorQueueBtn" class="toggle-btn queue-small-btn queue-membership-btn" type="button" title="Open daily 7 AM–8 PM Central time (including daylight saving). Queue clears at 8 PM." disabled>Join Queue</button>
+              <span id="coordinatorQueueIndicator" class="queue-status-light" data-state="disconnected" role="status" aria-label="Queue connecting" title="Queue connecting"></span>
             </div>
-            <p id="coordinatorQueueStatus" class="hint-text" role="status">Connecting to the queue…</p>
+            <p id="coordinatorQueueStatus" class="hint-text queue-error-status" role="status"></p>
             <ol id="coordinatorQueueList" class="coordinator-queue__list" aria-label="Active queue"></ol>
           </div>
         </section>
@@ -324,6 +324,7 @@
           <span class="landing-section__chevron" aria-hidden="true">▾</span>
         </button>
         <div class="landing-section__content" data-collapsible-content="pre-prep-tools" hidden>
+          <button id="excelTestToolBtn" class="toggle-btn landing-btn" type="button">Bulk Queue Sidekick</button>
           <button id="prePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Build a pre-prep scan list with corrected device serials and internal serial fields.">
             Device Sidekick
           </button>
@@ -739,7 +740,7 @@
 
     <div class="mini-row pre-prep-actions">
       <button id="prePrepLockBtn" class="toggle-btn" type="button">Lock edits: Off</button>
-      <button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
+      <button id="deviceTransferBulkBtn" class="toggle-btn" type="button" data-device-prep-only hidden>Transfer to Bulk Queue Sidekick</button><button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
     </div>
 
     <div class="note-preview pre-prep-list-card">
@@ -760,6 +761,23 @@
     <div class="crm-nav-footer">
       <button id="prePrepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
     </div>
+  </div>
+
+  <div class="container excel-test-view" id="excelTestToolView" style="display:none;">
+    <div class="device-sidekick-heading"><h1>Bulk Queue Sidekick</h1><button id="excelTestPopOut" class="toggle-btn queue-small-btn" type="button">Pop out ↗</button></div>
+    <p class="hint-text">Copy cells H–I from Excel and paste below. Manual device fields stay out of Copy for Excel.</p>
+    <div class="excel-test-toolbar"><label for="excelTestPasteMode">Paste</label><select id="excelTestPasteMode"><option value="replace">Replace rows</option><option value="append">Add rows</option></select><button id="excelTestCopy" class="toggle-btn queue-small-btn" type="button" disabled>Copy for Excel</button><button id="excelTestMarkX" class="toggle-btn queue-small-btn" type="button" title="Set column H to X">Mark Ready</button><button id="excelTestNotes" class="toggle-btn queue-small-btn" type="button">Enter notes</button><button id="excelTestClear" class="toggle-btn queue-small-btn" type="button">Clear</button></div>
+    <div class="excel-test-toolbar">
+      <button id="excelTestClaim" class="toggle-btn queue-small-btn" type="button">Bulk add queue initials</button>
+      <button id="excelTestSend" class="toggle-btn queue-small-btn" type="button">Send prep notifications</button>
+      <button id="excelTestRelease" class="toggle-btn queue-small-btn" type="button">Release reservations</button>
+      <label for="excelTestPriority">Priority</label><select id="excelTestPriority"><option value="auto">Default: Daily queue</option><option>Expedite</option><option>Funded rental</option><option>Ship request</option><option>Daily queue</option></select>
+    </div>
+    <p class="hint-text">Queue users are reserved for 15 minutes, one per empty DC cell. Enter client name, CRM ID, device and priority in the notification review menu. Client names are sent live only.</p>
+    <textarea id="excelTestPaste" rows="2" aria-label="Paste Excel cells H to I" placeholder="Paste one or more Excel rows here (Ctrl+V)."></textarea>
+    <div id="excelTestStatus" class="status-line" role="status" aria-live="polite"></div>
+    <div id="excelTestGrid" class="excel-test-grid"></div>
+    <button id="excelTestReturn" class="toggle-btn queue-small-btn" type="button">Return to Sidekick</button>
   </div>
 
   <!-- DEVICE LOOKUP VIEW -->
@@ -1406,6 +1424,7 @@
   <script src="workers/crm-links.js"></script>
   <script src="workers/serial-utils.js"></script>
   <script src="workers/device-sidekick.js"></script>
+  <script src="workers/excel-test-tool.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

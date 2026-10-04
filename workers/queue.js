@@ -2,7 +2,7 @@
   const api = globalThis.sidekickSupabase;
   const client = api.getClient();
   const join = document.getElementById("joinCoordinatorQueueBtn");
-  const leave = document.getElementById("leaveCoordinatorQueueBtn");
+  const indicator = document.getElementById("coordinatorQueueIndicator");
   const list = document.getElementById("coordinatorQueueList");
   const status = document.getElementById("coordinatorQueueStatus");
   const dialog = document.getElementById("prepAssignmentDialog");
@@ -27,11 +27,21 @@
   let channelToken = null;
   let live = false;
   let queueOpen = false;
+  let connected = false;
+
+  function updateIndicator() {
+    const state = !connected ? "disconnected" : !queueOpen ? "closed" : live ? "open" : "disconnected";
+    const label = state === "open" ? "Queue is live and open" : state === "closed" ? "Queue is closed. Opens at 7 AM Central time" : "Queue is not connected. Retrying automatically";
+    indicator.dataset.state = state;
+    indicator.setAttribute("aria-label", label);
+    indicator.title = label;
+  }
 
   function updateControls() {
     const queued = queue.some(entry => entry.user_id === profile?.user_id);
-    join.disabled = !profile || busy || queued || !queueOpen;
-    leave.disabled = !profile || busy || !queued;
+    join.textContent = queued ? "Leave Queue" : "Join Queue";
+    join.disabled = !profile || busy || !connected || (!queued && !queueOpen);
+    updateIndicator();
   }
 
   function renderQueue() {
@@ -39,11 +49,13 @@
     for (const entry of queue) {
       const item = document.createElement("li");
       const canAssign = profile?.role === "Device Systems Coordinator";
+      const reserved = entry.reserved_by && new Date(entry.reserved_until).getTime() > Date.now();
       const label = document.createElement(canAssign ? "button" : "span");
-      label.textContent = `${entry.name} (${entry.dashboard_initials})${entry.user_id === profile?.user_id ? " — You" : ""}`;
+      label.textContent = `${entry.name} (${entry.dashboard_initials})${entry.user_id === profile?.user_id ? " — You" : ""}${reserved ? " · Reserved" : ""}`;
       if (canAssign) {
         label.type = "button";
         label.className = "toggle-btn queue-user";
+        label.disabled = Boolean(reserved && entry.reserved_by !== profile.user_id);
         label.addEventListener("click", () => {
           selectedEntry = entry;
           document.getElementById("prepAssignmentUser").textContent = `${entry.name} (${entry.dashboard_initials})`;
@@ -90,6 +102,7 @@
       .on("postgres_changes", { event: "*", schema: "public", table: "sidekick_prep_notifications", filter: `user_id=eq.${userId}` }, () => void refresh())
       .subscribe(state => {
         live = state === "SUBSCRIBED";
+        updateIndicator();
         void refresh();
       });
   }
@@ -102,6 +115,7 @@
       if (sessionError) throw sessionError;
       const userId = sessionData.session?.user?.id;
       if (!userId) {
+        connected = false;
         profile = null;
         queue = [];
         renderQueue();
@@ -113,6 +127,7 @@
       if (result.error) throw result.error;
       profile = result.data;
       if (!profile) {
+        connected = false;
         queue = [];
         renderQueue();
         status.textContent = "Complete your Sidekick profile to use the queue.";
@@ -127,18 +142,17 @@
       if (queueResult.error) throw queueResult.error;
       if (notificationResult.error) throw notificationResult.error;
       if (hoursResult.error) throw hoursResult.error;
+      connected = true;
       queueOpen = hoursResult.data.is_open;
       queue = queueResult.data;
       renderQueue();
       renderNotifications(notificationResult.data);
-      const count = queue.length;
-      status.textContent = queueOpen
-        ? `${live ? "Live" : "Refreshing every 15 seconds"} · ${count ? `${count} waiting` : "Queue is empty"} · Open 7 AM–8 PM Central${profile.role === "Device Systems Coordinator" ? " · Select a user to assign a prep." : ""}`
-        : "Device Prep Queue is closed. Reopens at 7 AM Central time. Everyone is removed at 8 PM.";
+      status.textContent = "";
     } catch {
-      status.textContent = "Queue connection unavailable. Retrying automatically…";
+      connected = false;
+      updateIndicator();
+      status.textContent = "";
       join.disabled = true;
-      leave.disabled = true;
     } finally {
       refreshing = false;
       if (refreshAgain) { refreshAgain = false; void refresh(); }
@@ -155,8 +169,11 @@
     } catch (error) { status.textContent = error.message; }
     finally { busy = false; updateControls(); }
   }
-  join.addEventListener("click", () => void changeMembership("join"));
-  leave.addEventListener("click", () => void changeMembership("leave"));
+  join.addEventListener("click", () => {
+    if (join.disabled) return;
+    const queued = queue.some(entry => entry.user_id === profile?.user_id);
+    void changeMembership(queued ? "leave" : "join");
+  });
   cancel.addEventListener("click", () => dialog.close());
   dialog.addEventListener("cancel", event => { if (assigning) event.preventDefault(); });
   form.addEventListener("submit", async event => {
@@ -207,6 +224,7 @@
   });
   globalThis.addEventListener("sidekick-profile-saved", () => void refresh());
   globalThis.addEventListener("online", () => void refresh());
+  globalThis.addEventListener("offline", () => { connected = false; updateControls(); });
   document.addEventListener("visibilitychange", () => { if (!document.hidden) void refresh(); });
   const poll = setInterval(() => { if (!document.hidden) void refresh(); }, 15000);
   globalThis.addEventListener("pagehide", () => { clearInterval(poll); if (channel) void client.removeChannel(channel); });

@@ -100,7 +100,7 @@ let smartboxRepairTabId = null;
 const DEFAULT_LANDING_LAYOUT_POSITIONS = {};
 
 /* ---------------- Helpers ---------------- */
-const VIEW_IDS = ["welcomeView", "onboardingView", "outlookSetupView", "landingView", "settingsView", "themeBuilderView", "prePrepView", "lockDownView", "timecardView", "deviceLookupView", "gridView", "prepTypeView", "prepSlCrmView", "prepView", "prepChecklistOrderView", "gridPadPrepView", "gridPadChecklistOrderView", "ageCalculatorView", "formView", "completeView", "ltlCompletionView", "smartboxRepairView", "inventoryView", "dafRecapView", "emailView", "appOverridesView", "qaCompleteView"];
+const VIEW_IDS = ["welcomeView", "onboardingView", "outlookSetupView", "landingView", "settingsView", "themeBuilderView", "prePrepView", "excelTestToolView", "lockDownView", "timecardView", "deviceLookupView", "gridView", "prepTypeView", "prepSlCrmView", "prepView", "prepChecklistOrderView", "gridPadPrepView", "gridPadChecklistOrderView", "ageCalculatorView", "formView", "completeView", "ltlCompletionView", "smartboxRepairView", "inventoryView", "dafRecapView", "emailView", "appOverridesView", "qaCompleteView"];
 const MULTI_THEME_IDS = new Set([
   "coral",
   "lagoon",
@@ -7018,30 +7018,6 @@ updateVocabSelectionAvailability();
 
 /* ---------------- Device model detection ---------------- */
 
-function detectDeviceModel(deviceNumberRaw) {
-  const s = (deviceNumberRaw || "").trim().toUpperCase();
-  if (s === "X") return "Mount Only";
-
-  const rules = [
-    { prefix: "DTP10", model: "Talk Pad 10" },
-    { prefix: "DTP8", model: "Talk Pad 8" },
-    { prefix: "Z16", model: "Zuvo 16" },
-    { prefix: "Z12", model: "Zuvo 12" },
-    { prefix: "Z10", model: "Zuvo 10" },
-    { prefix: "DW5", model: "Wego 5A" },
-    { prefix: "DWM", model: "Wego 7A" },
-    { prefix: "DW13", model: "Wego 13A" },
-    { prefix: "DW", model: "Wego 10A" },
-    { prefix: "DGPG", model: "Grid Pad Go" },
-    { prefix: "DTT", model: "Grid Pad 13" },
-    { prefix: "DTZ", model: "Grid Pad 16" }
-  ];
-
-  for (const r of rules) {
-    if (s.startsWith(r.prefix)) return r.model;
-  }
-  return "Device";
-}
 
 function isSmartboxRepairModel(deviceNumberRaw) {
   const modelName = detectDeviceModel(deviceNumberRaw);
@@ -8730,14 +8706,29 @@ async function setCurrentTimecardPunch(field) {
     await refreshDeviceLookupWorkbooksFromHandles();
   });
 
+  document.getElementById("excelTestToolBtn")?.addEventListener("click", async () => {
+    if (!(await hasDeviceSystemsRole())) return;
+    try {
+      const result = await chrome.runtime.sendMessage({ type: "sidekick-open-excel-test" });
+      if (!result?.ok) throw new Error(result?.error || "Could not open Bulk Queue Sidekick.");
+    } catch (error) {
+      alert(error.message || "Could not open Bulk Queue Sidekick.");
+    }
+  });
+  document.getElementById("excelTestReturn")?.addEventListener("click", showLandingView);
+
   document.getElementById("prePrepSidekickBtn")?.addEventListener("click", async () => {
     if (!(await hasDeviceSystemsRole())) {
       alert("These tools are available to Device Systems Coordinators.");
       await refreshDeviceSystemsTools();
       return;
     }
-    showPrePrepView();
-    renderPrePrepRows();
+    try {
+      const result = await chrome.runtime.sendMessage({ type: "sidekick-open-device" });
+      if (!result?.ok) throw new Error(result?.error || "Could not open Device Sidekick.");
+    } catch (error) {
+      alert(error.message || "Could not open Device Sidekick.");
+    }
   });
 
   document.getElementById("lockDownSidekickBtn")?.addEventListener("click", async () => {

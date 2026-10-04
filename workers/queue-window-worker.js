@@ -131,6 +131,32 @@
   }
 
   const handlers = {
+    "sidekick-transfer-device-bulk": async () => {
+      const profile = await chrome.storage.local.get("ttmtSidekickUserProfile");
+      if (profile.ttmtSidekickUserProfile?.role !== "Device Systems Coordinator") throw new Error("Bulk Queue Sidekick is available to Device Systems Coordinators.");
+      const stored = await chrome.storage.session.get(["sidekickDeviceDraft","sidekickExcelTestDraft"]);
+      const devices = stored.sidekickDeviceDraft?.rows || [];
+      if (!devices.length) throw new Error("Add devices before transferring.");
+      const rows = stored.sidekickExcelTestDraft?.rows || [];
+      if (Math.max(rows.length,devices.length) > 500) throw new Error("Use up to 500 rows at a time.");
+      const escape = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      devices.forEach((device,index) => {
+        const row = rows[index] || (rows[index] = []);
+        while (row.length < 12) row.push({html:'',style:''});
+        row[9].html = escape(device.deviceSerial);
+        row[11].html = escape(device.gipodCode);
+        row[8].notificationDraft = {...row[8].notificationDraft,crm_id:device.crmId?.trim() || ''};
+      });
+      await chrome.storage.session.set({sidekickExcelTestDraft:{rows,origin:crypto.randomUUID()}});
+      await handlers["sidekick-open-excel-test"]();
+    },
+    "sidekick-open-excel-test": async () => {
+      const stored = await chrome.storage.local.get("ttmtSidekickUserProfile");
+      if (stored.ttmtSidekickUserProfile?.role !== "Device Systems Coordinator") throw new Error("Bulk Queue Sidekick is available to Device Systems Coordinators.");
+      const win = await findWindow("excel-test-window.html");
+      if (win) await chrome.windows.update(win.id, { focused: true, ...(win.state === "minimized" ? { state: "normal" } : {}) });
+      else await chrome.windows.create({ url: chrome.runtime.getURL("excel-test-window.html"), type: "popup", focused: true, ...await centeredBounds(1280, 720) });
+    },
     "sidekick-open-device": async () => {
       const stored = await chrome.storage.local.get("ttmtSidekickUserProfile");
       if (stored.ttmtSidekickUserProfile?.role !== "Device Systems Coordinator") {

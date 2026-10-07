@@ -7991,6 +7991,7 @@ function resetAllFieldsAndUI() {
 }
 
 async function finishCheckinAndReset({ returnToLanding = false } = {}) {
+  await globalThis.sidekickDesktopZip.clear();
   resetAllFieldsAndUI();
   hasFinalizedCheckin = false;
   smartboxRepairRequired = false;
@@ -8029,14 +8030,15 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
       visible: true
     });
 
-    // 1) Rename the saved zip files generated outside Sidekick
-    await refreshTrialFilesFromFolder();
-    setRenameWorkflowProgress({
-      percent: 35,
-      message: "Working: renaming saved zip files…",
-      visible: true
-    });
-    const renamedZipResult = await renameSavedZipFilesForCheckin();
+    // Paired helpers produce the final filenames directly; unpaired users retain the manual workflow.
+    const selectedVocabs = getSelectedVocabTypes();
+    const nonGridVocabs = selectedVocabs.filter(type => type !== 'Grid');
+    const names = {checkinName:nonGridVocabs.length ? buildZipFilenameFromVocabTypes(nonGridVocabs) : '',gridName:selectedVocabs.includes('Grid') ? buildZipFilenameFromVocabTypes(['Grid']) : ''};
+    setRenameWorkflowProgress({percent:35,message:'Working: preparing vocabulary ZIP files…',visible:true});
+    let renamedZipResult;
+    if (document.getElementById('vocabNotReturned')?.checked) renamedZipResult = {renamed:[],skipped:['vocab-not-returned'],checkinName:'',gridName:''};
+    else renamedZipResult = await globalThis.sidekickDesktopZip.zip(names);
+    if (!renamedZipResult) { await refreshTrialFilesFromFolder(); renamedZipResult = await renameSavedZipFilesForCheckin(); }
     setRenameWorkflowProgress({
       percent: 65,
       message: "Working: updating CRM note and opening Documents tab…",
@@ -8095,19 +8097,23 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
     await sendToCrm("CLICK_BY_XPATH", { xpath: DOCUMENTS_TAB_XPATH });
     setRenameWorkflowProgress({
       percent: 100,
-      message: "Done: renamed files and opened Documents tab.",
+      message: "Done: ZIP files prepared and Documents tab opened.",
       visible: true
     });
     const renamedSummary = renamedZipResult.renamed.length
-      ? ` Renamed: ${renamedZipResult.renamed.join(" | ")}.`
+      ? ` Files: ${renamedZipResult.renamed.join(" | ")}.`
       : " No matching Current Checkin.zip / Current Grid user.zip files were renamed.";
-    const uploadMessage = `CRM note submitted. Upload your renamed zip file(s) to the Documents tab.${renamedSummary}`;
+    const uploadMessage = `CRM note submitted. Upload your prepared ZIP file(s) to the Documents tab.${renamedSummary}`;
     setText("completeIntro", uploadMessage);
     renderRenamedFileCopyFields({
       checkinName: renamedZipResult.checkinName,
       gridName: renamedZipResult.gridName
     });
     showCompleteView();
+  } catch (error) {
+    setRenameWorkflowProgress({percent:35,message:error.message || 'Could not prepare ZIP files.',visible:true});
+    updateTrialFilesStatus(error.message || 'Could not prepare ZIP files.',true);
+    alert(error.message || 'Could not prepare ZIP files.');
   } finally {
     if (submitBtn) submitBtn.disabled = false;
   }

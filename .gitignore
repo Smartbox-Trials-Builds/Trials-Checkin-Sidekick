@@ -1,0 +1,7 @@
+Sidekick-V*.zip
+Desktop Helper/.build-deps/
+Desktop Helper/build/
+Desktop Helper/dist/
+**/__pycache__/
+Desktop Helper/*.spec
+Desktop Helper/dist-updates/

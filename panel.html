@@ -391,6 +391,13 @@
   <!-- SETTINGS VIEW -->
   <div class="container settings-view" id="settingsView" style="display:none;">
     <h1>User settings</h1>
+    <div class="settings-card">
+      <div class="settings-card__title">Desktop zipper</div>
+      <p class="hint-text">Open the Python helper, choose Drop and Final folders, and click Connect to Sidekick. Paste its private pairing code here.</p>
+      <label for="desktopZipPairCode">Pairing code</label><input id="desktopZipPairCode" type="password" autocomplete="off" />
+      <div class="mini-row"><button id="desktopZipPairBtn" class="toggle-btn" type="button">Pair helper</button><button id="desktopZipDisconnectBtn" class="toggle-btn" type="button">Use manual ZIP workflow</button></div>
+      <p id="desktopZipStatus" class="status-line" role="status"></p>
+    </div>
     <p class="complete-intro">Manage your profile details and theme preferences.</p>
     <div class="settings-panel">
       <div class="settings-card">
@@ -1321,6 +1328,7 @@
   </dialog>
   <script src="libs/supabase.min.js"></script>
   <script src="workers/supabase-connection.js"></script>
+  <script src="workers/desktop-zip.js"></script>
   <script src="workers/supabase-panel-connection.js"></script>
   <script src="workers/queue-layout.js"></script>
   <script src="workers/queue.js"></script>

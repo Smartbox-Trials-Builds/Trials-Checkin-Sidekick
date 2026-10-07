@@ -50,11 +50,11 @@ Run:
 python scripts/build-installer.py --clean
 ```
 
-This creates `dist/SmartboxVocabZipper.exe`.
+This creates `dist-updates/SmartboxVocabZipper.exe`.
 
 ### 3) Run on Windows
 
-1. Open `dist/SmartboxVocabZipper.exe`.
+1. Open `dist-updates/SmartboxVocabZipper.exe`.
 2. (Optional) Create a shortcut manually for easier access.
 
 ## Connect to Sidekick through Supabase
@@ -74,3 +74,9 @@ If a request is interrupted, check Final and Drop folders before retrying. A pen
 The helper's **Check for updates** button checks published GitHub Releases in Smartbox-Trials-Builds/Trials-Checkin-Sidekick. Releases must include SmartboxVocabZipper.exe and use tags such as zipper-v1.2.0. Extension-only releases and prereleases are skipped.
 
 Because the repository is private, users need GitHub access plus their own fine-grained access token limited to this repository with Contents: Read-only. The helper prompts for this token on the first check; Windows DPAPI encrypts the saved token for the current Windows user. If the token expires, enter a replacement when prompted. Downloads open in the browser, where users must also be signed into a GitHub account with repository access. Close the helper before replacing its executable. Folder selections, pairing, and update credentials remain saved separately.
+
+## Installable Windows package
+
+Download SmartboxVocabZipper-Setup-1.2.1.exe from the full Sidekick V3.0.2 release. Install for your Windows user; no administrator access or Python installation is required. Start-menu and optional desktop shortcuts are provided. Uninstall through Windows Installed apps. Saved AppData folders and pairing are retained during upgrades and uninstall.
+
+The repository is now public: GitHub sign-in and update tokens are not required. Future update checks prefer versioned Windows installer assets over portable executable downloads, including in combined Sidekick releases.

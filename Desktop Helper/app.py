@@ -297,7 +297,7 @@ class SidekickDesktopApp:
                     elif data["state"] == "current":
                         messagebox.showinfo(APP_NAME, "You have the latest published zipper version (" + HELPER_VERSION + ").")
                     elif data["state"] == "available":
-                        if messagebox.askyesno(APP_NAME, "Zipper " + data["version"] + " is available. Download it? Close this helper before replacing the executable. Your folders and pairing are saved separately."):
+                        if messagebox.askyesno(APP_NAME, "Zipper " + data["version"] + " is available. Download its installer? Close this helper before installing. Your folders and pairing are saved separately."):
                             webbrowser.open(data["url"])
                     elif messagebox.askyesno(APP_NAME, "Could not check for a published zipper update. Open GitHub Releases in your browser? Private repositories require GitHub access."):
                         webbrowser.open(data["url"])

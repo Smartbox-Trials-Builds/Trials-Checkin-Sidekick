@@ -6,7 +6,7 @@ import ctypes
 from ctypes import wintypes
 from pathlib import Path
 
-HELPER_VERSION = "1.2.0"
+HELPER_VERSION = "1.2.1"
 UPDATE_REPOSITORY = "Smartbox-Trials-Builds/Trials-Checkin-Sidekick"
 ASSET_NAME = "SmartboxVocabZipper.exe"
 TOKEN_PATH = Path.home() / "AppData" / "Roaming" / "SmartboxVocabZipper" / "github-update-token.bin"
@@ -64,14 +64,16 @@ def check_updates():
         releases = json.load(response)
     candidates = []
     for release in releases:
-        version = version_tuple(release.get("tag_name", ""))
-        if release.get("draft") or release.get("prerelease") or version is None:
+        if release.get("draft") or release.get("prerelease"):
             continue
         for asset in release.get("assets", []):
+            name = asset.get("name", "")
+            installer = re.fullmatch(r"SmartboxVocabZipper-Setup-(\d+\.\d+\.\d+)\.exe", name)
+            version = version_tuple(installer.group(1)) if installer else version_tuple(release.get("tag_name", "")) if release.get("tag_name", "").startswith("zipper-") and name == ASSET_NAME else None
             url = asset.get("browser_download_url", "")
-            if asset.get("name") == ASSET_NAME and url.startswith(f"https://github.com/{UPDATE_REPOSITORY}/releases/download/"):
-                candidates.append((version, url, release["tag_name"]))
+            if version and url.startswith(f"https://github.com/{UPDATE_REPOSITORY}/releases/download/"):
+                candidates.append((version, bool(installer), url))
     if not candidates:
         return {"state": "unavailable", "url": f"https://github.com/{UPDATE_REPOSITORY}/releases"}
-    version, url, tag = max(candidates)
-    return {"state": "available" if version > version_tuple(HELPER_VERSION) else "current", "version": tag, "url": url}
+    version, installer, url = max(candidates)
+    return {"state": "available" if version > version_tuple(HELPER_VERSION) else "current", "version": '.'.join(map(str,version)), "url": url}

@@ -5,3 +5,4 @@ Desktop Helper/dist/
 **/__pycache__/
 Desktop Helper/*.spec
 Desktop Helper/dist-updates/
+Desktop Helper/.build-tools/

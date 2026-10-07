@@ -28,7 +28,7 @@ def main() -> None:
         )
 
     if args.clean:
-        for folder_name in ("build", "dist"):
+        for folder_name in ("build", "dist", "dist-updates"):
             target = repo_root / folder_name
             if target.exists():
                 shutil.rmtree(target)
@@ -41,6 +41,8 @@ def main() -> None:
             "--noconfirm",
             "--windowed",
             "--onefile",
+            "--distpath",
+            "dist-updates",
             "--name",
             "SmartboxVocabZipper",
             "--icon",
@@ -52,7 +54,7 @@ def main() -> None:
         cwd=repo_root,
     )
 
-    print("Executable created in dist/")
+    print("Executable created in dist-updates/")
 
 
 if __name__ == "__main__":

@@ -7,17 +7,17 @@
   const status = document.getElementById("coordinatorQueueStatus");
   const dialog = document.getElementById("prepAssignmentDialog");
   const form = document.getElementById("prepAssignmentForm");
-  const rowInput = document.getElementById("prepAssignmentRow");
-  const crmInput = document.getElementById("prepAssignmentCrm");
-  const clientInput = document.getElementById("prepAssignmentClient");
-  const deviceInput = document.getElementById("prepAssignmentDevice");
-  const priorityInput = document.getElementById("prepAssignmentPriority");
+  const countInput = document.getElementById("prepAssignmentCount");
+  const openAssign = document.getElementById("assignDevicesBtn");
+  const copyInitials = document.getElementById("copyAssignedInitialsBtn");
+  let assignedInitials = '';
+  let requestId = null;
   const assignButton = document.getElementById("prepAssignmentSubmit");
   const cancel = document.getElementById("prepAssignmentCancel");
   const assignStatus = document.getElementById("prepAssignmentStatus");
   let profile = null;
   let queue = [];
-  let selectedEntry = null;
+
   let busy = false;
   let assigning = false;
   let refreshing = false;
@@ -41,6 +41,9 @@
     const queued = queue.some(entry => entry.user_id === profile?.user_id);
     join.textContent = queued ? "Leave Queue" : "Join Queue";
     join.disabled = !profile || busy || !connected || (!queued && !queueOpen);
+    openAssign.hidden = profile?.role !== "Device Systems Coordinator";
+    openAssign.disabled = busy || assigning || !connected || !queueOpen || !queue.length;
+    copyInitials.hidden = openAssign.hidden;
     updateIndicator();
   }
 
@@ -48,27 +51,8 @@
     list.replaceChildren();
     for (const entry of queue) {
       const item = document.createElement("li");
-      const canAssign = profile?.role === "Device Systems Coordinator";
-      const reserved = entry.reserved_by && new Date(entry.reserved_until).getTime() > Date.now();
-      const label = document.createElement(canAssign ? "button" : "span");
-      label.textContent = `${entry.name} (${entry.dashboard_initials})${entry.user_id === profile?.user_id ? " — You" : ""}${reserved ? " · Reserved" : ""}`;
-      if (canAssign) {
-        label.type = "button";
-        label.className = "toggle-btn queue-user";
-        label.disabled = Boolean(reserved && entry.reserved_by !== profile.user_id);
-        label.addEventListener("click", () => {
-          selectedEntry = entry;
-          document.getElementById("prepAssignmentUser").textContent = `${entry.name} (${entry.dashboard_initials})`;
-          rowInput.value = "";
-          crmInput.value = "";
-          clientInput.value = "";
-          deviceInput.value = "";
-          priorityInput.value = "";
-          assignStatus.textContent = "";
-          dialog.showModal();
-          crmInput.focus();
-        });
-      }
+      const label = document.createElement("span");
+      label.textContent = entry.name + ' (' + entry.dashboard_initials + ')' + (entry.user_id === profile?.user_id ? ' — You' : '');
       item.append(label);
       list.append(item);
     }
@@ -153,6 +137,7 @@
       updateIndicator();
       status.textContent = "";
       join.disabled = true;
+      openAssign.disabled = true;
     } finally {
       refreshing = false;
       if (refreshAgain) { refreshAgain = false; void refresh(); }
@@ -174,53 +159,36 @@
     const queued = queue.some(entry => entry.user_id === profile?.user_id);
     void changeMembership(queued ? "leave" : "join");
   });
-  cancel.addEventListener("click", () => dialog.close());
-  dialog.addEventListener("cancel", event => { if (assigning) event.preventDefault(); });
-  form.addEventListener("submit", async event => {
+  openAssign.addEventListener('click',() => {
+    if (openAssign.disabled) return;
+    requestId = crypto.randomUUID(); countInput.value = '1'; countInput.disabled = false;
+    assignStatus.textContent = ''; dialog.showModal(); countInput.focus();
+  });
+  copyInitials.addEventListener('click',async () => {
+    try { const result = await chrome.runtime.sendMessage({type:'sidekick-open-assignment-log'}); if (!result?.ok) throw new Error(result?.error || 'Could not open assignment log.'); }
+    catch(error) { status.textContent = error.message; }
+  });
+  cancel.addEventListener('click',() => { if (!assigning) dialog.close(); });
+  dialog.addEventListener('cancel',event => { if (assigning) event.preventDefault(); });
+  form.addEventListener('submit',async event => {
     event.preventDefault();
-    if (assigning || !selectedEntry || !form.reportValidity()) return;
-    const row = rowInput.value.trim() ? Number(rowInput.value) : null;
-    if (row !== null && (!Number.isInteger(row) || row < 1 || row > 2147483647)) return;
-    const crmId = crmInput.value.trim();
-    if (!crmId || crmId.length > 100) {
-      assignStatus.textContent = "Enter a CRM ID (up to 100 characters).";
-      crmInput.focus();
-      return;
-    }
-    const clientName = clientInput.value.trim();
-    if (!clientName || clientName.length > 200) {
-      assignStatus.textContent = "Enter a client name (up to 200 characters).";
-      clientInput.focus();
-      return;
-    }
-    if (!["Talkpad", "Zuvo", "Gridpad", "Wego"].includes(deviceInput.value) ||
-        !["Expedite", "Funded rental", "Ship request", "Daily queue"].includes(priorityInput.value)) {
-      assignStatus.textContent = "Select a device type and priority.";
-      return;
-    }
-    assigning = true;
-    assignButton.disabled = true;
-    cancel.disabled = true;
-    assignStatus.textContent = "Assigning prep…";
+    const count = Number(countInput.value);
+    if (assigning || !form.reportValidity() || !Number.isInteger(count) || count < 1 || count > 10) return;
+    assigning = true; countInput.disabled = true; assignButton.disabled = true; cancel.disabled = true; updateControls();
+    assignStatus.textContent = 'Assigning devices…';
     try {
-      const { data: notificationId, error } = await client.rpc("sidekick_assign_prep", {
-        p_entry_id: selectedEntry.id,
-        p_row_number: row,
-        p_crm_id: crmId,
-        p_device_type: deviceInput.value,
-        p_priority: priorityInput.value
-      });
-      if (error) throw new Error(error.message || "Could not assign the prep. Please try again.");
-      clientInput.value = "";
-      let nameDelivered = true;
-      try {
-        await api.sendLiveClientName({ recipientId: selectedEntry.user_id, notificationId, name: clientName, senderId: profile.user_id });
-      } catch { nameDelivered = false; }
-      dialog.close();
-      await refresh();
-      if (!nameDelivered) status.textContent = "Prep assigned. The client name could not be sent live; CRM ID, device and priority were delivered.";
-    } catch (error) { assignStatus.textContent = error.message; }
-    finally { assigning = false; assignButton.disabled = false; cancel.disabled = false; }
+      const {data,error} = await client.rpc('sidekick_assign_devices',{p_count:count,p_request_id:requestId});
+      if (error) { const failure = new Error(error.message); failure.databaseRejected = true; throw failure; }
+      assignedInitials = data.map(entry => entry.dashboard_initials).join('\r\n');
+      let copied = true;
+      try { await navigator.clipboard.writeText(assignedInitials); } catch { copied = false; }
+      dialog.close(); await refresh();
+      status.textContent = 'Assigned ' + data.length + ' users. ' + (copied ? 'Initials copied for Excel.' : 'Open Assignment log to copy their initials.');
+    } catch(error) {
+      if (error.databaseRejected) { countInput.disabled = false; requestId = crypto.randomUUID(); }
+      assignStatus.textContent = error.message;
+    }
+    finally { assigning = false; assignButton.disabled = false; cancel.disabled = false; updateControls(); }
   });
   globalThis.addEventListener("sidekick-profile-saved", () => void refresh());
   globalThis.addEventListener("online", () => void refresh());

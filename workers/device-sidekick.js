@@ -237,17 +237,3 @@ document.getElementById("bulkGipodForm")?.addEventListener("submit", async event
   document.getElementById("bulkGipodDialog").close();
   deviceToolSetText("prePrepStatus", `Applied ${lines.length} GIPOD codes in device list order.`);
 });
-
- document.getElementById("deviceTransferBulkBtn")?.addEventListener("click", async () => {
-   const button = document.getElementById("deviceTransferBulkBtn");
-   if (!prePrepRows.length) { deviceToolSetText("prePrepStatus", "Add devices before transferring."); return; }
-   button.disabled = true;
-   try {
-     await saveDeviceDraft();
-     const result = await chrome.runtime.sendMessage({ type: "sidekick-transfer-device-bulk" });
-     if (!result?.ok) throw new Error(result?.error || "Could not transfer devices.");
-     if (location.pathname.endsWith("device-window.html")) window.close();
-     else if (typeof showLandingView === "function") showLandingView();
-   } catch (error) { deviceToolSetText("prePrepStatus", error.message); }
-   finally { button.disabled = false; }
- });

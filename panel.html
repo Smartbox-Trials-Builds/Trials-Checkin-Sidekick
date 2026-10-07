@@ -86,8 +86,16 @@
         Show tooltips on landing buttons
       </label>
 
-      <div class="note-preview">
-        <div class="note-preview__title">SharePoint workbook links (auto-loaded)</div>
+      <details class="note-preview onboarding-timecard">
+        <summary class="note-preview__title">Timecard hours</summary>
+        <p class="hint-text">Set your usual start and end times for each weekday. Saved hours fill Timecard Sidekick automatically; you can still edit individual days.</p>
+        <div id="onboardingTimecardRows"></div>
+        <button id="onboardingTimecardSaveBtn" class="toggle-btn" type="button">Save hours</button>
+        <p id="onboardingTimecardStatus" class="status-line" role="status"></p>
+      </details>
+
+      <details class="note-preview onboarding-sharepoint">
+        <summary class="note-preview__title">SharePoint connections <span class="hint-text">(auto-loaded)</span></summary>
         <div class="lookup-file">
           <div>
             <div class="lookup-file__title">RWL &amp; LTL Update</div>
@@ -115,7 +123,7 @@
           <button type="button" class="toggle-btn" data-workbook-open="crm">Open workbook</button>
           <div id="onboardingCrmFileStatus" data-workbook-status="crm" class="status-line">Auto-loaded from SharePoint.</div>
         </div>
-      </div>
+      </details>
 
       <div class="settings-card">
         <div class="settings-card__title">Outlook setup</div>
@@ -264,6 +272,7 @@
             <h2 id="coordinatorQueueTitle">Device Prep Queue</h2>
             <div class="queue-actions queue-membership-controls">
               <button id="joinCoordinatorQueueBtn" class="toggle-btn queue-small-btn queue-membership-btn" type="button" title="Open daily 7 AM–8 PM Central time (including daylight saving). Queue clears at 8 PM." disabled>Join Queue</button>
+<button id="assignDevicesBtn" class="toggle-btn queue-small-btn" type="button" hidden>Assign Devices</button><button id="copyAssignedInitialsBtn" class="toggle-btn queue-small-btn" type="button" hidden>Assignment log</button>
               <span id="coordinatorQueueIndicator" class="queue-status-light" data-state="disconnected" role="status" aria-label="Queue connecting" title="Queue connecting"></span>
             </div>
             <p id="coordinatorQueueStatus" class="hint-text queue-error-status" role="status"></p>
@@ -291,14 +300,10 @@
           <button id="startCheckinBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Check-in form that auto-fills name and AAC from the current CRM.">
             Check-in Sidekick
           </button>
-          <button id="startLtlUpdateBtn" class="toggle-btn landing-btn" type="button" data-tooltip="LTL Update check-in form without camera and mount sections.">
-            LTL Update Sidekick
-            <span class="landing-btn__tag">Beta</span>
-          </button>
         </div>
       </div>
       <div class="landing-section" data-layout-item="prepTools">
-        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="prep-tools" aria-expanded="false" data-tooltip="Folder housing prep tools. Click to reveal Grid Sidekick, TalkPad Prep Sidekick, and GridPad Prep Sidekick.">
+        <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="prep-tools" aria-expanded="false" data-tooltip="Folder housing prep tools. Click to reveal Grid Sidekick, Age Calculator, and Device Prep Sidekick.">
           Prep Tools
           <span class="landing-section__chevron" aria-hidden="true">▾</span>
         </button>
@@ -309,13 +314,7 @@
           <button id="ageCalculatorBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Calculates age from a birthdate by comparing it against today's date.">
             Age Calculator
           </button>
-          <button id="talkPadPrepBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Basic TalkPad prep checklist (more features coming soon).">
-            TalkPad Prep Sidekick
-          </button>
-          <button id="gridPadPrepBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Categorized GridPad Go prep checklist with reorderable categories.">
-            GridPad &amp; GridPad Go Prep Side Kicik
-            <span class="landing-btn__tag">Beta</span>
-          </button>
+          <button id="devicePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Choose Talkpad or Grid Pad to open its prep checklist.">Device Prep Sidekick</button>
         </div>
       </div>
       <div class="landing-section" id="prePrepToolsSection" data-layout-item="prePrepTools" style="display:none;">
@@ -324,7 +323,6 @@
           <span class="landing-section__chevron" aria-hidden="true">▾</span>
         </button>
         <div class="landing-section__content" data-collapsible-content="pre-prep-tools" hidden>
-          <button id="excelTestToolBtn" class="toggle-btn landing-btn" type="button">Bulk Queue Sidekick</button>
           <button id="prePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Build a pre-prep scan list with corrected device serials and internal serial fields.">
             Device Sidekick
           </button>
@@ -567,13 +565,7 @@
                 <button class="toggle-btn landing-btn" type="button">
                   Grid Sidekick
                 </button>
-                <button class="toggle-btn landing-btn" type="button">
-                  TalkPad Prep Sidekick
-                </button>
-                <button class="toggle-btn landing-btn" type="button">
-                  GridPad &amp; GridPad Go Prep Side Kicik
-                  <span class="landing-btn__tag">Beta</span>
-                </button>
+                <button class="toggle-btn landing-btn" type="button">Device Prep Sidekick</button>
               </div>
             </div>
             <button class="toggle-btn landing-btn" data-layout-item="qaForm" type="button">QA Form</button>
@@ -740,7 +732,7 @@
 
     <div class="mini-row pre-prep-actions">
       <button id="prePrepLockBtn" class="toggle-btn" type="button">Lock edits: Off</button>
-      <button id="deviceTransferBulkBtn" class="toggle-btn" type="button" data-device-prep-only hidden>Transfer to Bulk Queue Sidekick</button><button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
+      <button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
     </div>
 
     <div class="note-preview pre-prep-list-card">
@@ -761,23 +753,6 @@
     <div class="crm-nav-footer">
       <button id="prePrepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
     </div>
-  </div>
-
-  <div class="container excel-test-view" id="excelTestToolView" style="display:none;">
-    <div class="device-sidekick-heading"><h1>Bulk Queue Sidekick</h1><button id="excelTestPopOut" class="toggle-btn queue-small-btn" type="button">Pop out ↗</button></div>
-    <p class="hint-text">Copy cells H–I from Excel and paste below. Manual device fields stay out of Copy for Excel.</p>
-    <div class="excel-test-toolbar"><label for="excelTestPasteMode">Paste</label><select id="excelTestPasteMode"><option value="replace">Replace rows</option><option value="append">Add rows</option></select><button id="excelTestCopy" class="toggle-btn queue-small-btn" type="button" disabled>Copy for Excel</button><button id="excelTestMarkX" class="toggle-btn queue-small-btn" type="button" title="Set column H to X">Mark Ready</button><button id="excelTestNotes" class="toggle-btn queue-small-btn" type="button">Enter notes</button><button id="excelTestClear" class="toggle-btn queue-small-btn" type="button">Clear</button></div>
-    <div class="excel-test-toolbar">
-      <button id="excelTestClaim" class="toggle-btn queue-small-btn" type="button">Bulk add queue initials</button>
-      <button id="excelTestSend" class="toggle-btn queue-small-btn" type="button">Send prep notifications</button>
-      <button id="excelTestRelease" class="toggle-btn queue-small-btn" type="button">Release reservations</button>
-      <label for="excelTestPriority">Priority</label><select id="excelTestPriority"><option value="auto">Default: Daily queue</option><option>Expedite</option><option>Funded rental</option><option>Ship request</option><option>Daily queue</option></select>
-    </div>
-    <p class="hint-text">Queue users are reserved for 15 minutes, one per empty DC cell. Enter client name, CRM ID, device and priority in the notification review menu. Client names are sent live only.</p>
-    <textarea id="excelTestPaste" rows="2" aria-label="Paste Excel cells H to I" placeholder="Paste one or more Excel rows here (Ctrl+V)."></textarea>
-    <div id="excelTestStatus" class="status-line" role="status" aria-live="polite"></div>
-    <div id="excelTestGrid" class="excel-test-grid"></div>
-    <button id="excelTestReturn" class="toggle-btn queue-small-btn" type="button">Return to Sidekick</button>
   </div>
 
   <!-- DEVICE LOOKUP VIEW -->
@@ -801,22 +776,22 @@
       <button type="submit" id="deviceLookupSearchBtn">Search</button>
     </form>
 
-    <div class="lookup-results">
-      <div class="note-preview lookup-result" id="lookupSerialCard">
+    <section class="note-preview lookup-summary" aria-label="Device lookup results"><div class="note-preview__title lookup-summary-title">Lookup results</div><div class="lookup-results">
+      <div class="lookup-result lookup-summary-section" id="lookupSerialCard">
         <div class="note-preview__title">Serial number result</div>
         <pre id="lookupSerialResult" class="note-preview__body"></pre>
       </div>
-      <div class="note-preview lookup-result" id="lookupMountCard">
+      <div class="lookup-result lookup-summary-section" id="lookupMountCard">
         <div class="note-preview__title">Mount result</div>
         <pre id="lookupMountResult" class="note-preview__body"></pre>
       </div>
-      <div class="note-preview lookup-result lookup-result--wide" id="lookupActionCard">
+      <div class="lookup-result lookup-summary-section" id="lookupActionCard">
         <div class="note-preview__title">Action required</div>
         <pre id="lookupActionResult" class="note-preview__body"></pre>
       </div>
     </div>
 
-    <div class="note-preview">
+    <div class="lookup-summary-copy">
       <div class="note-preview__title">Quick copy</div>
       <div class="lookup-copy-grid">
         <button class="copy-btn" type="button" id="copyDeviceSnBtn" disabled>Copy device SN</button>
@@ -831,11 +806,12 @@
       <div id="lookupCopyStatus" class="status-line"></div>
     </div>
 
-    <div class="mini-row">
+    <div class="mini-row lookup-summary-actions">
       <button id="lookupOpenCrmBtn" class="toggle-btn" type="button">Open CRM</button>
       <button id="lookupOpenWorkbookBtn" class="toggle-btn" type="button">Open LTL/RWL workbook</button>
-      <button id="lookupBeginLtlUpdateBtn" class="toggle-btn hidden-section" type="button">Begin LTL update</button>
     </div>
+
+    </section>
 
     <div class="crm-nav-footer">
       <button id="deviceLookupReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
@@ -942,6 +918,14 @@
   </div>
 
   <!-- TALKPAD PREP SIDEKICK VIEW -->
+  <div class="container" id="devicePrepSelectionView" style="display:none;">
+    <h1>Device Prep Sidekick</h1>
+    <p class="complete-intro">Select the device to prepare.</p>
+    <button id="talkPadPrepBtn" class="toggle-btn" type="button">Talkpad</button>
+    <button id="gridPadPrepBtn" class="toggle-btn" type="button">Grid Pad</button>
+    <button id="devicePrepSelectionReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+  </div>
+
   <div class="container" id="prepTypeView" style="display:none;">
     <h1>TalkPad Prep Sidekick</h1>
     <p class="complete-intro">Is this a Service Loan (SL) or a CL/LTL (Regular Prep)?</p>
@@ -1106,49 +1090,6 @@
         <textarea id="otherRepairInput" placeholder="Describe other repair..." style="display:none;"></textarea>
       </div>
 
-      <!-- LTL Updates -->
-      <div id="ltlUpdatesSection" class="hidden-section">
-        <label>Updates Made (Select all that apply):</label>
-        <div class="checkbox-group">
-          <label class="checkbox-row" for="ltlUpdateFixedHandle">
-            <input type="checkbox" id="ltlUpdateFixedHandle" name="ltlUpdates" value="Fixed Handle" />
-            Fixed Handle
-          </label>
-          <label class="checkbox-row" for="ltlUpdateFixedStand">
-            <input type="checkbox" id="ltlUpdateFixedStand" name="ltlUpdates" value="Fixed Stand" />
-            Fixed Stand
-          </label>
-          <label class="checkbox-row" for="ltlUpdateReplacedScreenProtector">
-            <input type="checkbox" id="ltlUpdateReplacedScreenProtector" name="ltlUpdates" value="Replaced Screen Protector" />
-            Replaced Screen Protector
-          </label>
-          <label class="checkbox-row" for="ltlUpdateReplacedDevice">
-            <input type="checkbox" id="ltlUpdateReplacedDevice" name="ltlUpdates" value="Replaced Device" />
-            Replaced Device
-          </label>
-          <label class="checkbox-row" for="ltlUpdateReplacedCase">
-            <input type="checkbox" id="ltlUpdateReplacedCase" name="ltlUpdates" value="Replaced Case" />
-            Replaced Case
-          </label>
-          <label class="checkbox-row" for="ltlUpdateNa">
-            <input type="checkbox" id="ltlUpdateNa" name="ltlUpdates" value="N/A" />
-            N/A
-          </label>
-          <label class="checkbox-row" for="ltlUpdateOther">
-            <input type="checkbox" id="ltlUpdateOther" name="ltlUpdates" value="Other" />
-            Other
-          </label>
-        </div>
-        <div id="ltlUpdateOtherField" class="hidden-section">
-          <label for="ltlUpdateOtherText">Other updates</label>
-          <input type="text" id="ltlUpdateOtherText" placeholder="Describe other updates..." />
-        </div>
-        <div id="ltlUpdateNewSerialField" class="hidden-section">
-          <label for="ltlUpdateNewSerialNumber">New serial number</label>
-          <input type="text" id="ltlUpdateNewSerialNumber" placeholder="Enter new serial number..." />
-        </div>
-      </div>
-
       <!-- Client info -->
       <label>Client First Name</label>
       <input type="text" id="firstName" />
@@ -1270,21 +1211,6 @@
     </button>
   </div>
 
-  <!-- LTL COMPLETION VIEW -->
-  <div class="container" id="ltlCompletionView" style="display:none;">
-    <h1>LTL Update</h1>
-    <p class="complete-intro">Review the row below, then press the button to open Excel and paste it into the Completed LTL Update List.</p>
-    <div class="note-preview">
-      <div class="note-preview__title">Row to paste</div>
-      <div class="note-preview__body" id="ltlCompletionRowDetails">No LTL row captured yet.</div>
-    </div>
-    <div class="mini-row">
-      <button class="toggle-btn" id="ltlCompletionRunBtn" type="button">Open workbook &amp; paste row</button>
-      <button class="toggle-btn" id="ltlCompletionReturnBtn" type="button">Return to landing</button>
-    </div>
-    <div class="status-line" id="ltlCompletionStatus"></div>
-  </div>
-
   <!-- SMARTBOX REPAIR VIEW -->
   <div class="container" id="smartboxRepairView" style="display:none;">
     <h1>Smartbox Repair Tracker</h1>
@@ -1374,35 +1300,12 @@
   <!-- Panel logic -->
   <dialog id="prepAssignmentDialog" class="prep-assignment-dialog" aria-labelledby="prepAssignmentTitle">
     <form id="prepAssignmentForm">
-      <h2 id="prepAssignmentTitle">Assign a prep</h2>
-      <p id="prepAssignmentUser"></p>
-      <label for="prepAssignmentRow">Row number (optional)</label>
-      <input id="prepAssignmentRow" type="number" min="1" max="2147483647" step="1" inputmode="numeric" />
-      <label for="prepAssignmentCrm">CRM ID</label>
-      <input id="prepAssignmentCrm" type="text" maxlength="100" autocomplete="off" required />
-      <label for="prepAssignmentClient">Client name</label>
-      <input id="prepAssignmentClient" type="text" maxlength="200" autocomplete="off" required />
-      <label for="prepAssignmentDevice">Device type</label>
-      <select id="prepAssignmentDevice" required>
-        <option value="">Select device type</option>
-        <option value="Talkpad">Talkpad</option>
-        <option value="Zuvo">Zuvo</option>
-        <option value="Gridpad">Gridpad</option>
-        <option value="Wego">Wego</option>
-      </select>
-      <label for="prepAssignmentPriority">Priority</label>
-      <select id="prepAssignmentPriority" required>
-        <option value="">Select priority</option>
-        <option value="Expedite">Expedite</option>
-        <option value="Funded rental">Funded rental</option>
-        <option value="Ship request">Ship request</option>
-        <option value="Daily queue">Daily queue</option>
-      </select>
+      <h2 id="prepAssignmentTitle">Assign Devices</h2>
+      <label for="prepAssignmentCount">How many devices?</label>
+      <input id="prepAssignmentCount" type="number" min="1" max="10" step="1" value="1" required />
+      <p class="hint-text">Assign the next available users in queue order. Their initials will be copied as separate Excel rows.</p>
       <p id="prepAssignmentStatus" class="status-line" role="status"></p>
-      <div class="queue-actions">
-        <button id="prepAssignmentSubmit" type="submit">Assign</button>
-        <button id="prepAssignmentCancel" class="toggle-btn" type="button">Cancel</button>
-      </div>
+      <div class="queue-actions"><button id="prepAssignmentSubmit" type="submit">Assign</button><button id="prepAssignmentCancel" class="toggle-btn" type="button">Cancel</button></div>
     </form>
   </dialog>
   <dialog id="bulkGipodDialog" class="prep-assignment-dialog" aria-labelledby="bulkGipodTitle">
@@ -1424,7 +1327,6 @@
   <script src="workers/crm-links.js"></script>
   <script src="workers/serial-utils.js"></script>
   <script src="workers/device-sidekick.js"></script>
-  <script src="workers/excel-test-tool.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

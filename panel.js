@@ -45,6 +45,7 @@ const DAILY_CUSTOM_COUNTER_ENABLED_STORAGE_KEY = "ttmtDailyCustomCounterEnabled"
 const WEEKLY_COUNTER_STORAGE_KEY = "ttmtWeeklyTaskCounterTotal";
 const WEEKLY_AVERAGE_ENABLED_STORAGE_KEY = "ttmtWeeklyTaskAverageEnabled";
 const WEEKLY_AVERAGE_DAYS_STORAGE_KEY = "ttmtWeeklyTaskAverageDaysWorked";
+const TIMECARD_DEFAULTS_KEY = "ttmtTimecardDefaultHours";
 const TIMECARD_STORAGE_KEY = "ttmtTimecardSidekickWeek";
 const WEEKLY_COUNTER_ENABLED_STORAGE_KEY = "ttmtWeeklyTaskCounterEnabled";
 const DAILY_COUNTER_COLLAPSED_STORAGE_KEY = "ttmtDailyTaskCounterCollapsed";
@@ -100,7 +101,7 @@ let smartboxRepairTabId = null;
 const DEFAULT_LANDING_LAYOUT_POSITIONS = {};
 
 /* ---------------- Helpers ---------------- */
-const VIEW_IDS = ["welcomeView", "onboardingView", "outlookSetupView", "landingView", "settingsView", "themeBuilderView", "prePrepView", "excelTestToolView", "lockDownView", "timecardView", "deviceLookupView", "gridView", "prepTypeView", "prepSlCrmView", "prepView", "prepChecklistOrderView", "gridPadPrepView", "gridPadChecklistOrderView", "ageCalculatorView", "formView", "completeView", "ltlCompletionView", "smartboxRepairView", "inventoryView", "dafRecapView", "emailView", "appOverridesView", "qaCompleteView"];
+const VIEW_IDS = ["welcomeView", "onboardingView", "outlookSetupView", "landingView", "settingsView", "themeBuilderView", "prePrepView", "lockDownView", "timecardView", "deviceLookupView", "gridView", "devicePrepSelectionView", "prepTypeView", "prepSlCrmView", "prepView", "prepChecklistOrderView", "gridPadPrepView", "gridPadChecklistOrderView", "ageCalculatorView", "formView", "completeView", "smartboxRepairView", "inventoryView", "dafRecapView", "emailView", "appOverridesView", "qaCompleteView"];
 const MULTI_THEME_IDS = new Set([
   "coral",
   "lagoon",
@@ -419,20 +420,9 @@ const GRIDPAD_CHECKLIST_CATEGORIES = [
   },
   {
     id: "folderContents",
-    title: "Folder Contents",
+    title: "Get Shipping Booklet",
     items: [
-      { id: "gridPadFolderSchoolBoard", label: "Left side (bottom to top): School Board (if pediatric/LTL/STL)." },
-      { id: "gridPadFolderStickers", label: "Left side: Stickers." },
-      { id: "gridPadFolderAacScript", label: "Left side: AAC Script." },
-      { id: "gridPadFolderFaq", label: "Left side: FAQ." },
-      { id: "gridPadFolderNextSteps", label: "Left side: Next Steps." },
-      { id: "gridPadFolderExamples", label: "Right side (bottom to top): Examples of Use." },
-      { id: "gridPadFolderDisinfection", label: "Right side: Disinfection Sheet." },
-      { id: "gridPadFolderQuickReference", label: "Right side: Zuvo and Grid Pad Quick Reference Sheet." },
-      { id: "gridPadFolderGuide", label: "Right side: User Guide (based on eyegaze)." },
-      { id: "gridPadFolderWelcome", label: "Right side: Welcome Card." },
-      { id: "gridPadFolderMagnet", label: "Right side: Magnet Warning." },
-      { id: "gridPadFolderChoking", label: "Right side: Choking Hazard." }
+      { id: "gridPadShippingBooklet", label: "Get Shipping Booklet" }
     ]
   },
   {
@@ -909,7 +899,7 @@ function isCheckinFlowActive() {
 }
 
 function isLtlUpdateFlow() {
-  return activeCheckinFlow === CHECKIN_FLOW.LTL_UPDATE;
+  return false;
 }
 
 function clearCameraAndMountFields() {
@@ -999,7 +989,7 @@ async function openLtlWorkbookForCompletion(rowValues = []) {
 function applyCheckinModeUI() {
   const isLtlUpdate = isLtlUpdateFlow();
   if (checkinFormTitle) {
-    checkinFormTitle.textContent = isLtlUpdate ? "LTL Update Sidekick" : "Trials Automated Check-in SideKick";
+    checkinFormTitle.textContent = "Trials Automated Check-in SideKick";
   }
   if (deviceNumberLabel) {
     deviceNumberLabel.textContent = isLtlUpdate
@@ -1047,8 +1037,7 @@ function setCollapsibleState(key, expanded) {
 }
 
 const CHECKIN_FLOW = {
-  CHECKIN: "checkin",
-  LTL_UPDATE: "ltlUpdate"
+  CHECKIN: "checkin"
 };
 let activeCheckinFlow = null;
 let smartboxRepairRequired = false;
@@ -3831,6 +3820,7 @@ function initSymojiPicker() {
 }
 
 async function initOnboardingForm() {
+  await initOnboardingTimecard();
   const form = document.getElementById("onboardingForm");
   const firstNameInput = document.getElementById("userFirstName");
   const roleInput = document.getElementById("userRole");
@@ -3960,6 +3950,7 @@ async function initOnboardingForm() {
     try {
       const cloudProfile = await globalThis.sidekickSupabase.saveProfile({ name: firstName, role, dashboardInitials });
       await saveUserProfile({ firstName, lastName, role, dashboardInitials, supabaseUserId: cloudProfile.user_id });
+      await saveOnboardingTimecardHours();
       if (pendingMascot) {
         await saveUserMascot(pendingMascot);
         updateLandingMascot(pendingMascot);
@@ -4615,7 +4606,11 @@ async function logLtlUpdateOutcome(outcome) {
 const UNSAFE_NAME_REGEX = /\s?(\*\d{5}|\*.*?\*|\(.*?\)|\b\d{5}\b|"[^"]*")/g;
 
 function sanitizeName(name) {
-  return (name || "").replace(UNSAFE_NAME_REGEX, "").trim();
+  return (name || "")
+    .replace(UNSAFE_NAME_REGEX, "")
+    .replace(/[^\p{L}\p{M}\s'’\-]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function getStoredValue(key) {
@@ -5496,7 +5491,11 @@ function mergeClientData(primary = {}, fallback = {}) {
 
 function scrapeClientDataFromCrmPage() {
   const unsafeNameRegex = /\s?(\*.*$|\*.*?\*|\(.*?\)|\b\d{5}\b|"[^"]*")/g;
-  const sanitize = value => (value || "").replace(unsafeNameRegex, "").trim();
+  const sanitize = value => (value || "")
+    .replace(unsafeNameRegex, "")
+    .replace(/[^\p{L}\p{M}\s'’\-]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
   const getFieldValue = el => {
     if (!el) return "";
     if (el.tagName === "SELECT") {
@@ -8371,6 +8370,46 @@ document.getElementById("emailView")?.addEventListener("click", async (e) => {
 
 const TIMECARD_WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
+async function initOnboardingTimecard() {
+  const container = document.getElementById('onboardingTimecardRows');
+  if (!container) return;
+  const defaults = await getStoredValue(TIMECARD_DEFAULTS_KEY) || {};
+  container.replaceChildren();
+  for (const day of TIMECARD_WEEKDAYS) {
+    const row = document.createElement('div'); row.className = 'onboarding-timecard-row';
+    const title = document.createElement('strong'); title.textContent = day; row.append(title);
+    for (const [field,label] of [['in','Start'],['out','End']]) {
+      const wrapper = document.createElement('label'); wrapper.textContent = label;
+      const input = document.createElement('input'); input.type = 'time'; input.dataset.defaultDay = day; input.dataset.defaultField = field; input.value = defaults[day]?.[field] || ''; wrapper.append(input); row.append(wrapper);
+    }
+    container.append(row);
+  }
+  const button = document.getElementById('onboardingTimecardSaveBtn');
+  button.addEventListener('click',async () => {
+    button.disabled = true;
+    try { await saveOnboardingTimecardHours(); document.getElementById('onboardingTimecardStatus').textContent = 'Hours saved and applied to Timecard Sidekick.'; }
+    catch(error) { document.getElementById('onboardingTimecardStatus').textContent = error.message; }
+    finally { button.disabled = false; }
+  });
+}
+async function saveOnboardingTimecardHours() {
+  const inputs = [...document.querySelectorAll('#onboardingTimecardRows input')];
+  if (!inputs.length) return;
+  const defaults = {};
+  for (const input of inputs) {
+    if (!input.reportValidity()) throw new Error('Enter valid start and end times.');
+    (defaults[input.dataset.defaultDay] ||= {})[input.dataset.defaultField] = input.value;
+  }
+  for (const day of TIMECARD_WEEKDAYS) if (Boolean(defaults[day].in) !== Boolean(defaults[day].out)) throw new Error(day + ': enter both start and end times, or leave both blank.');
+  const previous = await getStoredValue(TIMECARD_DEFAULTS_KEY) || {};
+  await setStoredValue(TIMECARD_DEFAULTS_KEY,defaults);
+  if (JSON.stringify(previous) !== JSON.stringify(defaults)) {
+    const week = await getTimecardWeek();
+    for (const day of TIMECARD_WEEKDAYS) week[day] = {...week[day],...defaults[day]};
+    await saveTimecardWeek(week);
+  }
+}
+
 function createDefaultTimecardWeek() {
   return TIMECARD_WEEKDAYS.reduce((week, day) => {
     week[day] = { in: "", out: "", notes: "" };
@@ -8380,7 +8419,10 @@ function createDefaultTimecardWeek() {
 
 async function getTimecardWeek() {
   const stored = await getStoredValue(TIMECARD_STORAGE_KEY);
-  return { ...createDefaultTimecardWeek(), ...(stored && typeof stored === "object" ? stored : {}) };
+  const defaults = await getStoredValue(TIMECARD_DEFAULTS_KEY) || {};
+  const week = {...createDefaultTimecardWeek(), ...(stored && typeof stored === "object" ? stored : {})};
+  for (const day of TIMECARD_WEEKDAYS) week[day] = {...week[day],in:week[day]?.in || defaults[day]?.in || '',out:week[day]?.out || defaults[day]?.out || ''};
+  return week;
 }
 
 async function saveTimecardWeek(week) {
@@ -8524,18 +8566,6 @@ async function setCurrentTimecardPunch(field) {
     await syncViewForTab(activeTab);
   });
 
-  document.getElementById("startLtlUpdateBtn")?.addEventListener("click", async () => {
-    clearLookupLtlRow();
-    resetMountReturnReview();
-    closeMountReturnModal();
-    setActiveCheckinFlow(CHECKIN_FLOW.LTL_UPDATE);
-    updateDeviceRules();
-    showFormView();
-    await refreshTrialFilesFromFolder();
-    const activeTab = await getActiveCrmTab();
-    await syncViewForTab(activeTab);
-  });
-
   document.getElementById("clearDailyCountersBtn")?.addEventListener("click", async () => {
     await clearDailyCounters();
   });
@@ -8608,6 +8638,9 @@ async function setCurrentTimecardPunch(field) {
   document.getElementById("ageCalculatorBtn")?.addEventListener("click", () => {
     showAgeCalculatorView();
   });
+
+  document.getElementById("devicePrepSidekickBtn")?.addEventListener("click", () => showView("devicePrepSelectionView"));
+  document.getElementById("devicePrepSelectionReturnBtn")?.addEventListener("click", showLandingView);
 
   document.getElementById("talkPadPrepBtn")?.addEventListener("click", async () => {
     const result = await runPrepFlowAction("OPEN_TALKPAD_PREP");
@@ -8705,17 +8738,6 @@ async function setCurrentTimecardPunch(field) {
     showDeviceLookupView();
     await refreshDeviceLookupWorkbooksFromHandles();
   });
-
-  document.getElementById("excelTestToolBtn")?.addEventListener("click", async () => {
-    if (!(await hasDeviceSystemsRole())) return;
-    try {
-      const result = await chrome.runtime.sendMessage({ type: "sidekick-open-excel-test" });
-      if (!result?.ok) throw new Error(result?.error || "Could not open Bulk Queue Sidekick.");
-    } catch (error) {
-      alert(error.message || "Could not open Bulk Queue Sidekick.");
-    }
-  });
-  document.getElementById("excelTestReturn")?.addEventListener("click", showLandingView);
 
   document.getElementById("prePrepSidekickBtn")?.addEventListener("click", async () => {
     if (!(await hasDeviceSystemsRole())) {
@@ -9127,24 +9149,6 @@ async function setCurrentTimecardPunch(field) {
     setValue("deviceNumberInput", deviceLookupLastSerial);
     updateDeviceRules();
     applyLookupAutofillToCheckin();
-  });
-
-  document.getElementById("lookupBeginLtlUpdateBtn")?.addEventListener("click", async () => {
-    if (!deviceLookupLastSerial) {
-      alert("Search for a device to continue.");
-      return;
-    }
-    setActiveCheckinFlow(CHECKIN_FLOW.LTL_UPDATE);
-    updateDeviceRules();
-    showFormView();
-    setValue("deviceNumberInput", deviceLookupLastSerial);
-    updateLtlUpdateRowSection();
-    await refreshTrialFilesFromFolder();
-    if (!deviceLookupLastCrmId) {
-      alert("No CRM ID found for this device.");
-      return;
-    }
-    await openCrmRecordTab(deviceLookupLastCrmId);
   });
 
   document.getElementById("lookupOpenWorkbookBtn")?.addEventListener("click", () => {

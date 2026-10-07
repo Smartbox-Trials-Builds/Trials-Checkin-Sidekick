@@ -13,7 +13,7 @@
     for (const entry of entries) {
       const existingCard = [...container.children].find(card => card.dataset.id === entry.id);
       if (existingCard) {
-        existingCard.clientNameValue.textContent = entry.liveClientName || "Not available — live delivery only";
+        if (existingCard.clientNameValue) existingCard.clientNameValue.textContent = entry.liveClientName || "Not available — live delivery only";
         continue;
       }
       const card = document.createElement("div");
@@ -24,7 +24,7 @@
       const details = document.createElement("dl");
       details.className = "prep-assignment-details";
       for (const [label, value] of [
-        ["Client", entry.liveClientName || "Not available — live delivery only"],
+        ["Client", entry.assignment_request_id ? null : entry.liveClientName || "Not available — live delivery only"],
         ["Device", entry.device_type],
         ["CRM ID", entry.crm_id],
         ["Row", entry.row_number],
@@ -74,7 +74,11 @@
           close.disabled = false;
         }
       });
-      card.append(message, details, close, openCrm, errorText);
+      card.append(message);
+      if (details.children.length) card.append(details);
+      card.append(close);
+      if (entry.crm_id) card.append(openCrm);
+      card.append(errorText);
       container.append(card);
     }
   }

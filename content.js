@@ -90,7 +90,11 @@ const DAF_CONSULTANT_LISTBOX_XPATHS = [
 const DAF_AAC_FIELD_XPATH = "/html/body/div[1]/div/div/form/div/div/div/div[5]/div/span/div/div/div/input";
 
 function sanitizeName(name) {
-  return (name || "").replace(UNSAFE_NAME_REGEX, "").trim();
+  return (name || "")
+    .replace(UNSAFE_NAME_REGEX, "")
+    .replace(/[^\p{L}\p{M}\s'’\-]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function normalizeText(str) {

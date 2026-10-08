@@ -35,10 +35,9 @@
 
   <!-- ONBOARDING VIEW -->
   <div class="container onboarding-view" id="onboardingView" style="display:none;">
-    <h1>Welcome to CRM Sidekick</h1>
-    <p class="complete-intro">Tell us your name, role, and Dashboard Initials, then choose your preferences.</p>
+    <header class="settings-heading"><span class="settings-eyebrow">YOUR SIDEKICK, YOUR WAY</span><h1>Welcome to CRM Sidekick</h1><p class="complete-intro">Start with your profile. Customize the rest when you’re ready.</p></header>
     <form id="onboardingForm">
-      <label for="userFirstName">Your name</label>
+<details class="settings-card settings-group" open><summary><span class="settings-group__icon" aria-hidden="true">☰</span><span><strong>Your profile</strong><small>Name, role and Dashboard Initials</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">      <label for="userFirstName">Your name</label>
       <input type="text" id="userFirstName" autocomplete="name" maxlength="100" required />
       <label for="userRole">Select a role</label>
       <select id="userRole" required>
@@ -50,7 +49,7 @@
       <input type="text" id="userDashboardInitials" maxlength="20" required title="Enter your initials exactly as you use them on the Dashboard." aria-describedby="dashboardInitialsHint" />
       <p id="dashboardInitialsHint" class="hint-text">Enter your initials exactly as you use them on the Dashboard.</p>
 
-      <label for="userMascotInput">Profile mascot image</label>
+</div></details><details class="settings-card settings-group"><summary><span class="settings-group__icon" aria-hidden="true">◐</span><span><strong>Appearance</strong><small>Theme, mascot and profile image</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">      <label for="userMascotInput">Profile mascot image</label>
       <input type="file" id="userMascotInput" accept="image/*" />
       <img id="userMascotPreview" class="onboarding-mascot-preview" src="assets/SB logo.png" alt="Spark mascot preview" />
       <button class="toggle-btn symoji-picker__toggle" id="symojiPickerMascotBtn" type="button">
@@ -67,7 +66,7 @@
       <label for="onboardingThemeSelect">Starting color theme</label>
       <select id="onboardingThemeSelect" required></select>
 
-      <label class="checkbox-row" for="onboardingDailyCounterToggle">
+</div></details><details class="settings-card settings-group"><summary><span class="settings-group__icon" aria-hidden="true">✓</span><span><strong>Landing preferences</strong><small>Task counters and tooltips</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">      <label class="checkbox-row" for="onboardingDailyCounterToggle">
         <input type="checkbox" id="onboardingDailyCounterToggle" />
         Show daily task counter on the landing page
       </label>
@@ -86,16 +85,14 @@
         Show tooltips on landing buttons
       </label>
 
-      <details class="note-preview onboarding-timecard">
-        <summary class="note-preview__title">Timecard hours</summary>
+</div></details>      <details class="settings-card settings-group"><summary><span class="settings-group__icon" aria-hidden="true">◷</span><span><strong>Timecard hours</strong><small>Your usual Monday–Friday schedule</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">
         <p class="hint-text">Set your usual start and end times for each weekday. Saved hours fill Timecard Sidekick automatically; you can still edit individual days.</p>
         <div id="onboardingTimecardRows"></div>
         <button id="onboardingTimecardSaveBtn" class="toggle-btn" type="button">Save hours</button>
         <p id="onboardingTimecardStatus" class="status-line" role="status"></p>
-      </details>
+      </div></details>
 
-      <details class="note-preview onboarding-sharepoint">
-        <summary class="note-preview__title">SharePoint connections <span class="hint-text">(auto-loaded)</span></summary>
+      <details class="settings-card settings-group"><summary><span class="settings-group__icon" aria-hidden="true">↔</span><span><strong>SharePoint connections</strong><small>Workbook links and connection status</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">
         <div class="lookup-file">
           <div>
             <div class="lookup-file__title">RWL &amp; LTL Update</div>
@@ -123,15 +120,13 @@
           <button type="button" class="toggle-btn" data-workbook-open="crm">Open workbook</button>
           <div id="onboardingCrmFileStatus" data-workbook-status="crm" class="status-line">Auto-loaded from SharePoint.</div>
         </div>
-      </details>
+      </div></details>
 
-      <div class="settings-card">
-        <div class="settings-card__title">Outlook setup</div>
+<details class="settings-card settings-group"><summary><span class="settings-group__icon" aria-hidden="true">✉</span><span><strong>Outlook setup</strong><small>Email setup checklist</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">
         <p class="hint-text">Open Outlook in a new tab and walk through the setup checklist.</p>
         <button class="toggle-btn settings-card__action" id="beginOutlookSetupBtn" type="button">
           Begin Outlook setup
-        </button>
-      </div>
+        </button></div></details>
 
       <div id="onboardingSaveStatus" class="status-line" role="status" aria-live="polite"></div>
       <button type="submit" id="onboardingSaveBtn">Save &amp; Continue</button>
@@ -161,12 +156,10 @@
   <!-- LANDING VIEW -->
   <div class="container landing-view" id="landingView">
     <div class="landing-content">
-      <div class="landing-header">
-        <h1 class="landing-title">CRM Sidekick</h1>
+      <div class="landing-identity">
+        <div class="landing-identity__copy"><span class="landing-eyebrow">YOUR WORKSPACE</span><div class="landing-header"><h1 class="landing-title">CRM Sidekick</h1></div><p class="landing-greeting" id="landingGreeting"></p><p class="landing-subtitle">Pick a workflow to get started.</p></div>
+        <img class="landing-symojo" id="landingMascot" src="assets/SB logo.png" alt="Spark mascot" />
       </div>
-      <img class="landing-symojo" id="landingMascot" src="assets/SB logo.png" alt="Spark mascot" />
-      <p class="landing-greeting" id="landingGreeting"></p>
-      <p class="landing-subtitle">Pick a workflow to get started.</p>
       <section class="landing-anime-quotes" id="landingAnimeQuoteSection" aria-live="polite" style="display:none;">
         <div class="landing-anime-quotes__title">Anime quote spotlight</div>
         <blockquote class="landing-anime-quotes__quote" id="landingAnimeQuoteText"></blockquote>
@@ -351,9 +344,8 @@
           </button>
         </div>
       </div>
-      <button id="themeMenuBtn" class="toggle-btn landing-settings-btn" data-layout-item="userSettings" type="button">
+      <button id="themeMenuBtn" class="toggle-btn landing-settings-btn" data-layout-item="userSettings" type="button" aria-label="User settings" title="User settings">
         <span class="landing-settings-icon" aria-hidden="true">⚙</span>
-        <span>User settings</span>
       </button>
       </div>
     </div>
@@ -390,25 +382,11 @@
 
   <!-- SETTINGS VIEW -->
   <div class="container settings-view" id="settingsView" style="display:none;">
-    <h1>User settings</h1>
-    <div class="settings-card">
-      <div class="settings-card__title">Desktop zipper</div>
-      <p class="hint-text">Open the Python helper, choose Drop and Final folders, and click Connect to Sidekick. Paste its private pairing code here.</p>
-      <label for="desktopZipPairCode">Pairing code</label><input id="desktopZipPairCode" type="password" autocomplete="off" />
-      <div class="mini-row"><button id="desktopZipPairBtn" class="toggle-btn" type="button">Pair helper</button><button id="desktopZipDisconnectBtn" class="toggle-btn" type="button">Use manual ZIP workflow</button></div>
-      <p id="desktopZipStatus" class="status-line" role="status"></p>
-    </div>
-    <p class="complete-intro">Manage your profile details and theme preferences.</p>
+    <header class="settings-heading"><span class="settings-eyebrow">PERSONALIZE YOUR WORKSPACE</span><h1>User settings</h1><p class="complete-intro">Make Sidekick work your way.</p></header>
     <div class="settings-panel">
-      <div class="settings-card">
-        <div class="settings-card__title">Supabase connection</div>
-        <p class="hint-text">Project: Trials CRM Sidekick</p>
-        <p class="hint-text">Check the connection before setting up cloud features.</p>
-        <button id="supabaseTestConnectionBtn" class="toggle-btn settings-card__action" type="button">Test connection</button>
-        <div id="supabaseConnectionStatus" class="status-line" role="status" aria-live="polite">Connection has not been tested.</div>
-      </div>
-      <div class="settings-card">
-        <div class="settings-card__title">User profile</div>
+      <details class="settings-card settings-group" open>
+        <summary><span class="settings-group__icon" aria-hidden="true">☰</span><span><strong>Profile &amp; landing</strong><small>Your profile and everyday preferences</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary>
+        <div class="settings-group__body">
         <p class="hint-text">Update your name, daily and weekly counter preferences, and workbook connections.</p>
         <label class="checkbox-row" for="settingsTooltipToggle">
           <input type="checkbox" id="settingsTooltipToggle" />
@@ -434,8 +412,10 @@
           Edit user profile
         </button>
       </div>
-      <div class="settings-card">
-        <div class="settings-card__title">Theme picker</div>
+      </details>
+      <details class="settings-card settings-group">
+        <summary><span class="settings-group__icon" aria-hidden="true">◐</span><span><strong>Appearance</strong><small>Themes, custom colors and imports</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary>
+        <div class="settings-group__body">
         <div class="theme-menu" aria-live="polite">
           <div class="theme-menu__title">Pick a theme</div>
           <div id="themeCurrentLabel" class="theme-current">Current theme: —</div>
@@ -466,7 +446,23 @@
           </div>
         </div>
       </div>
-
+      </details>
+      <details class="settings-card settings-group">
+        <summary><span class="settings-group__icon" aria-hidden="true">↔</span><span><strong>Connections</strong><small>Desktop zipper pairing and cloud status</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary>
+        <div class="settings-group__body"><section class="settings-connection">
+      <div class="settings-card__title">Desktop zipper</div>
+      <p class="hint-text">Open the Python helper, choose Drop and Final folders, and click Connect to Sidekick. Paste its private pairing code here.</p>
+      <label for="desktopZipPairCode">Pairing code</label><input id="desktopZipPairCode" type="password" autocomplete="off" />
+      <div class="mini-row"><button id="desktopZipPairBtn" class="toggle-btn" type="button">Pair helper</button><button id="desktopZipDisconnectBtn" class="toggle-btn" type="button">Disconnect helper</button></div>
+      <p id="desktopZipStatus" class="status-line" role="status"></p>
+    </section><section class="settings-connection">
+        <div class="settings-card__title">Supabase connection</div>
+        <p class="hint-text">Project: Trials CRM Sidekick</p>
+        <p class="hint-text">Check the connection before setting up cloud features.</p>
+        <button id="supabaseTestConnectionBtn" class="toggle-btn settings-card__action" type="button">Test connection</button>
+        <div id="supabaseConnectionStatus" class="status-line" role="status" aria-live="polite">Connection has not been tested.</div>
+      </section></div>
+      </details>
     </div>
     <div class="crm-nav-footer">
       <button id="settingsReturnBtn" class="toggle-btn" type="button">
@@ -586,9 +582,8 @@
                 <button class="toggle-btn landing-btn" type="button">APP Overrides</button>
               </div>
             </div>
-            <button class="toggle-btn landing-settings-btn" data-layout-item="userSettings" type="button">
+            <button class="toggle-btn landing-settings-btn" data-layout-item="userSettings" type="button" aria-label="User settings" title="User settings">
               <span class="landing-settings-icon" aria-hidden="true">⚙</span>
-              <span>User settings</span>
             </button>
             </div>
           </div>
@@ -1171,21 +1166,11 @@
         <input type="text" name="accessories" />
       </div>
 
-      <!-- Saved zip files -->
+      <!-- Desktop ZIP progress -->
       <div class="upload-block">
-        <label>Saved zips folder</label>
-        <button class="toggle-btn" id="trialFilesFolderPickBtn" type="button">
-          Choose saved zips folder
-        </button>
-        <button class="toggle-btn" id="trialFilesFolderRefreshBtn" type="button">
-          Refresh folder access
-        </button>
-        <div id="trialFilesFolderStatus" class="status-line">No saved zips folder selected yet.</div>
-        <div class="hint-text">
-          Sidekick will rename <strong>Current Checkin.zip</strong> and <strong>Current Grid user.zip</strong>
-          in this folder when you click Next Step.
-        </div>
-        <div id="trialFilesStatus" class="status-line">Waiting to rename saved zip files.</div>
+        <label>Desktop zipper</label>
+        <p class="hint-text">Keep your paired desktop helper open. Next Step creates and names your vocabulary ZIPs automatically.</p>
+        <div id="trialFilesStatus" class="status-line">Ready to request zipping.</div>
         <div id="renameWorkflowStatusBar" class="workflow-progress" style="display:none;" aria-live="polite">
           <div id="renameWorkflowStatusFill" class="workflow-progress__fill"></div>
         </div>
@@ -1328,6 +1313,7 @@
   </dialog>
   <script src="libs/supabase.min.js"></script>
   <script src="workers/supabase-connection.js"></script>
+  <script src="workers/role-verification.js"></script>
   <script src="workers/desktop-zip.js"></script>
   <script src="workers/supabase-panel-connection.js"></script>
   <script src="workers/queue-layout.js"></script>

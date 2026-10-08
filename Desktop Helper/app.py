@@ -272,7 +272,14 @@ class SidekickDesktopApp:
                     try:
                         names = self.bridge.decrypt(job)
                         self.bridge_events.put(("zip", (job["id"], names)))
-                        ok, result = self.bridge_results.get()
+                        while True:
+                            ok, result = self.bridge_results.get()
+                            if ok is not None:
+                                break
+                            try:
+                                self.bridge.rpc("zip_progress", {"p_id": job["id"], "p_percent": result["percent"], "p_phase": result["phase"]})
+                            except Exception:
+                                pass
                     except Exception:
                         ok, result = False, {"error": "The encrypted request could not be read. Check pairing."}
                     self.bridge.complete(job["id"], ok, result)
@@ -309,7 +316,11 @@ class SidekickDesktopApp:
                     self.zip_status_var.set("Sidekick requested zipping…")
                     self.root.update_idletasks()
                     try:
-                        result = zip_drop_folder(self.drop_folder, self.final_folder, data[1])
+                        def progress(percent, phase):
+                            self.zip_status_var.set(f"{phase.title()}: {percent}%")
+                            self.root.update_idletasks()
+                            self.bridge_results.put((None, {"percent": percent, "phase": phase}))
+                        result = zip_drop_folder(self.drop_folder, self.final_folder, data[1], progress=progress)
                         self.zip_status_var.set("ZIPs saved with final names. Sidekick can continue.")
                         self.bridge_results.put((True, result))
                     except Exception as exc:

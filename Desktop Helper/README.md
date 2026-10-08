@@ -80,3 +80,7 @@ Because the repository is private, users need GitHub access plus their own fine-
 Download SmartboxVocabZipper-Setup-1.2.1.exe from the full Sidekick V3.0.2 release. Install for your Windows user; no administrator access or Python installation is required. Start-menu and optional desktop shortcuts are provided. Uninstall through Windows Installed apps. Saved AppData folders and pairing are retained during upgrades and uninstall.
 
 The repository is now public: GitHub sign-in and update tokens are not required. Future update checks prefer versioned Windows installer assets over portable executable downloads, including in combined Sidekick releases.
+
+### Live ZIP progress (helper 1.2.2)
+
+Sidekick now requires the paired helper when vocabulary is returned; its former Saved Zips Folder/rename fallback is removed. The helper reports compression progress by bytes, archive verification, final saving and cleanup through authenticated Supabase progress updates. The extension polls those updates while waiting. Progress carries no client names or filenames. Keep helper 1.2.2 open. Vocab NOT returned still skips zipping.

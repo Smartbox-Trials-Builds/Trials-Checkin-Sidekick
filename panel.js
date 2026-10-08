@@ -33,8 +33,6 @@ const CHECKIN_CLEANUP_FOLDER_NAME_STORAGE_KEY = "ttmtCheckinCleanupFolderName";
 const CHECKIN_CLEANUP_HANDLE_DB = "ttmtSidekickHandles";
 const CHECKIN_CLEANUP_HANDLE_STORE = "handles";
 const CHECKIN_CLEANUP_HANDLE_KEY = "checkinCleanupFolder";
-const TRIAL_FILES_FOLDER_NAME_STORAGE_KEY = "ttmtTrialFilesFolderName";
-const TRIAL_FILES_HANDLE_KEY = "trialFilesFolder";
 const LOGS_FOLDER_NAME_STORAGE_KEY = "ttmtLogsFolderName";
 const LOGS_HANDLE_KEY = "logsFolder";
 const LOGS_SHAREPOINT_FOLDER_URL = "https://talktometechnologies2com.sharepoint.com/sites/TrialsSharePoint2/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FTrialsSharePoint2%2FShared%20Documents%2FTrials%20Operations%2FCRM%20Sidekick%20%2D%20Browser%20Ext%2FLogs&viewid=c09dd3c3%2Dbe9b%2D48f7%2D9635%2D46c9f9037922";
@@ -3846,7 +3844,16 @@ async function initOnboardingForm() {
   }
 
   const existingProfile = await getUserProfile();
-  if (roleInput) roleInput.value = existingProfile?.role || "";
+  if (roleInput) {
+    roleInput.value = existingProfile?.role || "";
+    roleInput.addEventListener("change", async () => {
+      if (roleInput.value !== "Device Systems Coordinator") return;
+      roleInput.disabled = true;
+      try { if (!(await globalThis.verifyDeviceSystemsRole())) roleInput.value = "Device Coordinator"; }
+      catch(error) { roleInput.value = "Device Coordinator"; saveStatus.textContent = error.message; }
+      finally { roleInput.disabled = false; }
+    });
+  }
   if (initialsInput) initialsInput.value = existingProfile?.dashboardInitials || "";
   if (existingProfile && firstNameInput) {
     firstNameInput.value = existingProfile.firstName || "";
@@ -3919,6 +3926,10 @@ async function initOnboardingForm() {
   }
 
   if (!form) return;
+  form.addEventListener("invalid", event => {
+    let section = event.target.closest("details");
+    while (section) { section.open = true; section = section.parentElement.closest("details"); }
+  }, true);
   form.addEventListener("submit", async event => {
     event.preventDefault();
     if (saving || !form.reportValidity()) return;
@@ -3938,6 +3949,7 @@ async function initOnboardingForm() {
     }
 
     const role = roleInput.value;
+    if (role === "Device Systems Coordinator" && !(await globalThis.verifyDeviceSystemsRole())) { roleInput.value = "Device Coordinator"; return; }
     const dashboardInitials = initialsInput.value.trim();
     if (!dashboardInitials) {
       saveStatus.textContent = "Please enter your Dashboard Initials.";
@@ -4120,9 +4132,6 @@ function initThemeControls() {
 
 const cleanupFolderPickBtn = document.getElementById("cleanupFolderPickBtn");
 const cleanupFolderStatus = document.getElementById("cleanupFolderStatus");
-const trialFilesFolderPickBtn = document.getElementById("trialFilesFolderPickBtn");
-const trialFilesFolderRefreshBtn = document.getElementById("trialFilesFolderRefreshBtn");
-const trialFilesFolderStatus = document.getElementById("trialFilesFolderStatus");
 const trialFilesStatus = document.getElementById("trialFilesStatus");
 const renameWorkflowStatusBar = document.getElementById("renameWorkflowStatusBar");
 const renameWorkflowStatusFill = document.getElementById("renameWorkflowStatusFill");
@@ -4356,106 +4365,6 @@ async function initLogFolderSetting() {
   });
 }
 
-function updateTrialFilesFolderStatus(name, messageOverride = null) {
-  if (!trialFilesFolderStatus) return;
-  if (messageOverride) {
-    trialFilesFolderStatus.textContent = messageOverride;
-    return;
-  }
-  if (name) {
-    trialFilesFolderStatus.textContent = `Using "${name}" for saved zips.`;
-    return;
-  }
-  trialFilesFolderStatus.textContent = "No saved zips folder selected yet.";
-}
-
-async function setTrialFilesFolderName(name) {
-  await setStoredValue(TRIAL_FILES_FOLDER_NAME_STORAGE_KEY, name || "");
-  updateTrialFilesFolderStatus(name);
-}
-
-async function getTrialFilesFolderName() {
-  return await getStoredValue(TRIAL_FILES_FOLDER_NAME_STORAGE_KEY);
-}
-
-async function saveTrialFilesFolderHandle(handle) {
-  const db = await openCleanupHandleDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(CHECKIN_CLEANUP_HANDLE_STORE, "readwrite");
-    tx.objectStore(CHECKIN_CLEANUP_HANDLE_STORE).put(handle, TRIAL_FILES_HANDLE_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function loadTrialFilesFolderHandle() {
-  const db = await openCleanupHandleDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(CHECKIN_CLEANUP_HANDLE_STORE, "readonly");
-    const req = tx.objectStore(CHECKIN_CLEANUP_HANDLE_STORE).get(TRIAL_FILES_HANDLE_KEY);
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function getTrialFilesFromFolder(handle) {
-  const files = [];
-  for await (const entry of handle.values()) {
-    if (entry.kind !== "file") continue;
-    const file = await entry.getFile();
-    files.push(file);
-  }
-  return files.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function refreshTrialFilesFromFolder({ promptIfMissing = false, handleOverride = null } = {}) {
-  let handle = handleOverride ?? await loadTrialFilesFolderHandle().catch(() => null);
-  if (!handle && promptIfMissing) {
-    handle = await pickTrialFilesFolder();
-  }
-  if (!handle) return false;
-  const permitted = await verifyFolderPermission(handle, "read");
-  const storedName = await getTrialFilesFolderName();
-  if (!permitted) {
-    updateTrialFilesFolderStatus(storedName, "Folder access blocked. Click Refresh to re-authorize.");
-    return false;
-  }
-  const files = await getTrialFilesFromFolder(handle);
-  updateTrialFilesStatus(storedName
-    ? `Using "${storedName}" (${files.length} file(s)) as the saved zips folder.`
-    : `${files.length} file(s) found in saved zips folder.`);
-  return true;
-}
-
-async function pickTrialFilesFolder() {
-  if (typeof window.showDirectoryPicker !== "function") {
-    alert("Folder picking isn't supported in this browser.");
-    return null;
-  }
-  let handle;
-  try {
-    handle = await window.showDirectoryPicker({ mode: "readwrite" });
-  } catch {
-    return null;
-  }
-  if (!handle) return null;
-  await saveTrialFilesFolderHandle(handle);
-  await setTrialFilesFolderName(handle.name || "Selected folder");
-  await refreshTrialFilesFromFolder({ handleOverride: handle });
-  return handle;
-}
-
-async function initTrialFilesFolderSetting() {
-  const storedName = await getTrialFilesFolderName();
-  updateTrialFilesFolderStatus(storedName);
-  trialFilesFolderPickBtn?.addEventListener("click", async () => {
-    await pickTrialFilesFolder();
-  });
-  trialFilesFolderRefreshBtn?.addEventListener("click", async () => {
-    await refreshTrialFilesFromFolder({ promptIfMissing: true });
-  });
-}
-
 async function initThemeSystem() {
   await loadCustomThemesFromStorage();
   initThemeControls();
@@ -4476,7 +4385,6 @@ initWeeklyAverageSetting();
 void refreshDeviceSystemsTools();
 initCleanupFolderSetting();
 initLogFolderSetting();
-initTrialFilesFolderSetting();
 
 function setValue(id, val) {
   const el = document.getElementById(id);
@@ -7728,6 +7636,11 @@ function setRenameWorkflowProgress({ percent = 0, message = "", visible = false 
   if (!renameWorkflowStatusBar || !renameWorkflowStatusFill || !renameWorkflowStatusText) return;
   const clampedPercent = Math.max(0, Math.min(100, Number(percent) || 0));
   renameWorkflowStatusFill.style.width = `${clampedPercent}%`;
+  renameWorkflowStatusBar.setAttribute("role","progressbar");
+  renameWorkflowStatusBar.setAttribute("aria-label","Vocabulary ZIP progress");
+  renameWorkflowStatusBar.setAttribute("aria-valuemin","0");
+  renameWorkflowStatusBar.setAttribute("aria-valuemax","100");
+  renameWorkflowStatusBar.setAttribute("aria-valuenow",String(clampedPercent));
   renameWorkflowStatusText.textContent = message || "";
   renameWorkflowStatusBar.style.display = visible ? "" : "none";
   renameWorkflowStatusText.style.display = visible ? "" : "none";
@@ -7813,87 +7726,6 @@ function buildZipFilenameFromVocabTypes(vocabTypes = []) {
 
 function stripZipExtension(filename = "") {
   return String(filename || "").replace(/\.zip$/i, "");
-}
-
-function findEntryNameIgnoreCase(entries, expectedName) {
-  const target = (expectedName || "").toLowerCase();
-  return entries.find(name => name.toLowerCase() === target) || null;
-}
-
-async function renameFileInFolder(folderHandle, entries, fromName, toName) {
-  const sourceName = findEntryNameIgnoreCase(entries, fromName);
-  if (!sourceName || !toName || sourceName === toName) {
-    return false;
-  }
-
-  const sourceHandle = await folderHandle.getFileHandle(sourceName);
-  const sourceFile = await sourceHandle.getFile();
-
-  const existingTarget = findEntryNameIgnoreCase(entries, toName);
-  if (existingTarget) {
-    await folderHandle.removeEntry(existingTarget);
-  }
-
-  const targetHandle = await folderHandle.getFileHandle(toName, { create: true });
-  const writable = await targetHandle.createWritable({ keepExistingData: false });
-  await writable.write(sourceFile);
-  await writable.close();
-  await folderHandle.removeEntry(sourceName);
-  return true;
-}
-
-async function renameSavedZipFilesForCheckin() {
-  let checkinName = "";
-  let gridName = "";
-  const folderHandle = await loadTrialFilesFolderHandle().catch(() => null);
-  if (!folderHandle) {
-    updateTrialFilesStatus("No saved zips folder selected. Skipping zip rename.", true);
-    return { renamed: [], skipped: ["folder-missing"], checkinName, gridName };
-  }
-
-  const permitted = await verifyFolderPermission(folderHandle, "readwrite");
-  if (!permitted) {
-    updateTrialFilesStatus("Saved zips folder access blocked. Re-authorize in settings.", true);
-    return { renamed: [], skipped: ["permission-blocked"], checkinName, gridName };
-  }
-
-  const vocabNotReturned = document.getElementById("vocabNotReturned")?.checked === true;
-  if (vocabNotReturned) {
-    updateTrialFilesStatus("Vocab not returned selected. No zip rename needed.");
-    return { renamed: [], skipped: ["vocab-not-returned"], checkinName, gridName };
-  }
-
-  const selectedVocabs = getSelectedVocabTypes();
-  const nonGridVocabs = selectedVocabs.filter(type => type !== "Grid");
-  const shouldRenameGridZip = selectedVocabs.includes("Grid");
-  const entries = [];
-  for await (const [name] of folderHandle.entries()) {
-    entries.push(name);
-  }
-
-  const renamed = [];
-  const skipped = [];
-
-  if (nonGridVocabs.length) {
-    checkinName = buildZipFilenameFromVocabTypes(nonGridVocabs);
-    const didRename = await renameFileInFolder(folderHandle, entries, "Current Checkin.zip", checkinName);
-    if (didRename) renamed.push(checkinName);
-    else skipped.push("Current Checkin.zip");
-  }
-
-  if (shouldRenameGridZip) {
-    gridName = buildZipFilenameFromVocabTypes(["Grid"]);
-    const didRenameGrid = await renameFileInFolder(folderHandle, entries, "Current Grid user.zip", gridName);
-    if (didRenameGrid) renamed.push(gridName);
-    else skipped.push("Current Grid user.zip");
-  }
-
-  if (renamed.length) {
-    updateTrialFilesStatus(`Renamed ${renamed.length} saved zip file(s).`);
-  } else {
-    updateTrialFilesStatus("No matching saved zip files found to rename.", true);
-  }
-  return { renamed, skipped, checkinName, gridName };
 }
 
 function renderRenamedFileCopyFields({ checkinName = "", gridName = "" } = {}) {
@@ -7985,7 +7817,7 @@ function resetAllFieldsAndUI() {
   setText("notePreviewText", "");
   setText("completeIntro", "");
   renderRenamedFileCopyFields({});
-  updateTrialFilesStatus("Waiting to rename saved zip files.");
+  updateTrialFilesStatus("Ready to request zipping.");
   setRenameWorkflowProgress();
   setText("inventoryStatus", "");
 }
@@ -8030,17 +7862,19 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
       visible: true
     });
 
-    // Paired helpers produce the final filenames directly; unpaired users retain the manual workflow.
+    // The paired helper creates final-named ZIPs and reports actual ZIP progress.
     const selectedVocabs = getSelectedVocabTypes();
     const nonGridVocabs = selectedVocabs.filter(type => type !== 'Grid');
     const names = {checkinName:nonGridVocabs.length ? buildZipFilenameFromVocabTypes(nonGridVocabs) : '',gridName:selectedVocabs.includes('Grid') ? buildZipFilenameFromVocabTypes(['Grid']) : ''};
-    setRenameWorkflowProgress({percent:35,message:'Working: preparing vocabulary ZIP files…',visible:true});
+    setRenameWorkflowProgress({percent:0,message:'Waiting for desktop helper…',visible:true});
     let renamedZipResult;
     if (document.getElementById('vocabNotReturned')?.checked) renamedZipResult = {renamed:[],skipped:['vocab-not-returned'],checkinName:'',gridName:''};
-    else renamedZipResult = await globalThis.sidekickDesktopZip.zip(names);
-    if (!renamedZipResult) { await refreshTrialFilesFromFolder(); renamedZipResult = await renameSavedZipFilesForCheckin(); }
+    else renamedZipResult = await globalThis.sidekickDesktopZip.zip(names, ({percent,phase}) => {
+      const labels = {waiting:'Waiting for desktop helper',zipping:'Compressing vocabulary files',verifying:'Verifying ZIP archives',saving:'Saving final ZIPs',cleanup:'Finishing ZIP files',done:'ZIP files ready'};
+      setRenameWorkflowProgress({percent,message:(labels[phase] || 'Zipping files') + ' — ' + percent + '%',visible:true});
+    });
     setRenameWorkflowProgress({
-      percent: 65,
+      percent: 100,
       message: "Working: updating CRM note and opening Documents tab…",
       visible: true
     });
@@ -8102,7 +7936,7 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
     });
     const renamedSummary = renamedZipResult.renamed.length
       ? ` Files: ${renamedZipResult.renamed.join(" | ")}.`
-      : " No matching Current Checkin.zip / Current Grid user.zip files were renamed.";
+      : " No vocabulary ZIP files were needed.";
     const uploadMessage = `CRM note submitted. Upload your prepared ZIP file(s) to the Documents tab.${renamedSummary}`;
     setText("completeIntro", uploadMessage);
     renderRenamedFileCopyFields({
@@ -8111,7 +7945,7 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
     });
     showCompleteView();
   } catch (error) {
-    setRenameWorkflowProgress({percent:35,message:error.message || 'Could not prepare ZIP files.',visible:true});
+    setRenameWorkflowProgress({percent:parseFloat(renameWorkflowStatusFill?.style.width) || 0,message:error.message || 'Could not prepare ZIP files.',visible:true});
     updateTrialFilesStatus(error.message || 'Could not prepare ZIP files.',true);
     alert(error.message || 'Could not prepare ZIP files.');
   } finally {
@@ -8567,7 +8401,7 @@ async function setCurrentTimecardPunch(field) {
     setActiveCheckinFlow(CHECKIN_FLOW.CHECKIN);
     updateDeviceRules();
     showFormView();
-    await refreshTrialFilesFromFolder();
+
     const activeTab = await getActiveCrmTab();
     await syncViewForTab(activeTab);
   });

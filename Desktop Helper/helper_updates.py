@@ -6,7 +6,7 @@ import ctypes
 from ctypes import wintypes
 from pathlib import Path
 
-HELPER_VERSION = "1.2.1"
+HELPER_VERSION = "1.2.2"
 UPDATE_REPOSITORY = "Smartbox-Trials-Builds/Trials-Checkin-Sidekick"
 ASSET_NAME = "SmartboxVocabZipper.exe"
 TOKEN_PATH = Path.home() / "AppData" / "Roaming" / "SmartboxVocabZipper" / "github-update-token.bin"

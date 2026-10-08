@@ -25,7 +25,7 @@
   async function updateStatus() {
     try {
       const link = await getLink();
-      if (!link) { status.textContent = 'Not paired. Existing manual ZIP workflow is active.'; return; }
+      if (!link) { status.textContent = 'Not paired. Pair the desktop helper before zipping vocabulary files.'; return; }
       const {data,error} = await client.from('sidekick_desktop_links').select('heartbeat,owner_id').eq('helper_id',link.helperId).single();
       status.textContent = !error && data.owner_id === link.ownerId && Date.now()-new Date(data.heartbeat).getTime()<30000 ? 'Helper paired and online. Next Step will zip and name files automatically.' : 'Helper paired but offline. Open it and click Connect to Sidekick.';
     } catch(error) { status.textContent = error.message; }
@@ -46,9 +46,9 @@
     finally { button.disabled = false; }
   });
   document.getElementById('desktopZipDisconnectBtn').addEventListener('click',async () => { await chrome.storage.local.remove(LINK); await updateStatus(); });
-  async function zip(names) {
+  async function zip(names, onProgress = () => {}) {
     const link = await getLink();
-    if (!link) return null;
+    if (!link) throw new Error("Pair the desktop zipper in User settings before continuing.");
     const signature = JSON.stringify(names);
     let request = (await chrome.storage.session.get(REQUEST))[REQUEST];
     if (request && request.signature !== signature) throw new Error('A different ZIP request is still recorded. Finish or check that request before changing the client.');
@@ -58,10 +58,11 @@
     }
     const {error} = await client.rpc('sidekick_request_zip',{p_helper:link.helperId,p_id:request.id,p_payload:await encrypt(link.code,request.id,names)});
     if (error) throw new Error(error.message);
-    const deadline = Date.now()+120000;
+    const deadline = Date.now()+1800000;
     while (Date.now()<deadline) {
-      const {data,error} = await client.from('sidekick_zip_jobs').select('status,result').eq('id',request.id).single();
+      const {data,error} = await client.from('sidekick_zip_jobs').select('status,result,progress,phase').eq('id',request.id).single();
       if (error) throw new Error('Could not check ZIP progress. Keep the helper open and click Next Step again to check the same request.');
+      onProgress({percent:data.status === 'done' ? 100 : data.progress || 0,phase:data.phase || 'waiting'});
       if (data.status==='done' || data.status==='failed') {
         const result = await decrypt(link.code,request.id,data.result);
         if (data.status==='failed') { await chrome.storage.session.remove(REQUEST); throw new Error(result.error || 'The helper could not zip the files.'); }

@@ -3,10 +3,11 @@ import json
 import re
 import urllib.request
 import ctypes
+import hashlib
 from ctypes import wintypes
 from pathlib import Path
 
-HELPER_VERSION = "1.2.2"
+HELPER_VERSION = "1.2.3"
 UPDATE_REPOSITORY = "Smartbox-Trials-Builds/Trials-Checkin-Sidekick"
 ASSET_NAME = "SmartboxVocabZipper.exe"
 TOKEN_PATH = Path.home() / "AppData" / "Roaming" / "SmartboxVocabZipper" / "github-update-token.bin"
@@ -72,8 +73,50 @@ def check_updates():
             version = version_tuple(installer.group(1)) if installer else version_tuple(release.get("tag_name", "")) if release.get("tag_name", "").startswith("zipper-") and name == ASSET_NAME else None
             url = asset.get("browser_download_url", "")
             if version and url.startswith(f"https://github.com/{UPDATE_REPOSITORY}/releases/download/"):
-                candidates.append((version, bool(installer), url))
+                candidates.append({"version_tuple": version, "installer": bool(installer), "url": url,
+                                   "digest": asset.get("digest"), "size": asset.get("size"), "name": name})
     if not candidates:
         return {"state": "unavailable", "url": f"https://github.com/{UPDATE_REPOSITORY}/releases"}
-    version, installer, url = max(candidates)
-    return {"state": "available" if version > version_tuple(HELPER_VERSION) else "current", "version": '.'.join(map(str,version)), "url": url}
+    chosen = max(candidates, key=lambda item: (item["version_tuple"], item["installer"]))
+    return {**chosen, "state": "available" if chosen["version_tuple"] > version_tuple(HELPER_VERSION) else "current",
+            "version": '.'.join(map(str,chosen["version_tuple"]))}
+
+
+def download_update(update, folder, progress=None):
+    if not update.get("installer") or not re.fullmatch(r"SmartboxVocabZipper-Setup-\d+\.\d+\.\d+\.exe", update.get("name", "")):
+        raise ValueError("This release does not have a supported Windows installer.")
+    digest = update.get("digest", "") or ""
+    if not re.fullmatch(r"sha256:[a-fA-F0-9]{64}", digest):
+        raise ValueError("The release has no verified SHA-256 digest. Update was not started.")
+    if not update["url"].startswith(f"https://github.com/{UPDATE_REPOSITORY}/releases/download/"):
+        raise ValueError("Invalid update download source.")
+    expected_size = update.get("size")
+    if not isinstance(expected_size, int) or not 1024 <= expected_size <= 200 * 1024 * 1024:
+        raise ValueError("Invalid installer size.")
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / update["name"]
+    partial = target.with_suffix(".part")
+    received = 0
+    checksum = hashlib.sha256()
+    try:
+        request = urllib.request.Request(update["url"], headers={"User-Agent": "Sidekick-Zipper/" + HELPER_VERSION})
+        with urllib.request.urlopen(request, timeout=30) as response, partial.open("wb") as output:
+            while True:
+                chunk = response.read(256 * 1024)
+                if not chunk:
+                    break
+                received += len(chunk)
+                if received > expected_size:
+                    raise ValueError("Installer size verification failed.")
+                checksum.update(chunk)
+                output.write(chunk)
+                if progress:
+                    progress(int(received * 100 / expected_size))
+        if received != expected_size or checksum.hexdigest() != digest.split(":", 1)[1].lower():
+            raise ValueError("Installer verification failed. The zipper will remain open.")
+        partial.replace(target)
+        return target
+    except Exception:
+        partial.unlink(missing_ok=True)
+        raise

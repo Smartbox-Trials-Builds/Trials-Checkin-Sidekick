@@ -1,5 +1,5 @@
 #define AppName "Smartbox Vocab Zipper"
-#define AppVersion "1.2.2"
+#define AppVersion "1.2.3"
 #define AppPublisher "Sidekick"
 #define AppExeName "SmartboxVocabZipper.exe"
 #define AppId "{{D476B0F0-28D6-4BE8-89E9-56D2DA3EA62D}"
@@ -41,3 +41,5 @@ Name: "{autodesktop}\Smartbox Vocab Zipper"; Filename: "{app}\{#AppExeName}"; Ta
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Launch Smartbox Vocab Zipper"; Flags: nowait postinstall skipifsilent
+
+Filename: "{app}\{#AppExeName}"; Flags: nowait skipifnotsilent

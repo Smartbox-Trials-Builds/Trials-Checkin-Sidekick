@@ -84,3 +84,7 @@ The repository is now public: GitHub sign-in and update tokens are not required.
 ### Live ZIP progress (helper 1.2.2)
 
 Sidekick now requires the paired helper when vocabulary is returned; its former Saved Zips Folder/rename fallback is removed. The helper reports compression progress by bytes, archive verification, final saving and cleanup through authenticated Supabase progress updates. The extension polls those updates while waiting. Progress carries no client names or filenames. Keep helper 1.2.2 open. Vocab NOT returned still skips zipping.
+
+### In-app update installation (helper 1.2.3)
+
+After confirming an available update, the helper downloads its Windows installer directly without opening a browser. It verifies the exact download size and GitHub SHA-256 asset digest before execution, waits for active ZIP requests and acknowledgements, closes the helper, and launches the installer. Silent updates relaunch the helper after installation. Download/verification failures leave the current helper open. Folder settings and pairing remain in AppData. Older helper versions require installing 1.2.3 once before this in-app update flow is available.

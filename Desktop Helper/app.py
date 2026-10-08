@@ -5,8 +5,8 @@ import sys
 import threading
 import queue
 import time
-import webbrowser
-from helper_updates import HELPER_VERSION, UPDATE_REPOSITORY, check_updates, save_token
+import subprocess
+from helper_updates import HELPER_VERSION, UPDATE_REPOSITORY, check_updates, save_token, download_update
 from urllib.error import HTTPError
 from cloud_bridge import CloudBridge
 from zip_engine import zip_drop_folder
@@ -23,13 +23,13 @@ GRID_USER_EXTENSION = ".grid3user"
 GRID_USER_ZIP_NAME = "Current Grid User.zip"
 CHECKIN_ZIP_NAME = "Current Checkin.zip"
 
-SIDEKICK_BG = "#121212"
-SIDEKICK_NAVY = "#e0e0e0"
-SIDEKICK_BLUE = "#81cfff"
-SIDEKICK_ORANGE = "#003366"
-SIDEKICK_MUTED = "#d5e9ff"
-SIDEKICK_INPUT_BG = "#2a2a3a"
-SIDEKICK_BORDER = "#81cfff"
+SIDEKICK_BG = "#101722"
+SIDEKICK_NAVY = "#e5edf7"
+SIDEKICK_BLUE = "#79b8ff"
+SIDEKICK_ORANGE = "#245c94"
+SIDEKICK_MUTED = "#9badc4"
+SIDEKICK_INPUT_BG = "#182333"
+SIDEKICK_BORDER = "#30435b"
 STATUS_CONNECTED = "#31c553"
 STATUS_DISCONNECTED = "#d44a4a"
 
@@ -73,8 +73,8 @@ class SidekickDesktopApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title(APP_NAME + " v" + HELPER_VERSION)
-        self.root.geometry("700x400")
-        self.root.minsize(680, 360)
+        self.root.geometry("450x350")
+        self.root.minsize(420, 340)
 
         self.config_store = ConfigStore()
         config = self.config_store.load()
@@ -92,6 +92,8 @@ class SidekickDesktopApp:
         self._refresh_connection_indicators()
         self.refresh_file_count()
         self.bridge = None
+        self.updating = False
+        self.bridge_gate = threading.Lock()
         self.bridge_events = queue.Queue()
         self.bridge_results = queue.Queue()
         self.root.after(250, self._handle_bridge_events)
@@ -102,10 +104,13 @@ class SidekickDesktopApp:
         style.theme_use("clam")
 
         style.configure("Root.TFrame", background=SIDEKICK_BG)
-        style.configure("TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 10))
-        style.configure("Title.TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 19, "bold"))
+        style.configure("Card.TFrame", background=SIDEKICK_INPUT_BG)
+        style.configure("Card.TLabel", background=SIDEKICK_INPUT_BG, foreground=SIDEKICK_MUTED, font=("Segoe UI", 9))
+        style.configure("Compact.TButton", background=SIDEKICK_INPUT_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 8), padding=(6, 4), borderwidth=1, bordercolor=SIDEKICK_BORDER)
+        style.configure("TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 9))
+        style.configure("Title.TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 16, "bold"))
         style.configure("Subtitle.TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_MUTED, font=("Segoe UI", 10))
-        style.configure("Field.TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 10, "bold"))
+        style.configure("Field.TLabel", background=SIDEKICK_BG, foreground=SIDEKICK_NAVY, font=("Segoe UI", 9, "bold"))
 
         style.configure(
             "Primary.TButton",
@@ -114,20 +119,20 @@ class SidekickDesktopApp:
             font=("Segoe UI", 10, "bold"),
             bordercolor=SIDEKICK_BORDER,
             borderwidth=1,
-            padding=(12, 7),
+            padding=(9, 5),
         )
         style.map("Primary.TButton", background=[("active", "#005599"), ("pressed", "#002a55")])
 
         style.configure(
             "Secondary.TButton",
-            background=SIDEKICK_BLUE,
-            foreground="#121212",
+            background=SIDEKICK_INPUT_BG,
+            foreground=SIDEKICK_NAVY,
             font=("Segoe UI", 10, "bold"),
             bordercolor=SIDEKICK_BORDER,
             borderwidth=1,
             padding=(12, 7),
         )
-        style.map("Secondary.TButton", background=[("active", "#9ad8ff"), ("pressed", "#66bfff")])
+        style.map("Secondary.TButton", background=[("active", "#253951"), ("pressed", "#1b2b40")])
 
         style.configure(
             "TEntry",
@@ -137,64 +142,46 @@ class SidekickDesktopApp:
         )
 
     def _build_ui(self) -> None:
-        root_frame = ttk.Frame(self.root, padding=20, style="Root.TFrame")
+        root_frame = ttk.Frame(self.root, padding=12, style="Root.TFrame")
         root_frame.pack(fill=tk.BOTH, expand=True)
-
         header = ttk.Frame(root_frame, style="Root.TFrame")
         header.pack(fill=tk.X)
-        ttk.Label(header, text=APP_NAME + " v" + HELPER_VERSION, style="Title.TLabel").pack(side=tk.LEFT)
-        self.update_button = ttk.Button(header, text="Check for updates", command=self.check_for_updates)
+        ttk.Label(header, text="Vocab Zipper", style="Title.TLabel").pack(side=tk.LEFT)
+        self.update_button = ttk.Button(header, text="Check for updates", style="Compact.TButton", command=self.check_for_updates)
         self.update_button.pack(side=tk.RIGHT)
-        ttk.Label(
-            root_frame,
-            text="Connect your Drop and Final folders, then zip and move check-in files in one click.",
-            style="Subtitle.TLabel",
-        ).pack(anchor="w", pady=(0, 20))
-
-        self._build_folder_row(
-            parent=root_frame,
-            label="Drop folder",
-            browse_command=self.select_drop_folder,
-            indicator_name="drop",
-        )
-        self._build_folder_row(
-            parent=root_frame,
-            label="Final folder",
-            browse_command=self.select_final_folder,
-            indicator_name="final",
-        )
-
+        ttk.Label(root_frame, text="Desktop companion  ·  v" + HELPER_VERSION, style="Subtitle.TLabel").pack(anchor="w", pady=(2, 10))
+        self.folder_labels = {}
+        self._build_folder_row(root_frame, "Drop folder", self.select_drop_folder, "drop")
+        self._build_folder_row(root_frame, "Final folder", self.select_final_folder, "final")
         info_box = ttk.Frame(root_frame, style="Root.TFrame")
-        info_box.pack(fill=tk.X, pady=(10, 12))
+        info_box.pack(fill=tk.X, pady=(5, 8))
         ttk.Label(info_box, textvariable=self.file_count_var, style="Field.TLabel").pack(side=tk.LEFT)
-        ttk.Button(info_box, text="Refresh", style="Secondary.TButton", command=self.refresh_file_count).pack(side=tk.LEFT, padx=(10, 0))
-
+        ttk.Button(info_box, text="Refresh", style="Compact.TButton", command=self.refresh_file_count).pack(side=tk.RIGHT)
         actions = ttk.Frame(root_frame, style="Root.TFrame")
         actions.pack(fill=tk.X)
-        ttk.Button(actions, text="Connect to Sidekick", command=self.connect_sidekick).pack(side=tk.LEFT, padx=(0, 8))
-        ttk.Button(actions, text="Zip & Move Files", style="Primary.TButton", command=self.zip_and_move_files).pack(side=tk.LEFT)
-        ttk.Label(root_frame, textvariable=self.bridge_status_var, style="Field.TLabel").pack(anchor="w", pady=(8, 0))
-        ttk.Label(root_frame, textvariable=self.zip_status_var, style="Field.TLabel", wraplength=640).pack(anchor="w", pady=(4, 0))
+        actions.columnconfigure(0, weight=1)
+        actions.columnconfigure(1, weight=1)
+        ttk.Button(actions, text="Connect to Sidekick", style="Primary.TButton", command=self.connect_sidekick).grid(row=0, column=0, sticky="ew", padx=(0, 5))
+        ttk.Button(actions, text="Zip & Move Files", style="Secondary.TButton", command=self.zip_and_move_files).grid(row=0, column=1, sticky="ew")
+        status_card = ttk.Frame(root_frame, padding=8, style="Card.TFrame")
+        status_card.pack(fill=tk.X, pady=(10, 0))
+        ttk.Label(status_card, textvariable=self.bridge_status_var, style="Card.TLabel", wraplength=375).pack(anchor="w")
+        ttk.Label(status_card, textvariable=self.zip_status_var, style="Card.TLabel", wraplength=375).pack(anchor="w", pady=(3, 0))
 
-    def _build_folder_row(self, parent: ttk.Frame, label: str, browse_command, indicator_name: str) -> None:
-        row = ttk.Frame(parent, style="Root.TFrame")
-        row.pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(row, text=f"{label}:", style="Field.TLabel", width=12).pack(side=tk.LEFT)
-        indicator_canvas = tk.Canvas(
-            row,
-            width=14,
-            height=14,
-            bg=SIDEKICK_BG,
-            highlightthickness=0,
-            bd=0,
-        )
-        indicator_canvas.create_oval(2, 2, 12, 12, fill=STATUS_DISCONNECTED, outline=STATUS_DISCONNECTED)
-        indicator_canvas.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(8, 8))
-        if indicator_name == "drop":
-            self.drop_indicator_canvas = indicator_canvas
-        elif indicator_name == "final":
-            self.final_indicator_canvas = indicator_canvas
-        ttk.Button(row, text="Connect", style="Secondary.TButton", command=browse_command).pack(side=tk.RIGHT)
+    def _build_folder_row(self, parent, label, browse_command, indicator_name):
+        row = ttk.Frame(parent, padding=(8, 6), style="Card.TFrame")
+        row.pack(fill=tk.X, pady=(0, 5))
+        indicator = tk.Canvas(row, width=12, height=12, bg=SIDEKICK_INPUT_BG, highlightthickness=0, bd=0)
+        indicator.create_oval(2, 2, 10, 10, fill=STATUS_DISCONNECTED, outline=STATUS_DISCONNECTED)
+        indicator.pack(side=tk.LEFT, padx=(0, 7))
+        setattr(self, indicator_name + "_indicator_canvas", indicator)
+        copy = ttk.Frame(row, style="Card.TFrame")
+        copy.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(copy, text=label, style="Card.TLabel").pack(anchor="w")
+        variable = tk.StringVar(value="Not connected")
+        self.folder_labels[indicator_name] = variable
+        ttk.Label(copy, textvariable=variable, style="Card.TLabel", width=25).pack(anchor="w")
+        ttk.Button(row, text="Choose", style="Compact.TButton", command=browse_command).pack(side=tk.RIGHT, padx=(6, 0))
 
     @staticmethod
     def _is_connected(path: str) -> bool:
@@ -207,6 +194,9 @@ class SidekickDesktopApp:
         indicator_canvas.itemconfig(1, fill=color, outline=color)
 
     def _refresh_connection_indicators(self) -> None:
+        for key, path in [("drop", self.drop_folder), ("final", self.final_folder)]:
+            name = Path(path).name if path else "Not connected"
+            self.folder_labels[key].set(name if len(name) <= 27 else name[:24] + "…")
         self._set_indicator_color(self.drop_indicator_canvas, self._is_connected(self.drop_folder))
         self._set_indicator_color(self.final_indicator_canvas, self._is_connected(self.final_folder))
 
@@ -251,6 +241,36 @@ class SidekickDesktopApp:
                 self.bridge_events.put(("update", {"state": "error", "url": f"https://github.com/{UPDATE_REPOSITORY}/releases"}))
         threading.Thread(target=worker, daemon=True).start()
 
+    def download_and_install_update(self, update):
+        self.update_button.configure(state="disabled")
+        def worker():
+            try:
+                path = download_update(update, CONFIG_DIR / "Updates", lambda percent: self.bridge_events.put(("download_progress", percent)))
+                self.bridge_events.put(("installer_ready", path))
+            except Exception as exc:
+                self.bridge_events.put(("update_failed", str(exc)))
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _launch_update_when_idle(self, installer):
+        if not self.bridge_gate.acquire(blocking=False):
+            self.root.after(500, lambda: self._launch_update_when_idle(installer))
+            return
+        try:
+            if self.bridge and (self.bridge.state.get("active_job") or self.bridge.state.get("pending_ack")):
+                self.root.after(500, lambda: self._launch_update_when_idle(installer))
+                return
+            arguments = [str(installer), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART"]
+            if getattr(sys, "frozen", False):
+                arguments.append("/DIR=" + str(Path(sys.executable).parent))
+            subprocess.Popen(arguments, close_fds=True)
+            self.root.destroy()
+        except Exception as exc:
+            self.updating = False
+            self.update_button.configure(state="normal")
+            messagebox.showerror(APP_NAME, "Could not start the installer. " + str(exc))
+        finally:
+            self.bridge_gate.release()
+
     def connect_sidekick(self):
         if self.bridge is None:
             try:
@@ -266,7 +286,12 @@ class SidekickDesktopApp:
     def _bridge_loop(self):
         while True:
             try:
-                job = self.bridge.poll()
+                if self.updating:
+                    self.bridge.flush_ack()
+                    time.sleep(0.5)
+                    continue
+                with self.bridge_gate:
+                    job = self.bridge.poll()
                 self.bridge_events.put(("connected", None))
                 if job:
                     try:
@@ -304,10 +329,20 @@ class SidekickDesktopApp:
                     elif data["state"] == "current":
                         messagebox.showinfo(APP_NAME, "You have the latest published zipper version (" + HELPER_VERSION + ").")
                     elif data["state"] == "available":
-                        if messagebox.askyesno(APP_NAME, "Zipper " + data["version"] + " is available. Download its installer? Close this helper before installing. Your folders and pairing are saved separately."):
-                            webbrowser.open(data["url"])
-                    elif messagebox.askyesno(APP_NAME, "Could not check for a published zipper update. Open GitHub Releases in your browser? Private repositories require GitHub access."):
-                        webbrowser.open(data["url"])
+                        if messagebox.askyesno(APP_NAME, "Zipper " + data["version"] + " is available. Download and install it now? The zipper will close after the download is verified. Your folders and pairing will be kept."):
+                            self.download_and_install_update(data)
+                    else:
+                        messagebox.showerror(APP_NAME, "Could not check for a published zipper update. Check your connection and try again.")
+                elif kind == "download_progress":
+                    self.bridge_status_var.set(f"Downloading update: {data}%")
+                elif kind == "installer_ready":
+                    self.updating = True
+                    self.bridge_status_var.set("Update verified. Waiting for active ZIP requests to finish…")
+                    self._launch_update_when_idle(data)
+                elif kind == "update_failed":
+                    self.updating = False
+                    self.update_button.configure(state="normal")
+                    messagebox.showerror(APP_NAME, "Update was not started. " + data)
                 elif kind == "connected":
                     self.bridge_status_var.set("Sidekick: online — ready for Next Step")
                 elif kind == "offline":

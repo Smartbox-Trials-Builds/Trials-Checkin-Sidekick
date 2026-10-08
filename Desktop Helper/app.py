@@ -14,14 +14,11 @@ import tkinter as tk
 from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog, messagebox, simpledialog, ttk
-from zipfile import ZIP_DEFLATED, ZipFile
 
 APP_NAME = "Smartbox Vocab Zipper"
 CONFIG_DIR = Path.home() / "AppData" / "Roaming" / "SmartboxVocabZipper"
 CONFIG_PATH = CONFIG_DIR / "config.json"
 GRID_USER_EXTENSION = ".grid3user"
-GRID_USER_ZIP_NAME = "Current Grid User.zip"
-CHECKIN_ZIP_NAME = "Current Checkin.zip"
 
 SIDEKICK_BG = "#101722"
 SIDEKICK_NAVY = "#e5edf7"
@@ -160,9 +157,7 @@ class SidekickDesktopApp:
         actions = ttk.Frame(root_frame, style="Root.TFrame")
         actions.pack(fill=tk.X)
         actions.columnconfigure(0, weight=1)
-        actions.columnconfigure(1, weight=1)
-        ttk.Button(actions, text="Connect to Sidekick", style="Primary.TButton", command=self.connect_sidekick).grid(row=0, column=0, sticky="ew", padx=(0, 5))
-        ttk.Button(actions, text="Zip & Move Files", style="Secondary.TButton", command=self.zip_and_move_files).grid(row=0, column=1, sticky="ew")
+        ttk.Button(actions, text="Connect to Sidekick", style="Primary.TButton", command=self.connect_sidekick).grid(row=0, column=0, sticky="ew")
         status_card = ttk.Frame(root_frame, padding=8, style="Card.TFrame")
         status_card.pack(fill=tk.X, pady=(10, 0))
         ttk.Label(status_card, textvariable=self.bridge_status_var, style="Card.TLabel", wraplength=375).pack(anchor="w")
@@ -365,65 +360,6 @@ class SidekickDesktopApp:
         except queue.Empty:
             pass
         self.root.after(250, self._handle_bridge_events)
-
-    def zip_and_move_files(self) -> None:
-        if self.bridge is not None:
-            messagebox.showinfo(APP_NAME, "Connected to Sidekick. Use Next Step in the extension to zip with final filenames.")
-            return
-        self.zip_status_var.set("")
-        if not self.drop_folder or not Path(self.drop_folder).is_dir():
-            messagebox.showerror(APP_NAME, "Please connect a valid Drop folder.")
-            return
-        if not self.final_folder:
-            messagebox.showerror(APP_NAME, "Please connect a Final folder.")
-            return
-
-        final_path = Path(self.final_folder)
-        final_path.mkdir(parents=True, exist_ok=True)
-
-        files_to_process = self._drop_files()
-        if not files_to_process:
-            messagebox.showinfo(APP_NAME, "There are no files in the Drop folder to zip.")
-            self.refresh_file_count()
-            return
-
-        grid_files = [path for path in files_to_process if path.suffix.lower() == GRID_USER_EXTENSION]
-        checkin_files = [path for path in files_to_process if path.suffix.lower() != GRID_USER_EXTENSION]
-
-        try:
-            self.zip_status_var.set("Zipping files please wait")
-            self.root.update_idletasks()
-
-            if grid_files:
-                grid_zip_path = final_path / GRID_USER_ZIP_NAME
-                self._create_zip(grid_zip_path, grid_files)
-
-            if checkin_files:
-                checkin_zip_path = final_path / CHECKIN_ZIP_NAME
-                self._create_zip(checkin_zip_path, checkin_files)
-
-            for file_path in files_to_process:
-                file_path.unlink()
-
-            self.refresh_file_count()
-            self.zip_status_var.set(
-                "Finished zipping You can now start your Checkin with the Sidekick extension"
-            )
-        except OSError as exc:
-            self.zip_status_var.set("")
-            messagebox.showerror(APP_NAME, f"Unable to complete zipping.\n\n{exc}")
-
-    @staticmethod
-    def _create_zip(
-        zip_path: Path,
-        files: list[Path],
-    ) -> None:
-        if zip_path.exists():
-            zip_path.unlink()
-
-        with ZipFile(zip_path, "w", compression=ZIP_DEFLATED) as zip_file:
-            for file_path in files:
-                zip_file.write(file_path, arcname=file_path.name)
 
 
 def main() -> None:

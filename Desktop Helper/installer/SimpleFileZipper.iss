@@ -1,5 +1,5 @@
 #define AppName "Smartbox Vocab Zipper"
-#define AppVersion "1.2.3"
+#define AppVersion "1.2.4"
 #define AppPublisher "Sidekick"
 #define AppExeName "SmartboxVocabZipper.exe"
 #define AppId "{{D476B0F0-28D6-4BE8-89E9-56D2DA3EA62D}"

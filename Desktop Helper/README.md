@@ -88,3 +88,7 @@ Sidekick now requires the paired helper when vocabulary is returned; its former 
 ### In-app update installation (helper 1.2.3)
 
 After confirming an available update, the helper downloads its Windows installer directly without opening a browser. It verifies the exact download size and GitHub SHA-256 asset digest before execution, waits for active ZIP requests and acknowledgements, closes the helper, and launches the installer. Silent updates relaunch the helper after installation. Download/verification failures leave the current helper open. Folder settings and pairing remain in AppData. Older helper versions require installing 1.2.3 once before this in-app update flow is available.
+
+### Connected-only workflow (1.2.4)
+
+The manual Zip & Move Files button and legacy fixed-name ZIP routine are removed. Select folders, connect the helper, and start all ZIP requests using Next Step in Sidekick. Refresh, folder selection, pairing and in-app updates remain available.

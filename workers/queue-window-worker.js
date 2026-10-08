@@ -36,7 +36,21 @@
     await chrome.storage.session.set({ sidekickQueueWindowId: win?.id ?? null });
     await chrome.storage.local.set({ sidekickQueueDetached: Boolean(win) });
   }
-  async function openQueue() {
+  async function openQueue(message = {}) {
+    const client = globalThis.sidekickSupabase.getClient();
+    const session = await client.auth.getSession();
+    const userId = session.data.session?.user.id;
+    if (!userId) throw new Error("Save your profile first.");
+    const profile = await client.from("sidekick_user_profiles").select("role").eq("user_id",userId).single();
+    if (profile.error || profile.data.role !== "Device Systems Coordinator") throw new Error("Queue beta access is limited to Device Systems Coordinators.");
+    if (message.type === "sidekick-open-queue-beta") {
+      const verified = await client.rpc("sidekick_queue_beta_access",{p_code:message.code});
+      if (verified.error) throw new Error(verified.error.message);
+      if (!verified.data) throw new Error("Incorrect password.");
+      await chrome.storage.session.set({sidekickQueueBetaUser:userId});
+    }
+    const allowed = await chrome.storage.session.get("sidekickQueueBetaUser");
+    if (allowed.sidekickQueueBetaUser !== userId) throw new Error("Open the queue from Device Systems Tools and enter its password.");
     let win = await findWindow("queue-window.html");
     if (win) {
       await chrome.windows.update(win.id, { focused: true, ...(win.state === "minimized" ? { state: "normal" } : {}) });
@@ -51,7 +65,7 @@
     const win = await findWindow("queue-window.html");
     // A deliberate return expands the queue even if it was previously hidden.
     await chrome.storage.local.set({ sidekickQueueDetached: false, sidekickQueueCollapsed: false });
-    await chrome.storage.session.set({ sidekickQueueWindowId: null });
+    await chrome.storage.session.set({ sidekickQueueWindowId: null, sidekickQueueBetaUser: null });
     if (win) await chrome.windows.remove(win.id);
   }
   async function dismissPending(client) {
@@ -151,6 +165,7 @@
       }
     },
     "sidekick-open-queue": openQueue,
+    "sidekick-open-queue-beta": openQueue,
     "sidekick-return-queue": returnQueue,
     "sidekick-reconcile-windows": reconcile,
     "sidekick-check-notifications": checkNotifications
@@ -158,7 +173,7 @@
   chrome.runtime.onMessage.addListener((message, sender, respond) => {
     const handler = handlers[message?.type];
     if (!handler || sender.id !== chrome.runtime.id) return;
-    enqueue(handler).then(() => respond({ ok: true }), error => respond({ ok: false, error: error.message }));
+    enqueue(() => handler(message)).then(() => respond({ ok: true }), error => respond({ ok: false, error: error.message }));
     return true;
   });
   chrome.windows.onRemoved.addListener(id => {

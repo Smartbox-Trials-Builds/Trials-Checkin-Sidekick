@@ -222,7 +222,7 @@ const PREP_CHECKLIST_CATEGORIES = [
       { id: "prepStrapClips", label: "Shoulder strap has Correct clips" },
       {
         id: "prepFolderMaterials",
-        label: "Folder is prepared with all necessary materials (Include Spanish AND English materials if device has any Spanish requested vocab or Spanish Interpreter Needed  Shipping reminder is present for all non-LTL devices)"
+        label: "Grab Shipping Booklet."
       }
     ]
   },

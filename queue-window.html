@@ -10,12 +10,12 @@
   <link rel="stylesheet" href="panel.css" />
   <link rel="stylesheet" href="themes.css" />
 </head>
-<body class="queue-window">
+<body class="queue-window" style="visibility:hidden;">
   <main class="container">
     <section id="coordinatorQueueSection" aria-labelledby="coordinatorQueueTitle">
       <div class="queue-heading">
         <h2 id="coordinatorQueueTitle">Device Prep Queue</h2>
-        <button id="returnCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Return to Sidekick</button>
+        <button id="returnCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Close queue</button>
       </div>
       <p class="hint-text">Move this window by its title bar. Drag an edge to resize.</p>
       <div id="queueWindowStatus" class="status-line" role="status"></div>
@@ -44,6 +44,7 @@
   <script src="libs/supabase.min.js"></script>
   <script src="workers/supabase-connection.js"></script>
   <script src="workers/queue-layout.js"></script>
+  <script src="workers/queue-beta-window.js"></script>
   <script src="workers/queue.js"></script>
 </body>
 </html>

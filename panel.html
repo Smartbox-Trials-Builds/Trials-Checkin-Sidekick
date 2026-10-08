@@ -14,16 +14,16 @@
 
   <!-- WELCOME VIEW -->
   <div class="container welcome-view" id="welcomeView" style="display:none;">
-    <h1>Welcome to the CRM Sidekick!</h1>
+    <h1>Welcome to the Trials Sidekick!</h1>
     <p class="welcome-intro">
       Before you get started, here’s a quick overview of what this tool is and how it can help you.
     </p>
     <p class="welcome-intro">
-      CRM Sidekick is a browser extension designed to streamline your daily tasks with a set of helpful, easy-to-use tools. While
+      Trials Sidekick is a browser extension designed to streamline your daily tasks with a set of helpful, easy-to-use tools. While
       it’s not a full automation platform like Power Automate and still requires some user interaction, it removes many of the
       time-consuming steps you deal with every day.
     </p>
-    <p class="welcome-intro">Instead of one-click check-ins, CRM Sidekick guides you through the process and takes care of repetitive work such as:</p>
+    <p class="welcome-intro">Instead of one-click check-ins, Trials Sidekick guides you through the process and takes care of repetitive work such as:</p>
     <ul class="welcome-list">
       <li>Naming and zipping files</li>
       <li>Formatting and submitting your CRM notes</li>
@@ -35,7 +35,7 @@
 
   <!-- ONBOARDING VIEW -->
   <div class="container onboarding-view" id="onboardingView" style="display:none;">
-    <header class="settings-heading"><span class="settings-eyebrow">YOUR SIDEKICK, YOUR WAY</span><h1>Welcome to CRM Sidekick</h1><p class="complete-intro">Start with your profile. Customize the rest when you’re ready.</p></header>
+    <header class="settings-heading"><span class="settings-eyebrow">YOUR SIDEKICK, YOUR WAY</span><h1>Welcome to Trials Sidekick</h1><p class="complete-intro">Start with your profile. Customize the rest when you’re ready.</p></header>
     <form id="onboardingForm">
 <details class="settings-card settings-group" open><summary><span class="settings-group__icon" aria-hidden="true">☰</span><span><strong>Your profile</strong><small>Name, role and Dashboard Initials</small></span><span class="settings-group__chevron" aria-hidden="true">⌄</span></summary><div class="settings-group__body">      <label for="userFirstName">Your name</label>
       <input type="text" id="userFirstName" autocomplete="name" maxlength="100" required />
@@ -157,7 +157,7 @@
   <div class="container landing-view" id="landingView">
     <div class="landing-content">
       <div class="landing-identity">
-        <div class="landing-identity__copy"><span class="landing-eyebrow">YOUR WORKSPACE</span><div class="landing-header"><h1 class="landing-title">CRM Sidekick</h1></div><p class="landing-greeting" id="landingGreeting"></p><p class="landing-subtitle">Pick a workflow to get started.</p></div>
+        <div class="landing-identity__copy"><span class="landing-eyebrow">YOUR WORKSPACE</span><div class="landing-header"><h1 class="landing-title">Trials Sidekick</h1></div><p class="landing-greeting" id="landingGreeting"></p><p class="landing-subtitle">Pick a workflow to get started.</p></div>
         <img class="landing-symojo" id="landingMascot" src="assets/SB logo.png" alt="Spark mascot" />
       </div>
       <section class="landing-anime-quotes" id="landingAnimeQuoteSection" aria-live="polite" style="display:none;">
@@ -316,6 +316,7 @@
           <span class="landing-section__chevron" aria-hidden="true">▾</span>
         </button>
         <div class="landing-section__content" data-collapsible-content="pre-prep-tools" hidden>
+          <button id="queueBetaAccessBtn" class="toggle-btn landing-btn" type="button">Device Prep Queue · Private access</button>
           <button id="prePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Build a pre-prep scan list with corrected device serials and internal serial fields.">
             Device Sidekick
           </button>
@@ -457,7 +458,7 @@
       <p id="desktopZipStatus" class="status-line" role="status"></p>
     </section><section class="settings-connection">
         <div class="settings-card__title">Supabase connection</div>
-        <p class="hint-text">Project: Trials CRM Sidekick</p>
+        <p class="hint-text">Project: Trials Sidekick</p>
         <p class="hint-text">Check the connection before setting up cloud features.</p>
         <button id="supabaseTestConnectionBtn" class="toggle-btn settings-card__action" type="button">Test connection</button>
         <div id="supabaseConnectionStatus" class="status-line" role="status" aria-live="polite">Connection has not been tested.</div>
@@ -466,7 +467,7 @@
     </div>
     <div class="crm-nav-footer">
       <button id="settingsReturnBtn" class="toggle-btn" type="button">
-        Return to CRM Sidekick
+        Return to Trials Sidekick
       </button>
     </div>
   </div>
@@ -503,7 +504,7 @@
         <div class="theme-builder-preview__container container">
           <div class="landing-content">
             <div class="landing-header">
-              <h1 class="landing-title">CRM Sidekick</h1>
+              <h1 class="landing-title">Trials Sidekick</h1>
             </div>
             <img class="landing-symojo theme-preview-mascot" data-preview-element="mascot" src="assets/SB logo.png" alt="Profile mascot preview" />
             <p class="landing-greeting">Welcome back, Jordan!</p>
@@ -669,7 +670,7 @@
     </div>
 
     <button id="qaReturnBtn" class="toggle-btn" type="button" style="margin-top:16px;">
-      Back to CRM Sidekick
+      Back to Trials Sidekick
     </button>
     <button id="qaFinishedBtn" class="toggle-btn" type="button" style="margin-top:16px;">
       Finished QA
@@ -701,7 +702,7 @@
       <div id="lockDownStatus" class="status-line lock-down-summary" role="status" aria-live="polite"></div>
     </form>
     <div class="crm-nav-footer">
-      <button id="lockDownReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="lockDownReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
   </div>
 
@@ -753,7 +754,7 @@
     </div>
 
     <div class="crm-nav-footer">
-      <button id="prePrepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="prePrepReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
   </div>
 
@@ -816,7 +817,7 @@
     </section>
 
     <div class="crm-nav-footer">
-      <button id="deviceLookupReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="deviceLookupReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
   </div>
 
@@ -854,7 +855,7 @@
       </div>
     </div>
     <div class="crm-nav-footer">
-      <button id="appOverridesReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="appOverridesReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
   </div>
 
@@ -867,7 +868,7 @@
       <button id="gridRefreshBtn" class="toggle-btn" type="button">↻ Refresh from CRM</button>
       <button id="gridRegisterLicenseBtn" class="toggle-btn" type="button">Register Grid License</button>
       <button id="gridLockChangesBtn" class="toggle-btn" type="button">Lock Changes: Off</button>
-      <button id="gridReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="gridReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
 
     <div class="grid-form">
@@ -925,7 +926,7 @@
     <p class="complete-intro">Select the device to prepare.</p>
     <button id="talkPadPrepBtn" class="toggle-btn" type="button">Talkpad</button>
     <button id="gridPadPrepBtn" class="toggle-btn" type="button">Grid Pad</button>
-    <button id="devicePrepSelectionReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+    <button id="devicePrepSelectionReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
   </div>
 
   <div class="container" id="prepTypeView" style="display:none;">
@@ -936,7 +937,7 @@
       <button id="prepTypeClBtn" class="toggle-btn" type="button">CL/LTL (Regular Prep)</button>
     </div>
     <div class="crm-nav-footer">
-      <button id="prepTypeReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="prepTypeReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
   </div>
 
@@ -958,7 +959,7 @@
     <p class="complete-intro">Work through the prep checklist and mark items off as you go.</p>
 
     <div class="mini-row">
-      <button id="prepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="prepReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
       <button id="prepReorderBtn" class="toggle-btn" type="button">Reorder categories</button>
     </div>
 
@@ -997,7 +998,7 @@
     <p class="complete-intro">Work through the GridPad Go prep checklist and mark items off as you go.</p>
 
     <div class="mini-row">
-      <button id="gridPadPrepReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="gridPadPrepReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
       <button id="gridPadPrepReorderBtn" class="toggle-btn" type="button">Reorder categories</button>
     </div>
 
@@ -1042,7 +1043,7 @@
       <p id="ageCalculatorResult" class="note-preview__body">Enter a birthdate to calculate age.</p>
     </div>
     <div class="crm-nav-footer">
-      <button id="ageCalculatorReturnBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="ageCalculatorReturnBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
   </div>
 
@@ -1052,7 +1053,7 @@
 
     <div class="mini-row">
       <button id="refreshBtn" class="toggle-btn" type="button">↻ Refresh from CRM</button>
-      <button id="returnToLandingBtn" class="toggle-btn" type="button">Return to CRM Sidekick</button>
+      <button id="returnToLandingBtn" class="toggle-btn" type="button">Return to Trials Sidekick</button>
     </div>
 
     <form id="checkinForm">
@@ -1317,6 +1318,7 @@
   <script src="workers/desktop-zip.js"></script>
   <script src="workers/supabase-panel-connection.js"></script>
   <script src="workers/queue-layout.js"></script>
+  <script src="workers/queue-beta-access.js"></script>
   <script src="workers/queue.js"></script>
   <script src="workers/crm-links.js"></script>
   <script src="workers/serial-utils.js"></script>

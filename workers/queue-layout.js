@@ -8,6 +8,7 @@
   const detachedPage = location.pathname.endsWith("/queue-window.html");
 
   function apply(values) {
+    if (!detachedPage) { section.hidden = true; if (placeholder) placeholder.hidden = true; return; }
     const detached = values.sidekickQueueDetached === true;
     if (!detachedPage) {
       section.hidden = detached;

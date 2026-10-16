@@ -40,6 +40,8 @@ const DAILY_COUNTER_STORAGE_KEY = "ttmtDailyTaskCounters";
 const DAILY_COUNTER_ENABLED_STORAGE_KEY = "ttmtDailyTaskCounterEnabled";
 const DAILY_CUSTOM_COUNTER_LABEL_STORAGE_KEY = "ttmtDailyCustomCounterLabel";
 const DAILY_CUSTOM_COUNTER_ENABLED_STORAGE_KEY = "ttmtDailyCustomCounterEnabled";
+const DAILY_WEIGHTED_COUNTER_ENABLED_STORAGE_KEY = "ttmtDailyWeightedCounterEnabled";
+const DAILY_WEIGHTED_COUNTER_STORAGE_KEY = "ttmtDailyWeightedTaskCounters";
 const WEEKLY_COUNTER_STORAGE_KEY = "ttmtWeeklyTaskCounterTotal";
 const WEEKLY_AVERAGE_ENABLED_STORAGE_KEY = "ttmtWeeklyTaskAverageEnabled";
 const WEEKLY_AVERAGE_DAYS_STORAGE_KEY = "ttmtWeeklyTaskAverageDaysWorked";
@@ -464,6 +466,7 @@ function showOutlookSetupView() { showView("outlookSetupView"); }
 function showLandingView() {
   showView("landingView");
   void refreshLandingView();
+  void globalThis.sidekickCheckinCount?.refresh();
 }
 function showSettingsView() { showView("settingsView"); }
 function showThemeBuilderView() {
@@ -3832,6 +3835,7 @@ async function initOnboardingForm() {
   const themeSelect = document.getElementById("onboardingThemeSelect");
   const dailyCounterToggle = document.getElementById("onboardingDailyCounterToggle");
   const customDailyCounterToggle = document.getElementById("onboardingCustomDailyCounterToggle");
+  const weightedDailyCounterToggle = document.getElementById("onboardingWeightedDailyCounterToggle");
   const customDailyCounterNameInput = document.getElementById("onboardingCustomDailyCounterName");
   const weeklyCounterToggle = document.getElementById("onboardingWeeklyCounterToggle");
   const tooltipToggle = document.getElementById("onboardingTooltipToggle");
@@ -3908,6 +3912,9 @@ async function initOnboardingForm() {
   if (customDailyCounterToggle) {
     customDailyCounterToggle.checked = await getDailyCustomCounterEnabled();
   }
+  if (weightedDailyCounterToggle) {
+    weightedDailyCounterToggle.checked = await getDailyWeightedCounterEnabled();
+  }
   if (customDailyCounterNameInput) {
     customDailyCounterNameInput.value = await getDailyCustomCounterLabel();
     customDailyCounterNameInput.disabled = !customDailyCounterToggle?.checked;
@@ -3938,6 +3945,7 @@ async function initOnboardingForm() {
     const themeId = themeSelect?.value || "ocean";
     const dailyCounterEnabled = dailyCounterToggle?.checked ?? true;
     const customDailyCounterEnabled = customDailyCounterToggle?.checked ?? false;
+    const weightedDailyCounterEnabled = weightedDailyCounterToggle?.checked ?? false;
     const customDailyCounterLabel = customDailyCounterNameInput?.value || "";
     const weeklyCounterEnabled = weeklyCounterToggle?.checked ?? true;
     const tooltipsEnabled = tooltipToggle?.checked ?? true;
@@ -3971,6 +3979,7 @@ async function initOnboardingForm() {
       applyLandingMascotSize(mascotSize);
       await setDailyCounterEnabled(dailyCounterEnabled);
       await setDailyCustomCounterEnabled(customDailyCounterEnabled);
+      await setStoredValue(DAILY_WEIGHTED_COUNTER_ENABLED_STORAGE_KEY, weightedDailyCounterEnabled);
       await setDailyCustomCounterLabel(customDailyCounterLabel);
       await setWeeklyCounterEnabled(weeklyCounterEnabled);
       await setLandingTooltipsEnabled(tooltipsEnabled);
@@ -4968,6 +4977,51 @@ async function setDailyCustomCounterEnabled(enabled) {
   await setStoredValue(DAILY_CUSTOM_COUNTER_ENABLED_STORAGE_KEY, Boolean(enabled));
 }
 
+async function getDailyWeightedCounterEnabled() {
+  return Boolean(await getStoredValue(DAILY_WEIGHTED_COUNTER_ENABLED_STORAGE_KEY));
+}
+
+function getWeightedCounterDay() {
+  const now = new Date();
+  return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+}
+
+// Keep a dated ledger separate from the existing manually managed counters.
+// Undated historical counts cannot safely be assumed to belong to today.
+let dailyWeightedCounterJobs = Promise.resolve();
+async function getDailyWeightedCounters() {
+  const stored = await getStoredValue(DAILY_WEIGHTED_COUNTER_STORAGE_KEY);
+  const date = getWeightedCounterDay();
+  return { date, counters: stored?.date === date ? { ...getDefaultDailyCounters(), ...stored.counters } : getDefaultDailyCounters() };
+}
+
+function adjustDailyWeightedCounter(key, delta, { clear = false } = {}) {
+  const job = dailyWeightedCounterJobs.then(async () => {
+    const daily = await getDailyWeightedCounters();
+    if (clear) daily.counters = getDefaultDailyCounters();
+    else daily.counters[key] = Math.max(0, (Number(daily.counters[key]) || 0) + delta);
+    await setStoredValue(DAILY_WEIGHTED_COUNTER_STORAGE_KEY, daily);
+    setText("dailyWeightedCount", formatCounterTotal(getDailyCountersTotal(daily.counters)));
+  });
+  dailyWeightedCounterJobs = job.catch(error => console.warn("Daily weighted counter update failed:", error));
+  return job;
+}
+
+async function refreshDailyWeightedCounter() {
+  await dailyWeightedCounterJobs;
+  const daily = await getDailyWeightedCounters();
+  setText("dailyWeightedCount", formatCounterTotal(getDailyCountersTotal(daily.counters)));
+}
+
+// Refresh the date while the landing page stays open across midnight.
+setInterval(() => {
+  const item = document.getElementById("dailyWeightedCounterItem");
+  const landing = document.getElementById("landingView");
+  if (item?.style.display !== "none" && landing?.style.display !== "none") {
+    void refreshDailyWeightedCounter().catch(console.warn);
+  }
+}, 30000);
+
 async function getDailyCustomCounterLabel() {
   const stored = await getStoredValue(DAILY_CUSTOM_COUNTER_LABEL_STORAGE_KEY);
   return normalizeCustomCounterLabel(stored);
@@ -5229,6 +5283,7 @@ async function updateWeeklyCounterCollapseState() {
 async function refreshDailyCounters() {
   const counters = await getDailyCounters();
   updateDailyCounterDisplay(counters);
+  await refreshDailyWeightedCounter();
   return counters;
 }
 
@@ -5253,12 +5308,20 @@ function updateDailyCustomLabel(label) {
 }
 
 async function updateDailyCustomCounterSettings() {
-  const [enabled, label] = await Promise.all([
+  const [enabled, label, weightedEnabled, profile] = await Promise.all([
     getDailyCustomCounterEnabled(),
-    getDailyCustomCounterLabel()
+    getDailyCustomCounterLabel(),
+    getDailyWeightedCounterEnabled(),
+    getUserProfile()
   ]);
   const item = document.getElementById("dailyCustomCounterItem");
   if (item) item.style.display = enabled ? "" : "none";
+  const weightedItem = document.getElementById("dailyWeightedCounterItem");
+  const showWeighted = weightedEnabled && profile?.role === "Device Coordinator";
+  if (weightedItem) weightedItem.style.display = showWeighted ? "" : "none";
+  const grid = document.getElementById("dailyCounterGrid");
+  if (grid) grid.classList.toggle("daily-counter__grid--both-extras", enabled && showWeighted);
+  if (showWeighted) await refreshDailyWeightedCounter();
   updateDailyCustomLabel(label);
   return enabled;
 }
@@ -5304,6 +5367,7 @@ async function incrementDailyCounter(key) {
   const updated = { ...counters, [key]: nextValue };
   await setDailyCounters(updated);
   updateDailyCounterDisplay(updated);
+  await adjustDailyWeightedCounter(key, 1);
   const nextTotal = getDailyCountersTotal(updated);
   await adjustWeeklyCounterByDelta(normalizeCounterTotal(nextTotal - previousTotal));
   return updated;
@@ -5317,6 +5381,7 @@ async function adjustDailyCounter(key, delta) {
   const updated = { ...counters, [key]: nextValue };
   await setDailyCounters(updated);
   updateDailyCounterDisplay(updated);
+  await adjustDailyWeightedCounter(key, nextValue - current);
   const nextTotal = getDailyCountersTotal(updated);
   await adjustWeeklyCounterByDelta(normalizeCounterTotal(nextTotal - previousTotal));
   return updated;
@@ -5326,6 +5391,7 @@ async function clearDailyCounters() {
   const reset = getDefaultDailyCounters();
   await setDailyCounters(reset);
   updateDailyCounterDisplay(reset);
+  await adjustDailyWeightedCounter(null, 0, { clear: true });
 }
 
 async function clearWeeklyCounters() {
@@ -7447,6 +7513,20 @@ async function finalizeCheckinCleanupAndCounters() {
 
 async function handleOutlookEmailTabClosed() {
   if (activeCheckinFlow !== CHECKIN_FLOW.CHECKIN) return;
+  // Only the shared team count waits until the existing email completion step.
+  const data = await getLastCheckinDataForDaf();
+  if (data && !data.isLtlUpdate) {
+    if (!data.completionId) {
+      data.completionId = crypto.randomUUID();
+      await saveLastCheckinDataForDaf(data);
+    }
+    try {
+      const result = await chrome.runtime.sendMessage({ type: "sidekick-record-checkin", completionId: data.completionId });
+      if (!result?.ok) console.warn("Could not queue shared check-in count:", result?.error);
+    } catch (error) {
+      console.warn("Could not queue shared check-in count:", error);
+    }
+  }
   await finalizeCheckinCleanupAndCounters();
   await finishCheckinAndReset({ returnToLanding: true });
 }
@@ -7879,9 +7959,8 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
       visible: true
     });
 
-    // 2) Build note + clipboard backup
+    // 2) Build note
     const note = buildCannedNote();
-    await navigator.clipboard.writeText(note);
 
     const condition = getFormValue("#conditionSelect");
     smartboxRepairRequired = !isMountOnly
@@ -7890,7 +7969,7 @@ document.getElementById("checkinForm")?.addEventListener("submit", async e => {
 
     // 2.5) Remember identifiers for the inventory page + DAF recap
     await saveLastIdentifiers(getCurrentIdentifiers());
-    await saveLastCheckinDataForDaf(collectCheckinFormDataForDaf());
+    await saveLastCheckinDataForDaf({ ...collectCheckinFormDataForDaf(), completionId: crypto.randomUUID() });
 
     // 3) Fill note in CRM
     const setNoteRes = await sendToCrm("SET_CRM_NOTE", { xpath: NOTE_BOX_XPATH, noteText: note });

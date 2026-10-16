@@ -360,6 +360,11 @@ body[data-theme^="customTheme-"] .container > * {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* Either optional counter uses the fourth tile; both share the last row. */
+#dailyCounterGrid.daily-counter__grid--both-extras > :nth-child(3) {
+  grid-column: 1 / -1;
+}
+
 .weekly-average__input {
   width: min(90px, 100%);
   margin: 4px auto 8px;

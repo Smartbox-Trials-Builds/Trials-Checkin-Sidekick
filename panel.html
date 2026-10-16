@@ -76,6 +76,11 @@
       </label>
       <label for="onboardingCustomDailyCounterName">Custom daily counter name</label>
       <input type="text" id="onboardingCustomDailyCounterName" placeholder="e.g. Calls" />
+      <label class="checkbox-row" for="onboardingWeightedDailyCounterToggle">
+        <input type="checkbox" id="onboardingWeightedDailyCounterToggle" />
+        Show today's weighted task total (Device Coordinators)
+      </label>
+      <p class="hint-text">Uses the same weights as the weekly total. Tracks today's tasks even while hidden and resets at midnight.</p>
       <label class="checkbox-row" for="onboardingWeeklyCounterToggle">
         <input type="checkbox" id="onboardingWeeklyCounterToggle" />
         Show weekly task counter on the landing page
@@ -164,6 +169,13 @@
         <div class="landing-anime-quotes__title">Anime quote spotlight</div>
         <blockquote class="landing-anime-quotes__quote" id="landingAnimeQuoteText"></blockquote>
       </section>
+      <section class="daily-counter" id="systemsCheckinCounter" aria-label="Today's combined check-ins" aria-live="polite" hidden>
+        <div class="daily-counter__header">Check-ins completed today</div>
+        <div class="daily-counter__content">
+          <span class="daily-counter__value" id="systemsCheckinTotal">—</span>
+          <p class="hint-text" id="systemsCheckinStatus">Loading shared total…</p>
+        </div>
+      </section>
       <div class="landing-layout" id="landingLayout">
       <div class="daily-counter" id="dailyCounterSection" data-layout-item="dailyCounter" aria-label="Daily task counter">
         <div class="daily-counter__header">
@@ -179,7 +191,7 @@
           </div>
         </div>
         <div class="daily-counter__content" id="dailyCounterContent">
-          <div class="daily-counter__grid">
+          <div class="daily-counter__grid" id="dailyCounterGrid">
           <div class="daily-counter__item">
             <span class="daily-counter__label">Checkins</span>
             <div class="daily-counter__controls">
@@ -210,6 +222,12 @@
               <button class="daily-counter__btn" type="button" data-counter="custom" data-delta="-1" aria-label="Decrease custom count">-</button>
               <span class="daily-counter__value" id="dailyCustomCount">0</span>
               <button class="daily-counter__btn" type="button" data-counter="custom" data-delta="1" aria-label="Increase custom count">+</button>
+            </div>
+          </div>
+          <div class="daily-counter__item" id="dailyWeightedCounterItem" style="display:none;" aria-live="polite" title="Today's tasks using the same weights as the weekly total">
+            <span class="daily-counter__label">Weighted today</span>
+            <div class="daily-counter__controls">
+              <span class="daily-counter__value" id="dailyWeightedCount">0</span>
             </div>
           </div>
           </div>
@@ -1323,6 +1341,7 @@
   <script src="workers/crm-links.js"></script>
   <script src="workers/serial-utils.js"></script>
   <script src="workers/device-sidekick.js"></script>
+  <script src="workers/checkin-count-panel.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

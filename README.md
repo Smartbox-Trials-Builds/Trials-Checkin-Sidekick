@@ -1,5 +1,15 @@
 # Trials Check-in Sidekick
 
+## Device Sidekick wipe workflow (3.0.6)
+
+Device Sidekick now focuses on wiping devices. Device Systems Coordinators can use **Begin Wipe** to find a listed internal serial in Entra, open the matching device, remove the supported AAC apps, and revoke licenses. Sidekick asks **Continue to wipe?** before sending the wipe request, then asks whether the wipe went through. Choosing No stops automation with manual completion instructions.
+
+After confirmation, Sidekick opens **Devices | All devices** and reminds the user to delete the device manually. **Next device** starts the next unfinished internal serial after the user deletes the device and returns to the main device page. Completed rows show **Wiped**; the last device offers only **Close**. Sidekick does not perform the final device deletion.
+
+Enable **Internal serial only** to hide scanning and device serial fields and add internal serials directly with **Add device** or Enter. Turning it off restores scanned-device entry without clearing existing rows. The setting and completion markers stay with the current device draft. Prep mode and its CRM/GIPOD fields have been removed from Device Sidekick.
+
+Reload the extension after updating, and allow access to Entra and its embedded device pages. No Desktop Zipper update is required.
+
 Trials Check-in Sidekick is a lightweight browser extension that streamlines participant check-ins and session tracking. It focuses on fast, reliable workflows for coordinators without exposing internal URLs or system links.
 
 ## Key Features

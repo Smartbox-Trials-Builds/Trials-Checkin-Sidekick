@@ -727,18 +727,17 @@
   <!-- PRE-PREP SIDEKICK VIEW -->
   <div class="container pre-prep-view" id="prePrepView" style="display:none;">
     <div class="device-sidekick-heading"><h1>Device Sidekick</h1><button id="popOutDeviceSidekickBtn" class="toggle-btn queue-small-btn" type="button" title="Open Device Sidekick in a movable, resizable window">Pop out ↗</button></div>
-    <p class="complete-intro">Scan device serial numbers into a prep list, then paste matching internal serial numbers beside them.</p>
+    <p class="complete-intro">Add devices to the wipe list using scanned device numbers or internal serial numbers.</p>
 
     <div class="device-mode-picker">
-      <label for="deviceSidekickMode">Mode</label>
-      <select id="deviceSidekickMode"><option value="wipe">Wipe</option><option value="prep">Prep</option></select>
+      <button id="internalSerialOnlyBtn" class="toggle-btn" type="button" aria-pressed="false">Internal serial only: Off</button>
     </div>
 
     <form id="prePrepScanForm" class="lookup-form">
       <label for="prePrepScanInput">Device serial number</label>
       <input type="text" id="prePrepScanInput" placeholder="Scan or type the device serial number" required />
       <button type="submit" id="prePrepAddBtn">Add device</button>
-      <div class="lookup-meta">
+      <div class="lookup-meta" id="deviceScanDetails">
         <div>
           <div class="lookup-meta__label">Last raw scan</div>
           <div id="prePrepRawScan" class="lookup-meta__value">—</div>
@@ -748,22 +747,26 @@
           <div id="prePrepCorrectedScan" class="lookup-meta__value">—</div>
         </div>
       </div>
-      <div id="prePrepStatus" class="status-line"></div>
     </form>
+    <form id="internalSerialForm" class="lookup-form" hidden>
+      <label for="internalSerialInput">Internal serial number</label>
+      <input type="text" id="internalSerialInput" placeholder="Enter an internal serial number" required />
+      <button type="submit" id="addInternalSerialBtn">Add device</button>
+    </form>
+    <div id="prePrepStatus" class="status-line" role="status" aria-live="polite"></div>
 
     <div class="mini-row pre-prep-actions">
+      <button id="beginWipeBtn" class="toggle-btn" type="button" hidden>Begin Wipe</button>
       <button id="prePrepLockBtn" class="toggle-btn" type="button">Lock edits: Off</button>
       <button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
     </div>
 
     <div class="note-preview pre-prep-list-card">
-      <div class="note-preview__title">Scanned device list</div>
+      <div class="note-preview__title">Device wipe list</div>
       <div class="pre-prep-table" id="deviceSidekickTable" data-mode="wipe" role="table" aria-label="Device and internal serial list">
         <div class="pre-prep-table__header" role="row">
-          <div role="columnheader">Scanned device numbers</div>
+          <div role="columnheader" id="deviceSerialHeading">Scanned device numbers</div>
           <div role="columnheader">Internal serial numbers</div>
-          <div role="columnheader" data-device-prep-only hidden>CRM ID</div>
-          <div class="device-gipod-heading" role="columnheader" data-device-prep-only hidden><span>GIPOD Codes</span><button id="bulkAddGipodBtn" class="toggle-btn queue-small-btn" type="button">Bulk add</button></div>
           <div class="device-row-actions-heading" role="columnheader" aria-label="Row actions">Actions</div>
         </div>
         <div id="prePrepRows" class="pre-prep-table__body"></div>
@@ -1317,17 +1320,6 @@
       <p class="hint-text">Assign the next available users in queue order. Their initials will be copied as separate Excel rows.</p>
       <p id="prepAssignmentStatus" class="status-line" role="status"></p>
       <div class="queue-actions"><button id="prepAssignmentSubmit" type="submit">Assign</button><button id="prepAssignmentCancel" class="toggle-btn" type="button">Cancel</button></div>
-    </form>
-  </dialog>
-  <dialog id="bulkGipodDialog" class="prep-assignment-dialog" aria-labelledby="bulkGipodTitle">
-    <form id="bulkGipodForm">
-      <h2 id="bulkGipodTitle">Bulk add GIPOD codes</h2>
-      <p class="hint-text">Paste one column from Excel without a header. Codes replace existing GIPOD codes, one per device in list order.</p>
-      <p id="bulkGipodCount" class="hint-text"></p>
-      <label for="bulkGipodInput">GIPOD codes</label>
-      <textarea id="bulkGipodInput" rows="8" placeholder="One code per line" required></textarea>
-      <p id="bulkGipodStatus" class="status-line" role="status" aria-live="polite"></p>
-      <div class="queue-actions"><button type="submit">Apply codes</button><button id="bulkGipodCancel" class="toggle-btn" type="button">Cancel</button></div>
     </form>
   </dialog>
   <script src="libs/supabase.min.js"></script>

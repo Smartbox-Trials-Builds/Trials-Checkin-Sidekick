@@ -1,5 +1,11 @@
 # Trials Check-in Sidekick
 
+## Audit serial and category lookup (3.0.8)
+
+For Device Systems Coordinators, scanning a device now looks up its internal serial and category in **Audit.xlsm**, using the saved **query** worksheet values in columns A (TTMT Serial Number), B (Title/internal serial), and D (Device Type). Sidekick downloads the shared SharePoint workbook with a read-only GET, caches the lookup locally, and fills blank internal serial and category fields after a unique match. Column D mappings include Talk Pad 10 / Wego 10 / Wego 10s → Talkpad 10, Talk Pad 8 / Wego 7 → Talkpad 8, Wego 13 / Wego 13a → Wego 13, and Wego 5 / Wego 5a → Wego 5. It does not edit the workbook, refresh Excel queries, or run its macros. Existing manual entries and completed or locked rows are preserved. Unknown or conflicting categories stay blank for manual selection. An older serial-only cache is refreshed automatically to load column D.
+
+The lookup refreshes every Wednesday at **5:00 AM America/Chicago time**, including daylight saving changes. If the browser is closed or asleep, it catches up when available or on the next lookup. Failed downloads keep the last successful cache with a visible warning and retry after 15 minutes. **Refresh serial lookup** fetches on demand. Sign in to SharePoint using the workbook link if necessary. **Use Audit file** lets a user read their own synced Audit.xlsm if SharePoint access is unavailable; the selected file is never written. This uses the shared workbook URL rather than a path containing a particular Windows username.
+
 ## Device Sidekick profile categories and progress (3.0.7)
 
 Device Systems Coordinators can choose a **Device category** for each internal serial, then click **Begin Adding Profiles**. Sidekick searches Intune, opens the matching device, verifies the displayed serial, opens **Properties → Edit**, selects the exact category, and clicks **Next → Save**. It then returns through **Devices | All devices**, clears the device search with its X button, marks **Profile added**, and continues to the next unmarked device. A missing category or an unsuccessful step stops the sequence; correct the row or complete the category manually before restarting.

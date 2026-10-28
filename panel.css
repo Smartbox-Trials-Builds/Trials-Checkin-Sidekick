@@ -2659,6 +2659,8 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
 .device-sidekick-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .device-sidekick-heading h1 { margin-right: auto; }
 .device-mode-picker { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.audit-lookup-controls { margin-bottom: 12px; padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 12px; }
+#auditLookupControls[hidden], #auditLookupFile[hidden] { display: none !important; }
 #prePrepScanForm[hidden], #internalSerialForm[hidden], #deviceSerialHeading[hidden] { display: none !important; }
 #deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__header,
 #deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) minmax(110px, .65fr) auto; }

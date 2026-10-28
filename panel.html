@@ -732,6 +732,12 @@
     <div class="device-mode-picker">
       <button id="internalSerialOnlyBtn" class="toggle-btn" type="button" aria-pressed="false">Internal serial only: Off</button>
     </div>
+    <div id="auditLookupControls" class="audit-lookup-controls" hidden>
+      <div class="mini-row"><button id="refreshAuditLookupBtn" class="toggle-btn" type="button">Refresh serial lookup</button><button id="importAuditLookupBtn" class="toggle-btn" type="button">Use Audit file</button></div>
+      <input id="auditLookupFile" type="file" accept=".xlsm,.xlsx" hidden />
+      <p id="auditLookupStatus" class="hint-text" role="status" aria-live="polite"></p>
+      <a href="https://smartboxassistivetnam.sharepoint.com/:x:/r/sites/TrialsSharePoint.us/_layouts/15/Doc.aspx?sourcedoc=%7B4541AB44-2F93-401B-BB0F-371E8F6F23A2%7D&amp;file=Audit.xlsm&amp;action=default" target="_blank" rel="noopener">Open Audit in SharePoint</a>
+    </div>
 
     <form id="prePrepScanForm" class="lookup-form">
       <label for="prePrepScanInput">Device serial number</label>

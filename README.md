@@ -1,5 +1,20 @@
 # Trials Check-in Sidekick
 
+## Device Sidekick profile categories and progress (3.0.7)
+
+Device Systems Coordinators can choose a **Device category** for each internal serial, then click **Begin Adding Profiles**. Sidekick searches Intune, opens the matching device, verifies the displayed serial, opens **Properties → Edit**, selects the exact category, and clicks **Next → Save**. It then returns through **Devices | All devices**, clears the device search with its X button, marks **Profile added**, and continues to the next unmarked device. A missing category or an unsuccessful step stops the sequence; correct the row or complete the category manually before restarting.
+
+| Sidekick choice | Intune device category |
+| --- | --- |
+| Talkpad 10 | Wego TalkPad 10 |
+| Talkpad 8 | Wego TalkPad 8 |
+| Wego 13 | Wego 13a |
+| Wego 5 | Wego 5a |
+
+**Wiped** and **Profile added** can each be checked or unchecked manually and are saved independently with the current device draft. **Begin Wipe** skips devices marked Wiped; **Begin Adding Profiles** skips devices marked Profile added. Changing an internal serial clears both markers; changing its category clears Profile added. Category selection respects Lock edits, while completion checkboxes remain editable.
+
+Reload the updated extension and allow access to **intune.microsoft.com** as well as Entra and the embedded device pages. The category workflow submits changes to Intune; check Intune if a save fails or the sequence stops. Desktop Zipper is unchanged.
+
 ## Device Sidekick wipe workflow (3.0.6)
 
 Device Sidekick now focuses on wiping devices. Device Systems Coordinators can use **Begin Wipe** to find a listed internal serial in Entra, open the matching device, remove the supported AAC apps, and revoke licenses. Sidekick asks **Continue to wipe?** before sending the wipe request, then asks whether the wipe went through. Choosing No stops automation with manual completion instructions.

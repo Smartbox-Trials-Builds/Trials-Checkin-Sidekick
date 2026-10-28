@@ -360,7 +360,7 @@ body[data-theme^="customTheme-"] .container > * {
   grid-template-columns: minmax(0, 1fr);
 }
 
-#beginWipeBtn[hidden] { display: none !important; }
+#beginWipeBtn[hidden], #beginAddingProfilesBtn[hidden] { display: none !important; }
 
 /* Either optional counter uses the fourth tile; both share the last row. */
 #dailyCounterGrid.daily-counter__grid--both-extras > :nth-child(3) {
@@ -2493,7 +2493,8 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
 }
 
 .pre-prep-table__header,
-.device-wipe-row-actions { display: flex; align-items: center; gap: 8px; }
+.device-wipe-row-actions { display: grid; grid-template-columns: auto auto; align-items: center; gap: 4px 8px; }
+.device-wipe-row-actions .device-row-remove { grid-column: 2; grid-row: 1 / span 2; }
 .device-wiped-status { display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; }
 .device-wiped-status input[type="checkbox"] { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
 .pre-prep-table__row {
@@ -2660,9 +2661,10 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
 .device-mode-picker { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 #prePrepScanForm[hidden], #internalSerialForm[hidden], #deviceSerialHeading[hidden] { display: none !important; }
 #deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__header,
-#deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) auto; }
+#deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) minmax(110px, .65fr) auto; }
 #deviceSidekickTable[data-mode="wipe"] .pre-prep-table__header,
-#deviceSidekickTable[data-mode="wipe"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+#deviceSidekickTable[data-mode="wipe"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(110px, .65fr) auto; }
+.device-category-select { width: 100%; min-width: 0; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: 8px; padding: 7px; }
 .device-row-actions-heading { font-size: 0; }
 .assignment-window h1 { font-size: 22px; margin: 0 0 14px; }
 #coordinatorQueueBody[hidden], #coordinatorQueueSection[hidden], #coordinatorQueueDetached[hidden], #popOutCoordinatorQueueBtn[hidden] { display: none !important; }

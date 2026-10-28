@@ -1340,6 +1340,8 @@ function updateBeginWipeVisibility() {
   if (button) button.hidden = !deviceSystemsWipeAccess || deviceSidekickMode !== "wipe";
   const profilesButton = document.getElementById("beginAddingProfilesBtn");
   if (profilesButton) profilesButton.hidden = !deviceSystemsWipeAccess;
+  const auditControls = document.getElementById("auditLookupControls");
+  if (auditControls) auditControls.hidden = !deviceSystemsWipeAccess;
 }
 
 async function refreshBeginWipeAccess() {
@@ -1407,6 +1409,74 @@ function makePrePrepRowId() {
   return `pre-prep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function showAuditLookupStatus(result) {
+  if (!result?.ok) { deviceToolSetText("auditLookupStatus", result?.error || "Serial lookup unavailable. Enter internal serials manually."); return; }
+  const updated = result.fetchedAt ? new Date(result.fetchedAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "short", timeStyle: "short" }) : null;
+  const prefix = updated ? `${result.count} device serials loaded from ${result.source}, ${updated} Central.` : "No serial lookup loaded yet.";
+  deviceToolSetText("auditLookupStatus", `${prefix} Refreshes Wednesdays at 5:00 AM Central.${result.stale ? " The cached lookup needs refreshing." : ""}${result.error ? ` ${result.error}` : ""}`);
+}
+
+async function populateAuditInternalSerial(rowId, device) {
+  if (!(await refreshBeginWipeAccess())) return;
+  const original = prePrepRows.find(row => row.id === rowId);
+  if (!original || original.internalSerial?.trim() || original.wiped || original.profileAdded) return;
+  const revision = original.auditLookupRevision || 0;
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "sidekick-audit-lookup", device });
+    showAuditLookupStatus(result);
+    const allowed = await refreshBeginWipeAccess();
+    const row = prePrepRows.find(item => item.id === rowId);
+    if (!row || row.deviceSerial !== device || (row.auditLookupRevision || 0) !== revision || row.internalSerial?.trim()
+      || row.wiped || row.profileAdded || prePrepEditsLocked || !allowed) return;
+    if (!result?.ok) {
+      deviceToolSetText("prePrepStatus", `${device}: Audit lookup unavailable. Enter the internal serial and select a category manually.`);
+      return;
+    }
+    const category = Object.hasOwn(DEVICE_PROFILE_CATEGORIES, result.category) ? result.category : null;
+    const fillCategory = category && !row.category;
+    if (!result.internalSerial && !fillCategory) {
+      deviceToolSetText("prePrepStatus", `${device}: ${result?.ambiguous ? "multiple internal serials found in Audit" : "no internal serial available from Audit"}. Enter it manually.`);
+      return;
+    }
+    if (result.internalSerial) row.internalSerial = result.internalSerial;
+    if (fillCategory) row.category = category;
+    renderPrePrepRows();
+    await saveDeviceDraft();
+    deviceToolSetText("prePrepStatus", `${device}: ${result.internalSerial ? `internal serial ${result.internalSerial} filled from Audit.` : "Enter the internal serial manually."} ${fillCategory ? `Category ${category} selected.` : row.category ? "Existing category preserved." : "Select the category manually; Audit has no unique recognized category."}${result.stale ? " Using an older cached lookup; refresh when connected." : ""}`);
+  } catch {
+    deviceToolSetText("prePrepStatus", `${device}: serial lookup unavailable. Enter the internal serial manually.`);
+  }
+}
+
+async function loadAuditLookupStatus(force = false) {
+  if (!document.getElementById("auditLookupStatus") || !(await refreshBeginWipeAccess())) return;
+  deviceToolSetText("auditLookupStatus", "Reading the Audit serial lookup…");
+  try { showAuditLookupStatus(await chrome.runtime.sendMessage({ type: force ? "sidekick-audit-refresh" : "sidekick-audit-status" })); }
+  catch { deviceToolSetText("auditLookupStatus", "Serial lookup unavailable. Reload Sidekick or enter internal serials manually."); }
+}
+
+document.getElementById("refreshAuditLookupBtn")?.addEventListener("click", async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try { await loadAuditLookupStatus(true); }
+  finally { button.disabled = false; }
+});
+document.getElementById("importAuditLookupBtn")?.addEventListener("click", () => document.getElementById("auditLookupFile")?.click());
+document.getElementById("auditLookupFile")?.addEventListener("change", async event => {
+  const file = event.target.files?.[0];
+  if (!file || !(await refreshBeginWipeAccess())) return;
+  try {
+    if (file.size > 20000000) throw new Error("Choose the Audit.xlsm workbook (under 20 MB).");
+    deviceToolSetText("auditLookupStatus", "Reading the selected Audit file without changing it…");
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 8192) binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    showAuditLookupStatus(await chrome.runtime.sendMessage({ type: "sidekick-audit-import", base64: btoa(binary) }));
+  } catch (error) { deviceToolSetText("auditLookupStatus", error.message || "Could not read Audit.xlsm."); }
+  finally { event.target.value = ""; }
+});
+void loadAuditLookupStatus();
+
 function updatePrePrepLockState() {
   const lockButton = document.getElementById("prePrepLockBtn");
   if (lockButton) {
@@ -1445,6 +1515,7 @@ function buildPrePrepCopyCell(row, field, label) {
   input.setAttribute("aria-label", label);
   input.addEventListener("input", () => {
     row[field] = input.value;
+    row.auditLookupRevision = (row.auditLookupRevision || 0) + 1;
     if (field === "internalSerial") {
       row.wiped = false;
       row.profileAdded = false;
@@ -1513,6 +1584,7 @@ function renderPrePrepRows() {
     category.addEventListener("change", async () => {
       if (prePrepEditsLocked) { category.value = row.category || ""; return; }
       row.category = category.value;
+      row.auditLookupRevision = (row.auditLookupRevision || 0) + 1;
       row.profileAdded = false;
       const profileStatus = rowEl.querySelector('.device-profile-status input');
       if (profileStatus) profileStatus.checked = false;
@@ -1579,15 +1651,17 @@ function addPrePrepScan(rawInput) {
     return false;
   }
 
-  prePrepRows.push({
+  const row = {
     id: makePrePrepRowId(),
     deviceSerial: corrected,
     internalSerial: "",
     wiped: false, profileAdded: false
-  });
+  };
+  prePrepRows.push(row);
   renderPrePrepRows();
   void saveDeviceDraft();
   deviceToolSetText("prePrepStatus", `Added ${corrected}.`);
+  void populateAuditInternalSerial(row.id, corrected);
   return true;
 }
 
@@ -1616,6 +1690,7 @@ async function loadDeviceDraft() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.ttmtSidekickUserProfile) {
     void refreshBeginWipeAccess().catch(console.warn);
+    void loadAuditLookupStatus();
   }
   const draft = changes[DEVICE_DRAFT_KEY]?.newValue;
   if (area !== "session" || !draft || draft.origin === deviceDraftOrigin) return;

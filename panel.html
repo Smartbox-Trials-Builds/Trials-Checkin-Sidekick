@@ -169,6 +169,7 @@
         <div class="landing-anime-quotes__title">Anime quote spotlight</div>
         <blockquote class="landing-anime-quotes__quote" id="landingAnimeQuoteText"></blockquote>
       </section>
+      <div class="systems-counters" id="systemsCounters" hidden>
       <section class="daily-counter" id="systemsCheckinCounter" aria-label="Today's combined check-ins" aria-live="polite" hidden>
         <div class="daily-counter__header">Check-ins completed today</div>
         <div class="daily-counter__content">
@@ -176,6 +177,14 @@
           <p class="hint-text" id="systemsCheckinStatus">Loading shared total…</p>
         </div>
       </section>
+      <section class="daily-counter" aria-label="Available GIPOD codes" aria-live="polite">
+        <div class="daily-counter__header">Available GIPOD codes</div>
+        <div class="daily-counter__content">
+          <span class="daily-counter__value" id="gipodCount">—</span>
+          <p class="hint-text" id="gipodStatus">Loading available codes…</p>
+        </div>
+      </section>
+      </div>
       <div class="landing-layout" id="landingLayout">
       <div class="daily-counter" id="dailyCounterSection" data-layout-item="dailyCounter" aria-label="Daily task counter">
         <div class="daily-counter__header">
@@ -760,10 +769,13 @@
       <button type="submit" id="addInternalSerialBtn">Add device</button>
     </form>
     <div id="prePrepStatus" class="status-line" role="status" aria-live="polite"></div>
+    <div id="stickerLookupStatus" class="status-line" role="status" aria-live="polite"></div>
 
     <div class="mini-row pre-prep-actions">
       <button id="beginWipeBtn" class="toggle-btn" type="button" hidden>Begin Wipe</button>
       <button id="beginAddingProfilesBtn" class="toggle-btn" type="button" hidden>Begin Adding Profiles</button>
+      <button id="getLoanLibrarySearchBtn" class="toggle-btn" type="button">Get Loan Library Search</button>
+      <button id="bulkImportGipodBtn" class="toggle-btn" type="button">Bulk import GIPOD codes</button>
       <button id="prePrepLockBtn" class="toggle-btn" type="button">Lock edits: Off</button>
       <button id="prePrepClearBtn" class="toggle-btn" type="button">Clear list</button>
     </div>
@@ -1342,6 +1354,7 @@
   <script src="workers/serial-utils.js"></script>
   <script src="workers/device-sidekick.js"></script>
   <script src="workers/checkin-count-panel.js"></script>
+  <script src="workers/gipod-count-panel.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

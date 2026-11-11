@@ -256,6 +256,78 @@ test('AAC app selection includes requested families and variants but never unrel
   }
 });
 
+test('no AAC apps skips selection only after an unfiltered loaded list settles', async () => {
+  for (const scenario of ['other-app', 'empty', 'filtered', 'loading', 'not-loaded', 'arriving-app']) {
+    const context = setup(async () => []);
+    let changed, clicked = 0;
+    const timers = new Map(); let timerId = 0;
+    context.setTimeout = (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; };
+    context.clearTimeout = id => timers.delete(id);
+    context.queueMicrotask = queueMicrotask;
+    context.MutationObserver = class { constructor(fn) { changed = fn; } observe() {} disconnect() {} };
+    context.getComputedStyle = () => ({ display: 'block', visibility: 'visible' });
+    context.location = { hash: '#view/Microsoft_Intune_Devices/SyncPayloadsWizard.ReactView/deviceName/iPad-INTERNAL-001' };
+    const visible = { isConnected: true, getClientRects: () => [{}], getAttribute: () => null };
+    let names = scenario === 'empty' || scenario === 'not-loaded' ? [] : ['Smartbox Link'];
+    const row = name => ({ ...visible, querySelectorAll: () => [{ textContent: name }], click: () => { clicked++; } });
+    const grid = { textContent: scenario === 'empty' ? 'No apps found' : '', getAttribute: () => null,
+      querySelectorAll: selector => selector.includes('columnheader') ? [{ textContent: 'App name' }] : names.map(row) };
+    const selected = { getAttribute: () => 'Selected apps', querySelectorAll: () => [] };
+    const panel = {
+      querySelector: selector => scenario === 'loading' && selector.includes('progressbar') ? {} : null,
+      querySelectorAll: selector => selector === '[role="grid"]' ? [grid, selected] : selector === 'input'
+        ? [{ ...visible, value: scenario === 'filtered' ? 'Smartbox' : '' }] : []
+    };
+    context.document.body = {};
+    context.document.querySelectorAll = () => [{ ...visible, textContent: 'Select managed apps', closest: () => panel }];
+    const pending = context.selectManagedAacApps('INTERNAL-001');
+    const settled = [...timers.values()].find(t => t.delay === 1000);
+    if (scenario === 'arriving-app') { names = ['LAMP Words For Life']; changed(); }
+    if (settled) settled.fn();
+    const timeout = [...timers.values()].find(t => t.delay === 20000); timeout?.fn();
+    const result = await pending;
+    assert.equal(result.status, ['other-app','empty'].includes(scenario) ? 'no-matching-apps' : 'not-found');
+    assert.equal(clicked, scenario === 'arriving-app' ? 1 : 0);
+  }
+});
+
+test('empty-app return clicks only the serial and device ID matching breadcrumb', () => {
+  for (const scenario of ['matching','wrong-name','wrong-id','duplicate','changed-device']) {
+    const context = setup(async () => []); let clicks = 0;
+    context.location = { origin: 'https://entra.microsoft.com', href: 'https://entra.microsoft.com/',
+      hash: '#view/Microsoft_Intune_Devices/SyncPayloadsWizard.ReactView/deviceId/device-id/deviceName/iPad-' + (scenario === 'changed-device' ? 'OTHER' : 'INTERNAL-001') };
+    context.getComputedStyle = () => ({ display: 'block', visibility: 'visible' });
+    const link = { isConnected: true, getClientRects: () => [{}], getAttribute: () => null,
+      textContent: scenario === 'wrong-name' ? 'iPad-OTHER' : 'iPad-INTERNAL-001',
+      href: 'https://entra.microsoft.com/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/aadDeviceId/' + (scenario === 'wrong-id' ? 'other-id' : 'device-id'),
+      click: () => { clicks++; } };
+    context.document.querySelectorAll = () => scenario === 'duplicate' ? [link,link] : [link];
+    assert.equal(context.returnEntraWipeDeviceBreadcrumb('INTERNAL-001').status, scenario === 'matching' ? 'clicked' : scenario === 'changed-device' ? 'wrong-device' : scenario === 'duplicate' ? 'multiple' : 'not-found');
+    assert.equal(clicks, scenario === 'matching' ? 1 : 0);
+  }
+});
+
+test('no-app workflow bypasses Next and Remove and resumes license revocation', async () => {
+  const requests = []; let wizard = false, returned = false;
+  const context = setup(async request => {
+    const name = request.func.name; requests.push(name);
+    if (name === 'fillEntraDeviceSearch') return request.target.allFrames ? [{frameId:13,result:{found:true}}] : [{result:{entered:true}}];
+    if (name === 'openMatchingEntraDevice') return [{result:{status:'opened'}}];
+    if (name === 'clickEntraDeviceManage') return [{result:{status:'clicked'}}];
+    if (name === 'openEntraRemoveAppsConfiguration') { wizard = true; return [{result:{status:'opened'}}]; }
+    if (name === 'selectEntraAppOption') return [{frameId:25,result:request.args?.[0] ? {status:'selected'} : {found:true}}];
+    if (name === 'selectManagedAacApps') return [{result:{status:'no-matching-apps'}}];
+    if (name === 'returnEntraWipeDeviceBreadcrumb') { returned = true; return [{result:{status:'clicked'}}]; }
+    if (name === 'revokeEntraDeviceLicenses') { assert.equal(returned,true); return [{result:{status:'confirmed'}}]; }
+    throw new Error('Unexpected action: '+name);
+  });
+  context.chrome.tabs.get = async () => ({url: returned ? 'https://entra.microsoft.com/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/aadDeviceId/test' : wizard ? 'https://entra.microsoft.com/#view/Microsoft_Intune_Devices/SyncPayloadsWizard.ReactView/deviceName/iPad-INTERNAL-001' : overview});
+  await context.searchFirstWipeDevice(7,'INTERNAL-001');
+  assert.equal(requests.includes('clickEntraRemovalNext'),false);
+  assert.equal(requests.includes('clickEntraRemovalConfirm'),false);
+  assert.deepEqual(requests.slice(-2),['returnEntraWipeDeviceBreadcrumb','revokeEntraDeviceLicenses']);
+});
+
 test('Remove is clicked once only when the review contains exactly the prepared apps', async () => {
   for (const scenario of ['matching', 'changed-app', 'configuration', 'disabled']) {
     const context = setup(async () => []);

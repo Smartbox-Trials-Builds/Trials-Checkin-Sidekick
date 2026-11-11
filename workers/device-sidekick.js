@@ -100,7 +100,7 @@ function clickIntuneProfileNext(category) {
       if (finished) return;
       const buttons = [...document.querySelectorAll('button, [role="button"]')].filter(visible);
       if (clicked) {
-        const review = [...document.querySelectorAll('a, [role="link"]')].some(link => visible(link) && name(link).startsWith("review + save"));
+        const review = [...document.querySelectorAll('a, [role="link"], button, [role="button"]')].some(link => visible(link) && name(link).startsWith("review + save"));
         if (review && buttons.some(button => name(button) === "save")) finish("review");
         return;
       }
@@ -220,7 +220,7 @@ function saveIntuneProfileCategory(serial, category) {
   const name = element => String(element.getAttribute("aria-label") || element.textContent || "").replace(/\s+/g, " ").trim();
   const root = document.getElementById("root-container");
   if (!root || !visible(root) || document.getElementById("device-category-dropdown")) return { status: "not-review" };
-  const review = [...root.querySelectorAll('a, [role="link"]')].filter(link => visible(link) && name(link).toLowerCase().startsWith("review + save"));
+  const review = [...root.querySelectorAll('a, [role="link"], button, [role="button"]')].filter(link => visible(link) && name(link).toLowerCase().startsWith("review + save"));
   if (review.length !== 1) return { status: "not-review" };
   const values = [...root.querySelectorAll('span, div, p, dt, dd')].filter(visible).map(element => String(element.textContent || "").replace(/\s+/g, " ").trim());
   if (!values.includes("Device category") || !values.includes(category) || !values.includes("Management name")
@@ -254,10 +254,12 @@ async function applyIntuneProfileCategory(tabId, serial, category) {
       if (result?.[0]?.result?.status !== "selected") throw new Error("Could not select the exact device category. No changes were saved.");
       if (!(await refreshBeginWipeAccess()) || String(nextUnprofiledDevice()?.internalSerial || "").trim() !== serial || nextUnprofiledDevice()?.category !== category
         || (await chrome.tabs.get(tabId)).url !== url.href) throw new Error("The device, category or page changed. Next was not clicked.");
+      deviceToolSetText("prePrepStatus", `Selected ${targetName} for ${serial}. Opening Review + save…`);
       const next = await chrome.scripting.executeScript({ target: { tabId, frameIds: [matches[0].frameId] }, world: "MAIN", func: clickIntuneProfileNext, args: [targetName] });
       if (next?.[0]?.result?.status !== "review") throw new Error("Could not reach Review + save with the selected category. No changes were saved.");
       if (!(await refreshBeginWipeAccess()) || String(nextUnprofiledDevice()?.internalSerial || "").trim() !== serial || nextUnprofiledDevice()?.category !== category
         || (await chrome.tabs.get(tabId)).url !== url.href) throw new Error("The device, category or page changed. Save was not clicked.");
+      deviceToolSetText("prePrepStatus", `Review ready for ${serial}. Saving ${targetName}…`);
       const saved = await chrome.scripting.executeScript({ target: { tabId, frameIds: [matches[0].frameId] }, world: "MAIN", func: saveIntuneProfileCategory, args: [serial, targetName] });
       if (saved?.[0]?.result?.status !== "clicked") throw new Error("Could not verify the device, category and Save button on Review + save. No Save click was sent.");
       deviceToolSetText("prePrepStatus", `Save submitted for ${serial}. Waiting to return to Devices | All devices…`);
@@ -333,11 +335,20 @@ function openIntuneProfileDevice(serial) {
       if (!table || table.getAttribute("aria-busy") === "true" || [...document.querySelectorAll('[role="progressbar"]')].some(visible)) {
         clearTimeout(settledTimer); settledTimer = null; candidateHref = ""; return;
       }
-      const links = [...table.querySelectorAll('a[href]')].filter(link => {
-        if (!visible(link)) return false;
+      // New Intune lists render device-name buttons inside the row header.
+      // Keep legacy links, and exclude command/header buttons outside that cell.
+      const links = [...new Set([
+        ...table.querySelectorAll('a[href]'),
+        ...table.querySelectorAll('[role="rowheader"] button, [role="rowheader"] [role="button"]')
+      ])].filter(link => {
+        if (!visible(link) || link.disabled || link.getAttribute("aria-disabled") === "true") return false;
+        const href = link.getAttribute("href");
+        if (!href) return Boolean(link.closest?.('[role="rowheader"]'))
+          && (link.tagName === "BUTTON" || link.getAttribute("role") === "button");
         try {
-          const url = new URL(link.getAttribute("href"), "https://intune.microsoft.com");
-          return url.origin === "https://intune.microsoft.com" && url.hash.startsWith("#blade/Microsoft_Intune_ManagedDevices/ManagedDeviceMenu.MenuView/managedDeviceId/");
+          const url = new URL(href, "https://intune.microsoft.com");
+          return url.origin === "https://intune.microsoft.com"
+            && /^#(?:blade|view)\/Microsoft_Intune_ManagedDevices\/ManagedDeviceMenu\.MenuView\/(?:~\/overview\/)?managedDeviceId\/[^/]+/i.test(url.hash);
         } catch { return false; }
       });
       const named = links.filter(link => normalize(link.textContent).includes(normalize(serial)));
@@ -349,7 +360,7 @@ function openIntuneProfileDevice(serial) {
       }
       const link = matches[0];
       if (!link) { clearTimeout(settledTimer); settledTimer = null; candidateHref = ""; return; }
-      const href = link.getAttribute("href");
+      const href = link.getAttribute("href") || `device-button:${normalize(link.textContent)}`;
       if (settled && href === candidateHref) {
         link.click();
         finish("opened");
@@ -425,7 +436,7 @@ async function openIntunePropertiesForProfiles(tabId, serial) {
         while (Date.now() < deadline) {
           const current = new URL((await chrome.tabs.get(tabId)).url);
           if (current.origin === "https://intune.microsoft.com" && current.hash.includes('/Microsoft_Intune_ManagedDevices/PropertiesWizard.ReactView/')) {
-            deviceToolSetText("prePrepStatus", `Opened Properties → Edit for ${serial}. Profile test finished; no changes saved.`);
+            deviceToolSetText("prePrepStatus", `Opened Properties → Edit for ${serial}. Selecting the device category…`);
             return;
           }
           await new Promise(resolve => setTimeout(resolve, 250));
@@ -1147,6 +1158,9 @@ function selectManagedAacApps(serial) {
   return new Promise(resolve => {
     let observer;
     let timeout;
+    let emptyTimer;
+    let emptySignature = null;
+    let emptyReady = false;
     let finished = false;
     let clickedName = null;
     const appFamily = /^(?:lamp words for life|proloquo2go aac|touchchat hd|dialogue|grid for ipad)\b/i;
@@ -1160,6 +1174,7 @@ function selectManagedAacApps(serial) {
       finished = true;
       observer?.disconnect();
       clearTimeout(timeout);
+      clearTimeout(emptyTimer);
       resolve({ status, count, appNames });
     };
     const check = () => {
@@ -1173,7 +1188,10 @@ function selectManagedAacApps(serial) {
         .find(element => visible(element) && normalize(element.textContent).toLowerCase() === "select managed apps");
       if (!heading) return;
       const panel = heading.closest('section.fxs-blade, [role="region"], [role="dialog"], section, aside');
-      if (!panel || panel.querySelector('[aria-busy="true"]')) return;
+      if (!panel || panel.querySelector('[aria-busy="true"]')) {
+        clearTimeout(emptyTimer); emptySignature = null; emptyReady = false;
+        return;
+      }
       const grids = [...panel.querySelectorAll('[role="grid"]')];
       const appGrid = grids.find(grid => grid.getAttribute("aria-label") !== "Selected apps" && [...grid.querySelectorAll('[role="columnheader"]')]
         .some(header => normalize(header.textContent).toLowerCase() === "app name"));
@@ -1189,10 +1207,30 @@ function selectManagedAacApps(serial) {
       clickedName = null;
       const headers = [...appGrid.querySelectorAll('[role="columnheader"]')];
       const nameColumn = headers.findIndex(header => normalize(header.textContent).toLowerCase() === "app name");
-      const candidates = [...appGrid.querySelectorAll('[role="row"]')].map(row => {
+      const appRows = [...appGrid.querySelectorAll('[role="row"]')].map(row => {
         const cells = [...row.querySelectorAll('[role="gridcell"]')];
         return { row, name: normalize(cells[nameColumn]?.textContent) };
-      }).filter(item => item.name && appFamily.test(item.name) && visible(item.row));
+      }).filter(item => item.name && visible(item.row));
+      const candidates = appRows.filter(item => appFamily.test(item.name));
+      if (!selectedNames.length && !candidates.length) {
+        // Never interpret an unfinished or filtered list as no installed AAC apps.
+        const filtered = [...panel.querySelectorAll('input')].some(input => visible(input) && normalize(input.value));
+        const loading = panel.querySelector('[role="progressbar"], [aria-busy="true"]');
+        const loaded = appRows.length || /no (?:apps|applications|results|items)(?:\b|\s)/i.test(appGrid.textContent || "");
+        if (filtered || loading || !loaded) {
+          clearTimeout(emptyTimer); emptySignature = null; emptyReady = false;
+          return;
+        }
+        const signature = JSON.stringify(appRows.map(item => item.name));
+        if (signature !== emptySignature) {
+          clearTimeout(emptyTimer); emptySignature = signature; emptyReady = false;
+          emptyTimer = setTimeout(() => { emptyReady = true; check(); }, 1000);
+          return;
+        }
+        if (emptyReady) finish("no-matching-apps");
+        return;
+      }
+      clearTimeout(emptyTimer); emptySignature = null; emptyReady = false;
       const next = candidates.find(item => !selected.has(item.name.toLowerCase()));
       if (next) {
         if (next.row.getAttribute("aria-disabled") === "true") { finish("disabled-app"); return; }
@@ -1216,6 +1254,29 @@ function selectManagedAacApps(serial) {
     timeout = setTimeout(() => finish("not-found"), 20000);
     check();
   });
+}
+
+function returnEntraWipeDeviceBreadcrumb(serial) {
+  const normalize = value => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+  const current = location.hash.match(/\/deviceName\/([^/]+)/)?.[1];
+  if (location.origin !== "https://entra.microsoft.com" || !location.hash.includes("/SyncPayloadsWizard.ReactView/")
+    || !current || !normalize(decodeURIComponent(current)).includes(normalize(serial))) return { status: "wrong-device" };
+  const id = location.hash.match(/\/deviceId\/([^/]+)/)?.[1];
+  if (!id || !normalize(serial)) return { status: "wrong-device" };
+  const links = [...document.querySelectorAll('nav a[href], [role="navigation"] a[href]')].filter(link => {
+    const style = getComputedStyle(link);
+    if (!link.isConnected || !link.getClientRects().length || style.visibility !== "visible" || style.display === "none"
+      || link.getAttribute("aria-disabled") === "true" || !normalize(link.textContent).includes(normalize(serial))) return false;
+    try {
+      const target = new URL(link.href, location.href);
+      const targetId = target.hash.match(/\/aadDeviceId\/([^/]+)/)?.[1];
+      return target.origin === location.origin && target.hash.includes("/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/")
+        && targetId && decodeURIComponent(targetId) === decodeURIComponent(id);
+    } catch { return false; }
+  });
+  if (links.length !== 1) return { status: links.length ? "multiple" : "not-found" };
+  links[0].click();
+  return { status: "clicked" };
 }
 
 async function searchFirstWipeDevice(tabId, serial) {
@@ -1273,7 +1334,16 @@ async function searchFirstWipeDevice(tabId, serial) {
     });
     const appResult = apps?.[0]?.result;
     if (appResult?.status === "unrelated-selection") throw new Error("An app outside the requested AAC list is already selected. Review the app selection before continuing.");
-    if (appResult?.status !== "selected") throw new Error("Could not finish selecting the matching AAC apps. Check the Select managed apps list; no removal was submitted.");
+    if (appResult?.status !== "selected" && appResult?.status !== "no-matching-apps") throw new Error("Could not finish selecting the matching AAC apps. Check the Select managed apps list; no removal was submitted.");
+    const removalSkipped = appResult.status === "no-matching-apps";
+    if (removalSkipped) {
+      if (deviceSidekickMode !== "wipe" || !(await refreshBeginWipeAccess())) return;
+      deviceToolSetText("prePrepStatus", "No matching AAC apps are listed. Returning to the device for Revoke Licenses…");
+      const returned = await chrome.scripting.executeScript({
+        target: { tabId, frameIds: [0] }, world: "MAIN", func: returnEntraWipeDeviceBreadcrumb, args: [serial]
+      });
+      if (returned?.[0]?.result?.status !== "clicked") throw new Error("Could not return to the matching device. No app removal was submitted. Open the device overview to continue manually.");
+    } else {
     deviceToolSetText("prePrepStatus", `Selected ${appResult.count} matching AAC app(s). Opening the review step…`);
     const next = await chrome.scripting.executeScript({
       target: { tabId, frameIds: [wizardFrameId] }, world: "MAIN", func: clickEntraRemovalNext
@@ -1293,6 +1363,7 @@ async function searchFirstWipeDevice(tabId, serial) {
     });
     if (removed?.[0]?.result?.status === "selection-changed") throw new Error("The review list differs from the selected AAC apps. No Remove click was sent.");
     if (removed?.[0]?.result?.status !== "clicked") throw new Error("Could not verify the review list and Remove button. Check Entra before continuing.");
+    }
     if (deviceSidekickMode !== "wipe" || !(await refreshBeginWipeAccess())) return;
     deviceToolSetText("prePrepStatus", "Opening Revoke Licenses and confirming for the matching device…");
     const revoked = await chrome.scripting.executeScript({
@@ -1300,15 +1371,15 @@ async function searchFirstWipeDevice(tabId, serial) {
       args: [serial]
     });
     if (revoked?.[0]?.result?.status !== "confirmed") {
-      throw new Error("App removal was submitted, but Revoke Licenses could not be confirmed for the matching device. Check Entra before retrying any action.");
+      throw new Error(`${removalSkipped ? "No matching AAC apps were listed" : "App removal was submitted"}, but Revoke Licenses could not be confirmed for the matching device. Check Entra before retrying any action.`);
     }
     const wipeTarget = new URL((await chrome.tabs.get(tabId)).url);
     if (wipeTarget.origin !== "https://entra.microsoft.com" || !wipeTarget.hash.includes("/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/")) {
       throw new Error("The device overview changed before wipe confirmation. No Wipe click was sent.");
     }
-    deviceToolSetText("prePrepStatus", "App removal and license revocation requested. Waiting for your wipe decision…");
+    deviceToolSetText("prePrepStatus", `${removalSkipped ? "No matching AAC apps to remove. License revocation requested." : "App removal and license revocation requested."} Waiting for your wipe decision…`);
     if (!(await requestContinueDeviceWipe(serial))) {
-      deviceToolSetText("prePrepStatus", "Wipe cancelled. App removal and license revocation were already requested.");
+      deviceToolSetText("prePrepStatus", `Wipe cancelled. ${removalSkipped ? "License revocation was" : "App removal and license revocation were"} already requested.`);
       return;
     }
     if (deviceSidekickMode !== "wipe" || !(await refreshBeginWipeAccess())
@@ -1487,7 +1558,7 @@ function updatePrePrepLockState() {
     input.readOnly = prePrepEditsLocked;
   });
   document.querySelectorAll("#prePrepRows select").forEach(select => { select.disabled = prePrepEditsLocked; });
-  for (const id of ["prePrepScanInput", "prePrepAddBtn", "internalSerialInput", "addInternalSerialBtn"]) {
+  for (const id of ["prePrepScanInput", "prePrepAddBtn", "internalSerialInput", "addInternalSerialBtn", "bulkImportGipodBtn"]) {
     const input = document.getElementById(id);
     if (input) input.disabled = prePrepEditsLocked;
   }
@@ -1515,6 +1586,11 @@ function buildPrePrepCopyCell(row, field, label) {
   input.setAttribute("aria-label", label);
   input.addEventListener("input", () => {
     row[field] = input.value;
+    if (field === "deviceSerial" || !input.value.trim()) {
+      row.gipodCode = "";
+      const codeInput = input.closest(".pre-prep-table__row")?.querySelector('.device-gipod-code');
+      if (codeInput) codeInput.value = "";
+    }
     row.auditLookupRevision = (row.auditLookupRevision || 0) + 1;
     if (field === "internalSerial") {
       row.wiped = false;
@@ -1543,6 +1619,69 @@ function buildPrePrepCopyCell(row, field, label) {
   wrapper.append(input, copyButton);
   return wrapper;
 }
+
+function assignDeviceGipodCodes(text, expectedIds) {
+  if (prePrepEditsLocked) throw new Error("Unlock edits before importing GIPOD codes.");
+  if (!prePrepRows.length) throw new Error("Add devices before importing GIPOD codes.");
+  if (expectedIds && (expectedIds.length !== prePrepRows.length || expectedIds.some((id, i) => id !== prePrepRows[i].id))) {
+    throw new Error("The device list changed. Close this window and start the import again.");
+  }
+  const codes = String(text || "").trim().toUpperCase().split(/[\s,;]+/).filter(Boolean);
+  if (codes.length !== prePrepRows.length) throw new Error(`Paste exactly ${prePrepRows.length} GIPOD code${prePrepRows.length === 1 ? "" : "s"}, one per device in list order.`);
+  if (codes.some(code => !/^GIPOD-\d{4}-\d{4}-\d{4}$/.test(code))) throw new Error("Each code must use the format GIPOD-1234-5678-9012.");
+  if (new Set(codes).size !== codes.length) throw new Error("The pasted list contains a duplicate GIPOD code. Check the codes before importing.");
+  prePrepRows.forEach((row, i) => { row.gipodCode = codes[i]; });
+  return codes.length;
+}
+
+async function copyDeviceDashboardNote(rowId) {
+  const row = prePrepRows.find(item => item.id === rowId);
+  const device = String(row?.deviceSerial || "").trim();
+  const code = String(row?.gipodCode || "").trim().toUpperCase();
+  if (!row || !device) { deviceToolSetText("prePrepStatus", "Add the scanned device number before copying its Dashboard Note."); return; }
+  if (!/^GIPOD-\d{4}-\d{4}-\d{4}$/.test(code)) { deviceToolSetText("prePrepStatus", "Import or enter a valid GIPOD code for this device before copying its Dashboard Note."); return; }
+  try {
+    await navigator.clipboard.writeText(`${device}\n${code}`);
+    deviceToolSetText("prePrepStatus", `Dashboard Note copied for ${device}.`);
+  } catch { deviceToolSetText("prePrepStatus", "Could not copy the Dashboard Note. Please try again."); }
+}
+
+document.getElementById("bulkImportGipodBtn")?.addEventListener("click", () => {
+  if (prePrepEditsLocked || !prePrepRows.length) {
+    deviceToolSetText("prePrepStatus", prePrepEditsLocked ? "Unlock edits before importing GIPOD codes." : "Add devices before importing GIPOD codes.");
+    return;
+  }
+  const ids = prePrepRows.map(row => row.id);
+  const dialog = document.createElement("dialog");
+  dialog.className = "prep-assignment-dialog device-gipod-import-dialog";
+  dialog.setAttribute("aria-labelledby", "gipodImportTitle");
+  const title = document.createElement("h2"); title.id = "gipodImportTitle"; title.textContent = "Bulk import GIPOD codes";
+  const hint = document.createElement("p");
+  hint.textContent = `Paste ${ids.length} codes, one per line, in the device order below. Import replaces the codes currently assigned to these devices.`;
+  const order = document.createElement("ol");
+  prePrepRows.forEach(row => {
+    const item = document.createElement("li"); item.textContent = row.deviceSerial || row.internalSerial || "Device number not entered"; order.append(item);
+  });
+  const label = document.createElement("label"); label.htmlFor = "gipodImportCodes"; label.textContent = "GIPOD codes";
+  const input = document.createElement("textarea"); input.id = "gipodImportCodes"; input.rows = 7; input.placeholder = "GIPOD-1234-5678-9012\nGIPOD-2345-6789-0123";
+  const status = document.createElement("p"); status.className = "status-line"; status.setAttribute("role", "status");
+  const actions = document.createElement("div"); actions.className = "mini-row";
+  const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "toggle-btn"; cancel.textContent = "Cancel";
+  const apply = document.createElement("button"); apply.type = "button"; apply.className = "toggle-btn"; apply.textContent = "Import codes";
+  cancel.addEventListener("click", () => dialog.close());
+  dialog.addEventListener("close", () => dialog.remove());
+  apply.addEventListener("click", async () => {
+    try {
+      const count = assignDeviceGipodCodes(input.value, ids);
+      renderPrePrepRows();
+      await saveDeviceDraft();
+      deviceToolSetText("prePrepStatus", `Imported ${count} GIPOD code${count === 1 ? "" : "s"} in device list order. Use Dashboard Note beside each device to copy it.`);
+      dialog.close();
+    } catch (error) { status.textContent = error.message; }
+  });
+  actions.append(cancel, apply); dialog.append(title, hint, order, label, input, status, actions);
+  document.body.append(dialog); dialog.showModal(); input.focus();
+});
 
 function renderPrePrepRows() {
   updateBeginWipeVisibility();
@@ -1631,13 +1770,54 @@ function renderPrePrepRows() {
         deviceToolSetText("prePrepStatus", `${row.internalSerial || row.deviceSerial} ${row.profileAdded ? "marked profile added" : "marked profile not added"}. Begin Adding Profiles will start with the next unfinished device.`);
       });
       profileLabel.append(profileCheckbox, document.createTextNode("Profile added"));
-      actions.append(label, profileLabel, remove);
+      const code = document.createElement("input");
+      code.type = "text"; code.className = "device-gipod-code";
+      code.value = row.gipodCode || ""; code.placeholder = "GIPOD code"; code.readOnly = prePrepEditsLocked;
+      code.setAttribute("aria-label", `Dashboard Note GIPOD code for ${row.deviceSerial || row.internalSerial}`);
+      code.addEventListener("input", () => {
+        if (prePrepEditsLocked) { code.value = row.gipodCode || ""; return; }
+        row.gipodCode = code.value.trim().toUpperCase();
+        void saveDeviceDraft();
+      });
+      const note = document.createElement("button");
+      note.type = "button"; note.className = "toggle-btn queue-small-btn"; note.textContent = "Dashboard Note";
+      note.setAttribute("aria-label", `Copy Dashboard Note for ${row.deviceSerial || row.internalSerial}`);
+      note.addEventListener("click", () => void copyDeviceDashboardNote(row.id));
+      actions.append(label, profileLabel, code, note, remove);
       rowEl.append(actions);
     } else rowEl.append(remove);
     rowsEl.append(rowEl);
   });
   updatePrePrepLockState();
   updatePrePrepEmptyState();
+}
+
+const MISSING_STICKER_WORKBOOK_URL = "https://smartboxassistivetnam.sharepoint.com/:x:/r/sites/TrialsSharePoint.us/_layouts/15/Doc.aspx?sourcedoc=%7B0EA98517-551F-426A-BFB3-8EB6A8125B17%7D&file=Missing%20DTP%20Stickers.xlsx&action=default&mobileredirect=true&wdwpf=doclib-c";
+
+async function checkDeviceSticker(rowId, device) {
+  if (!(await refreshBeginWipeAccess())) return;
+  const stillListed = () => prePrepRows.some(row => row.id === rowId && row.deviceSerial === device);
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "sidekick-sticker-lookup", device });
+    if (!stillListed() || !(await refreshBeginWipeAccess())) return;
+    if (!result?.ok) throw new Error(result?.error || "Sticker check unavailable. Check Missing DTP Stickers.xlsx manually.");
+    if (!result.matches?.length) return;
+    const locations = result.matches.map(match => `${match.sheet}, row ${match.row} (${match.cell})`).join("; ");
+    const message = `${device}: Replace the Serial Number sticker. Found in Missing DTP Stickers.xlsx: ${locations}.`;
+    deviceToolSetText("stickerLookupStatus", message);
+    const dialog = document.createElement("dialog"); dialog.className = "prep-assignment-dialog";
+    const title = document.createElement("h2"); title.id = `sticker-${rowId}`; title.textContent = "Replace Serial Number sticker";
+    dialog.setAttribute("aria-labelledby", title.id);
+    const description = document.createElement("p"); description.textContent = message;
+    const tabStatus = document.createElement("p"); tabStatus.textContent = "The sticker workbook is opening in a new tab.";
+    const close = document.createElement("button"); close.type = "button"; close.className = "toggle-btn"; close.textContent = "Close";
+    close.addEventListener("click", () => dialog.close()); dialog.addEventListener("close", () => dialog.remove());
+    dialog.append(title, description, tabStatus, close); document.body.append(dialog); dialog.showModal(); close.focus();
+    try { await chrome.tabs.create({ url: MISSING_STICKER_WORKBOOK_URL, active: false }); }
+    catch { tabStatus.textContent = "Could not open the workbook automatically. Open Missing DTP Stickers.xlsx in SharePoint and check the row shown above."; }
+  } catch (error) {
+    if (stillListed()) deviceToolSetText("stickerLookupStatus", `${device}: ${error.message || "Sticker check unavailable. Check the workbook manually."}`);
+  }
 }
 
 function addPrePrepScan(rawInput) {
@@ -1662,6 +1842,7 @@ function addPrePrepScan(rawInput) {
   void saveDeviceDraft();
   deviceToolSetText("prePrepStatus", `Added ${corrected}.`);
   void populateAuditInternalSerial(row.id, corrected);
+  void checkDeviceSticker(row.id, corrected);
   return true;
 }
 
@@ -1672,6 +1853,7 @@ function clearPrePrepRows() {
   deviceToolSetText("prePrepRawScan", "—");
   deviceToolSetText("prePrepCorrectedScan", "—");
   deviceToolSetText("prePrepStatus", "Device list cleared.");
+  deviceToolSetText("stickerLookupStatus", "");
 }
 
 
@@ -1710,6 +1892,22 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (addPrePrepScan(raw) && input) {
       input.value = "";
       input.focus();
+    }
+  });
+
+  document.getElementById("getLoanLibrarySearchBtn")?.addEventListener("click", async () => {
+    const serials = prePrepRows
+      .map(row => String(row.internalSerial || "").trim().toUpperCase())
+      .filter(Boolean);
+    if (!serials.length) {
+      deviceToolSetText("prePrepStatus", "Add an internal serial number before copying a loan library search.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(serials.join(" OR "));
+      deviceToolSetText("prePrepStatus", `Copied loan library search for ${serials.length} device${serials.length === 1 ? "" : "s"}. Paste it into SharePoint search.`);
+    } catch {
+      deviceToolSetText("prePrepStatus", "Could not copy the loan library search. Please click Get Loan Library Search again.");
     }
   });
 

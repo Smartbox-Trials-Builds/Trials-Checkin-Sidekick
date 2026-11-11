@@ -14,7 +14,7 @@
       const { data, error } = await globalThis.sidekickSupabase.getClient().rpc('sidekick_daily_checkin_total');
       if (error) throw error;
       value.textContent = String(data.total);
-      status.textContent = 'All Device Coordinators · Today, Central time';
+      status.textContent = '';
     } catch {
       value.textContent = '—';
       status.textContent = 'Count unavailable. Retrying automatically.';

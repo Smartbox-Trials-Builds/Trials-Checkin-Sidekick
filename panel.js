@@ -7176,6 +7176,245 @@ function renumberLockDownEntries() {
   });
 }
 
+function fillIntuneLockDownLostMode(serial, action = "discover") {
+  const message = "This device is durable medical equipment, property of Smartbox. If found, please contact 877-392-2299 ext.6 or trials.us@smartboxaac.com";
+  const phone = "877-392-2299 ext.6";
+  const normalize = value => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+  if (location.origin !== "https://intune.microsoft.com" || !location.hash.includes("/Microsoft_Intune_ManagedDevices/ManagedDeviceMenu.MenuView/") || !normalize(serial)) return { found: false };
+  const visible = element => {
+    const style = getComputedStyle(element);
+    return element.isConnected && element.getClientRects().length && style.display !== "none" && style.visibility === "visible";
+  };
+  const enabled = element => visible(element) && !element.disabled && element.getAttribute("aria-disabled") !== "true";
+  const name = element => normalize(element.getAttribute("aria-label") || (element.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean).map(id => document.getElementById(id)?.textContent || "").join(" ")
+    || [...(element.labels || [])].map(label => label.textContent).join(" ") || element.textContent);
+  const panels = [...document.querySelectorAll('h1, h2, [role="heading"]')]
+    .filter(heading => visible(heading) && normalize(heading.textContent) === "lost mode (supervised only)")
+    .map(heading => heading.closest('[role="region"], section.fxs-blade, [role="dialog"]'))
+    .filter(panel => panel && visible(panel) && normalize(panel.textContent).includes(normalize(serial)));
+  if (panels.length !== 1) return { found: false, ambiguous: panels.length > 1 };
+  const panel = panels[0];
+  const controls = () => {
+    const enable = [...panel.querySelectorAll('input[type="radio"], [role="radio"]')].filter(element => enabled(element) && name(element) === "enable");
+    const fields = [...panel.querySelectorAll('input, textarea')].filter(visible);
+    const messages = fields.filter(element => name(element) === "messages to display on lock screen");
+    const phones = fields.filter(element => name(element) === "phone number to display");
+    const buttons = [...panel.querySelectorAll('button, [role="button"]')].filter(element => enabled(element) && name(element) === "ok");
+    return { enable, messages, phones, buttons };
+  };
+  const selected = element => element.checked === true || element.getAttribute("aria-checked") === "true";
+  const current = controls();
+  if (current.enable.length !== 1 || current.messages.length !== 1 || current.phones.length !== 1) return { found: false };
+  if (action === "discover") return { found: true };
+  const correct = state => state.enable.length === 1 && selected(state.enable[0]) && state.messages.length === 1 && state.phones.length === 1
+    && enabled(state.messages[0]) && enabled(state.phones[0]) && !state.messages[0].readOnly && !state.phones[0].readOnly
+    && state.messages[0].value === message && state.phones[0].value === phone;
+  if (action === "submit") {
+    if (!correct(current) || current.buttons.length !== 1) return { status: "form-changed" };
+    current.buttons[0].click();
+    return { status: "submitted" };
+  }
+  if (action !== "fill") return { status: "invalid-action" };
+  return new Promise(resolve => {
+    let observer, timeout, finished = false, enableClicked = false, wrote = false;
+    const finish = status => { if (finished) return; finished = true; observer?.disconnect(); clearTimeout(timeout); resolve({ status }); };
+    const setValue = (element, value) => {
+      const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, "value").set.call(element, value);
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    const check = () => {
+      if (finished) return;
+      if (!panel.isConnected || !normalize(panel.textContent).includes(normalize(serial))) { finish("device-changed"); return; }
+      const state = controls();
+      if (state.enable.length !== 1) return;
+      if (!selected(state.enable[0])) {
+        if (!enableClicked) { enableClicked = true; state.enable[0].click(); queueMicrotask(check); }
+        return;
+      }
+      if (state.messages.length !== 1 || state.phones.length !== 1 || !enabled(state.messages[0]) || !enabled(state.phones[0]) || state.messages[0].readOnly || state.phones[0].readOnly) return;
+      if (!wrote) { wrote = true; setValue(state.messages[0], message); setValue(state.phones[0], phone); queueMicrotask(check); return; }
+      if (correct(state) && state.buttons.length === 1) finish("filled");
+    };
+    observer = new MutationObserver(check); observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+    timeout = setTimeout(() => finish("not-ready"), 10000); check();
+  });
+}
+
+function openIntuneLockDownLostMode(serial, act = false) {
+  if (!location.hostname.endsWith(".reactblade.portal.azure.net") || !String(serial || "").trim()) return { found: false };
+  const normalize = value => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+  const visible = element => {
+    const style = getComputedStyle(element);
+    return element.isConnected && element.getClientRects().length && style.display !== "none" && style.visibility === "visible";
+  };
+  const enabled = element => visible(element) && !element.disabled && element.getAttribute("aria-disabled") !== "true";
+  const name = element => normalize(element.getAttribute("aria-label") || (element.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean).map(id => document.getElementById(id)?.textContent || "").join(" ") || element.textContent);
+  const verified = () => [...document.querySelectorAll('span, div, p, dd, td, [role="cell"]')]
+    .some(element => visible(element) && normalize(element.textContent) === normalize(serial));
+  const toolbar = document.getElementById("resourceViewToolbar");
+  if (!toolbar || !visible(toolbar) || !verified()) return { found: false };
+  const locate = [...toolbar.querySelectorAll('button, [role="button"]')].filter(button => enabled(button) && name(button) === "locate");
+  if (locate.length !== 1) return { found: false, ambiguous: locate.length > 1 };
+  if (!act) return { found: true };
+  return new Promise(resolve => {
+    let observer, timeout, finished = false, locateClicked = false;
+    const finish = status => {
+      if (finished) return;
+      finished = true; observer?.disconnect(); clearTimeout(timeout); resolve({ status });
+    };
+    const check = () => {
+      if (finished) return;
+      if (!toolbar.isConnected || !verified()) { finish("device-changed"); return; }
+      const menus = [...document.querySelectorAll('[role="menu"]')].filter(menu => visible(menu) && name(menu) === "locate");
+      if (menus.length > 1) { finish("ambiguous-menu"); return; }
+      if (menus.length === 1) {
+        const options = [...menus[0].querySelectorAll('[role="menuitem"]')].filter(option => enabled(option) && name(option) === "lost mode (supervised only)");
+        if (options.length > 1) { finish("ambiguous-option"); return; }
+        if (options.length === 1) { options[0].click(); finish("opened"); }
+        return;
+      }
+      if (!locateClicked && enabled(locate[0])) {
+        locateClicked = true; locate[0].click(); queueMicrotask(check);
+      }
+    };
+    observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+    timeout = setTimeout(() => finish("not-found"), 10000);
+    check();
+  });
+}
+
+let lockDownSearchRunning = false;
+
+async function beginLockDownSearch(entry) {
+  const button = entry.querySelector("[data-lock-down-begin]");
+  const status = entry.querySelector("[data-lock-down-lookup-status]");
+  const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
+  const deviceInput = entry.querySelector("[data-lock-down-device-number]");
+  const serial = String(serialInput?.value || "").trim();
+  if (!button || !status) return;
+  if (lockDownSearchRunning) { status.textContent = "Another Lock Down device search is running. Try again when it finishes."; return; }
+  if (!serial) { status.textContent = "Wait for the internal serial lookup or enter the internal serial before clicking Begin Lockdown."; return; }
+  const device = deviceInput?.value;
+  const unchanged = () => entry.isConnected && String(serialInput.value || "").trim() === serial && deviceInput?.value === device;
+  lockDownSearchRunning = true;
+  button.disabled = true;
+  try {
+    if (!(await hasDeviceSystemsRole())) throw new Error("Lock Down is available to Device Systems Coordinators.");
+    const tabs = await chrome.tabs.query({ url: "https://intune.microsoft.com/*" });
+    const matching = tabs.filter(tab => isIntuneAllDevices(tab.url) || isIntuneAllDevices(tab.pendingUrl));
+    const existing = matching.find(tab => tab.active) || matching[0];
+    const tab = existing ? await chrome.tabs.update(existing.id, { active: true }) : await chrome.tabs.create({ url: INTUNE_ALL_DEVICES_URL, active: true });
+    if (tab.windowId) await chrome.windows.update(tab.windowId, { focused: true });
+    status.textContent = `Opening Intune device search for ${serial}…`;
+    const deadline = Date.now() + 20000;
+    while (Date.now() < deadline) {
+      if (!unchanged() || !(await hasDeviceSystemsRole())) throw new Error("The device card or role changed. Click Begin Lockdown again for the current device.");
+      const current = await chrome.tabs.get(tab.id);
+      if (!isIntuneAllDevices(current.url) && !isIntuneAllDevices(current.pendingUrl)) throw new Error("The Intune tab changed. Open All devices and try again.");
+      let frames;
+      try {
+        frames = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: "MAIN", func: fillIntuneProfileSearch });
+      } catch (error) {
+        if (/permission|cannot access|not allowed/i.test(error.message || "")) throw new Error("Reload Sidekick and allow access to Intune and its embedded device pages, then try again.");
+        await new Promise(resolve => setTimeout(resolve, 250));
+        continue;
+      }
+      const matches = frames.filter(frame => frame.result?.found);
+      if (matches.length > 1 || frames.some(frame => frame.result?.ambiguous)) throw new Error("More than one Intune device search is available. Close extra views and try again.");
+      if (matches.length === 1) {
+        if (!unchanged() || !(await hasDeviceSystemsRole()) || !isIntuneAllDevices((await chrome.tabs.get(tab.id)).url)) throw new Error("The device card or Intune page changed. No search was submitted.");
+        const results = await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [matches[0].frameId] }, world: "MAIN", func: fillIntuneProfileSearch, args: [serial] });
+        if (!results?.[0]?.result?.entered) throw new Error("Intune did not keep the internal serial in its search field. Try Begin Lockdown again.");
+        if (!unchanged() || !(await hasDeviceSystemsRole()) || !isIntuneAllDevices((await chrome.tabs.get(tab.id)).url)) throw new Error("The device card or Intune page changed. No device result was opened.");
+        status.textContent = `Opening the Intune result for ${serial}…`;
+        const opened = await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [matches[0].frameId] }, world: "MAIN", func: openIntuneProfileDevice, args: [serial] });
+        const resultStatus = opened?.[0]?.result?.status;
+        if (resultStatus === "search-changed") throw new Error("The Intune search changed. No device result was opened.");
+        if (resultStatus !== "opened") throw new Error("No unique matching Intune device result was ready. Check the results and try Begin Lockdown again.");
+        status.textContent = `Opening Locate → Lost mode for ${serial}…`;
+        const deviceDeadline = Date.now() + 20000;
+        let devicePage = null;
+        while (Date.now() < deviceDeadline) {
+          if (!unchanged() || !(await hasDeviceSystemsRole())) throw new Error("The device card or role changed. No Lost Mode option was selected.");
+          const currentTab = await chrome.tabs.get(tab.id);
+          const page = new URL(currentTab.url);
+          if (isIntuneAllDevices(currentTab.url)) { await new Promise(resolve => setTimeout(resolve, 250)); continue; }
+          if (page.origin !== "https://intune.microsoft.com" || !/^#(?:view|blade)\/Microsoft_Intune_ManagedDevices\/ManagedDeviceMenu\.MenuView\/(?:~\/overview\/)?managedDeviceId\/[^/]+/i.test(page.hash)) throw new Error("The Intune device page changed. No Lost Mode option was selected.");
+          if (devicePage && devicePage !== currentTab.url) throw new Error("The Intune device changed. No Lost Mode option was selected.");
+          devicePage = currentTab.url;
+          const deviceFrames = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: "MAIN", func: openIntuneLockDownLostMode, args: [serial] });
+          const verified = deviceFrames.filter(frame => frame.result?.found);
+          if (verified.length > 1 || deviceFrames.some(frame => frame.result?.ambiguous)) throw new Error("Multiple device controls are available. Open Lost Mode manually for the correct device.");
+          if (verified.length === 1) {
+            if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No Lost Mode option was selected.");
+            const lost = await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [verified[0].frameId] }, world: "MAIN", func: openIntuneLockDownLostMode, args: [serial, true] });
+            if (lost?.[0]?.result?.status !== "opened") throw new Error("Could not select Lost mode (supervised only) for the matching device. Check the Locate menu in Intune.");
+            status.textContent = `Enabling Lost Mode and entering the lock screen details for ${serial}…`;
+            const formDeadline = Date.now() + 15000;
+            while (Date.now() < formDeadline) {
+              if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No Lost Mode request was submitted.");
+              const forms = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: "MAIN", func: fillIntuneLockDownLostMode, args: [serial] });
+              const matchingForms = forms.filter(frame => frame.result?.found);
+              if (matchingForms.length > 1 || forms.some(frame => frame.result?.ambiguous)) throw new Error("Multiple Lost Mode forms are open. No request was submitted.");
+              if (matchingForms.length === 1) {
+                const target = { tabId: tab.id, frameIds: [matchingForms[0].frameId] };
+                if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No Lost Mode request was submitted.");
+                const filled = await chrome.scripting.executeScript({ target, world: "MAIN", func: fillIntuneLockDownLostMode, args: [serial, "fill"] });
+                if (filled?.[0]?.result?.status !== "filled") throw new Error("Could not verify Enable, the message and phone number. No OK click was sent.");
+                if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No OK click was sent.");
+                const submitted = await chrome.scripting.executeScript({ target, world: "MAIN", func: fillIntuneLockDownLostMode, args: [serial, "submit"] });
+                if (submitted?.[0]?.result?.status !== "submitted") throw new Error("The Lost Mode form changed. No OK click was sent.");
+                status.textContent = `Lost Mode request submitted for ${serial}. Check Intune for its device action status.`;
+                return;
+              }
+              await new Promise(resolve => setTimeout(resolve, 250));
+            }
+            throw new Error("The Lost Mode form was not ready. No request was submitted.");
+          }
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        throw new Error("The matching device's Locate control was not ready. Check the device overview in Intune.");
+      }
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    throw new Error("Intune device search is not ready. Open All devices and click Begin Lockdown again.");
+  } catch (error) { status.textContent = error.message || "Could not search Intune. Please try again."; }
+  finally { lockDownSearchRunning = false; button.disabled = false; }
+}
+
+async function lookupLockDownInternalSerial(entry) {
+  const deviceInput = entry.querySelector("[data-lock-down-device-number]");
+  const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
+  const status = entry.querySelector("[data-lock-down-lookup-status]");
+  if (!deviceInput || !serialInput || !status || deviceInput.disabled) return;
+  const raw = deviceInput.value.trim();
+  const device = typeof extractValidSerial === "function" ? extractValidSerial(raw) : raw.toUpperCase();
+  const revision = entry.dataset.lookupRevision;
+  if (!device) { status.textContent = raw ? "Enter a complete device number to look up its internal serial." : ""; return; }
+  const original = serialInput.value;
+  status.textContent = "Looking up the internal serial…";
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "sidekick-audit-lookup", device });
+    if (!entry.isConnected || deviceInput.disabled || deviceInput.value.trim() !== raw
+      || entry.dataset.lookupRevision !== revision || serialInput.value !== original) return;
+    if (!result?.ok) throw new Error(result?.error || "Serial lookup unavailable. Enter the internal serial manually.");
+    if (original.trim()) { status.textContent = "Existing internal serial preserved."; return; }
+    if (!result.internalSerial || result.ambiguous) {
+      status.textContent = result.ambiguous ? "Multiple internal serials found in Audit. Enter the correct serial manually." : "No internal serial found in Audit. Enter it manually.";
+      return;
+    }
+    serialInput.value = result.internalSerial;
+    status.textContent = `Internal serial filled from Audit.${result.stale ? " Using an older cached lookup." : ""}`;
+  } catch (error) {
+    if (entry.isConnected && !deviceInput.disabled && deviceInput.value.trim() === raw && entry.dataset.lookupRevision === revision) {
+      status.textContent = error.message || "Serial lookup unavailable. Enter it manually.";
+    }
+  }
+}
+
 function addLockDownEntry(values = {}) {
   const list = document.getElementById("lockDownList");
   if (!list) return null;
@@ -7184,6 +7423,7 @@ function addLockDownEntry(values = {}) {
   const entryId = `lockDownEntry${lockDownEntrySequence}`;
   const crmInputId = `${entryId}CrmLink`;
   const deviceInputId = `${entryId}DeviceNumber`;
+  const serialInputId = `${entryId}InternalSerial`;
   const entry = document.createElement("section");
   entry.className = "lock-down-entry";
   entry.dataset.state = "ready";
@@ -7194,12 +7434,38 @@ function addLockDownEntry(values = {}) {
     <input type="url" id="${crmInputId}" data-lock-down-crm-link placeholder="https://portal.talktometechnologies.com/…" autocomplete="off" />
     <label for="${deviceInputId}">Device number</label>
     <input type="text" id="${deviceInputId}" data-lock-down-device-number placeholder="Enter device number" autocomplete="off" />
+    <label for="${serialInputId}">Internal serial number</label>
+    <input type="text" id="${serialInputId}" data-lock-down-internal-serial placeholder="Filled automatically from Audit" autocomplete="off" />
+    <button type="button" class="toggle-btn queue-small-btn lock-down-entry__begin" data-lock-down-begin>Begin Lockdown</button>
+    <div class="status-line" data-lock-down-lookup-status role="status" aria-live="polite"></div>
     <div class="status-line" data-lock-down-entry-status role="status" aria-live="polite"></div>
   `;
   entry.querySelector("[data-lock-down-crm-link]").value = values.crmLink || "";
   entry.querySelector("[data-lock-down-device-number]").value = values.deviceNumber || "";
+  const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
+  serialInput.value = values.internalSerial || "";
+  const deviceInput = entry.querySelector("[data-lock-down-device-number]");
+  let lookupTimer;
+  entry.dataset.lookupRevision = "0";
+  deviceInput.addEventListener("input", () => {
+    clearTimeout(lookupTimer);
+    entry.dataset.lookupRevision = String(Number(entry.dataset.lookupRevision) + 1);
+    serialInput.value = "";
+    entry.querySelector("[data-lock-down-lookup-status]").textContent = "";
+    lookupTimer = setTimeout(() => void lookupLockDownInternalSerial(entry), 500);
+  });
+  deviceInput.addEventListener("change", () => {
+    clearTimeout(lookupTimer);
+    void lookupLockDownInternalSerial(entry);
+  });
+  serialInput.addEventListener("input", () => {
+    entry.dataset.lookupRevision = String(Number(entry.dataset.lookupRevision) + 1);
+    entry.querySelector("[data-lock-down-lookup-status]").textContent = "";
+  });
+  entry.querySelector("[data-lock-down-begin]").addEventListener("click", () => void beginLockDownSearch(entry));
   list.appendChild(entry);
   renumberLockDownEntries();
+  if (values.deviceNumber && !values.internalSerial) void lookupLockDownInternalSerial(entry);
   return entry;
 }
 

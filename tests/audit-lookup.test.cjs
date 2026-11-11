@@ -145,8 +145,10 @@ test('adding a scanned device requests its corrected device number and fills the
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(context.addPrePrepScan('(21)dtp8-0001'), true);
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(requests.length, 1);
-  assert.equal(requests[0].device, 'DTP8.0001');
+  const auditRequests = requests.filter(message => message.type === 'sidekick-audit-lookup');
+  assert.equal(auditRequests.length, 1);
+  assert.equal(auditRequests[0].device, 'DTP8.0001');
+  assert.equal(requests.filter(message => message.type === 'sidekick-sticker-lookup').length, 1);
   assert.equal(vm.runInContext('prePrepRows[0].internalSerial', context), 'AUTO');
   assert.equal(vm.runInContext('prePrepRows[0].category', context), 'Talkpad 8');
 });

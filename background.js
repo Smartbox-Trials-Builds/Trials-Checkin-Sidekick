@@ -1,5 +1,7 @@
 // background.js
 importScripts("libs/supabase.min.js", "workers/supabase-connection.js", "workers/queue-window-worker.js", "workers/checkin-count-worker.js", "libs/jszip.min.js", "workers/audit-workbook.js", "workers/audit-lookup-worker.js");
+importScripts("workers/gipod-workbook.js", "workers/gipod-count-worker.js");
+importScripts("workers/sticker-workbook.js", "workers/sticker-lookup-worker.js");
 
 chrome.runtime.onInstalled.addListener(() => {
   // This makes the side panel open automatically when the user clicks the extension icon.

@@ -100,8 +100,9 @@ test('mapped Intune input excludes shell search and only enters a unique visible
   assert.equal(input.value, 'FIRST');
 });
 
-test('Intune result opening handles generic iPad names and refuses changed search, multiple results and wrong links', async () => {
-  for (const scenario of ['named', 'generic', 'multiple', 'changed', 'wrong-link', 'loading']) {
+test('Intune result opening supports device-name buttons and links, refusing changed searches and ambiguous results', async () => {
+  const successful = ['named', 'generic', 'button', 'generic-button', 'view-link'];
+  for (const scenario of [...successful, 'multiple', 'multiple-buttons', 'disabled-button', 'outside-button', 'changed', 'wrong-link', 'loading']) {
     const { context } = setup();
     const clicks = [];
     const timers = new Map(); let id = 0;
@@ -113,9 +114,16 @@ test('Intune result opening handles generic iPad names and refuses changed searc
     const link = (name, key, origin = 'https://intune.microsoft.com') => ({ ...visible, textContent: name,
       getAttribute: () => `${origin}/#blade/Microsoft_Intune_ManagedDevices/ManagedDeviceMenu.MenuView/managedDeviceId/${key}`,
       click: () => clicks.push(key) });
-    const links = scenario === 'multiple' ? [link('iPad-FIRST', 'a'), link('iPad-FIRST', 'b')]
+    const button = (name, key) => ({ ...visible, tagName: 'BUTTON', textContent: name,
+      disabled: scenario === 'disabled-button', closest: () => scenario === 'outside-button' ? null : {},
+      getAttribute: () => null, click: () => clicks.push(key) });
+    const buttons = scenario.includes('button') ? [button(scenario === 'generic-button' ? 'iPad' : 'iPad-FIRST', 'a')] : [];
+    if (scenario === 'multiple-buttons') buttons.push(button('iPad-FIRST', 'b'));
+    const links = scenario.includes('button') ? [] : scenario === 'multiple' ? [link('iPad-FIRST', 'a'), link('iPad-FIRST', 'b')]
       : [link(scenario === 'generic' ? 'iPad' : 'iPad-FIRST', 'a', scenario === 'wrong-link' ? 'https://example.com' : undefined)];
-    const table = { ...visible, getAttribute: () => scenario === 'loading' ? 'true' : null, querySelectorAll: () => links };
+    if (scenario === 'view-link') links[0].getAttribute = () => 'https://intune.microsoft.com/#view/Microsoft_Intune_ManagedDevices/ManagedDeviceMenu.MenuView/~/overview/managedDeviceId/a';
+    const table = { ...visible, getAttribute: () => scenario === 'loading' ? 'true' : null,
+      querySelectorAll: selector => selector === 'a[href]' ? links : buttons };
     context.document.body = {};
     context.document.querySelectorAll = selector => selector.startsWith('input') ? [{ ...visible, value: scenario === 'changed' ? 'OTHER' : 'FIRST' }]
       : selector.startsWith('[role="progressbar"]') ? [] : [table];
@@ -124,8 +132,8 @@ test('Intune result opening handles generic iPad names and refuses changed searc
     if (settle) settle.fn();
     else [...timers.values()].find(timer => timer.delay === 20000)?.fn();
     const result = await pending;
-    assert.equal(result.status, ['named', 'generic'].includes(scenario) ? 'opened' : scenario === 'changed' ? 'search-changed' : 'not-found');
-    assert.deepEqual(clicks, ['named', 'generic'].includes(scenario) ? ['a'] : []);
+    assert.equal(result.status, successful.includes(scenario) ? 'opened' : scenario === 'changed' ? 'search-changed' : 'not-found');
+    assert.deepEqual(clicks, successful.includes(scenario) ? ['a'] : []);
   }
 });
 
@@ -250,7 +258,7 @@ test('profile button requires a category before opening or searching Intune', as
 });
 
 test('profile Next clicks once after verifying category and stops when Review + save appears', async () => {
-  for (const scenario of ['normal', 'wrong-category', 'disabled', 'ambiguous']) {
+  for (const scenario of ['normal', 'button-review', 'wrong-category', 'disabled', 'ambiguous']) {
     const { context } = setup();
     let review = false, expire;
     const clicks = [];
@@ -260,7 +268,8 @@ test('profile Next clicks once after verifying category and stops when Review + 
     const save = { ...visible, textContent: 'Save', getAttribute: () => null, click: () => clicks.push('save') };
     context.document.getElementById = () => ({ value: scenario === 'wrong-category' ? 'Wego 5a' : 'Wego TalkPad 8' });
     context.document.querySelectorAll = selector => selector.startsWith('button') ? review ? [save] : scenario === 'ambiguous' ? [next, next] : [next]
-      : [{ ...visible, textContent: 'Review + save - In progress', getAttribute: () => null }];
+      : scenario === 'button-review' && !selector.includes('button') ? []
+      : [{ ...visible, tagName: scenario === 'button-review' ? 'BUTTON' : 'A', textContent: 'Review + save - In progress', getAttribute: () => null }];
     context.document.body = {};
     context.getComputedStyle = () => ({ display: 'block', visibility: 'visible' });
     context.MutationObserver = class { observe() {} disconnect() {} };
@@ -270,28 +279,28 @@ test('profile Next clicks once after verifying category and stops when Review + 
     const pending = context.clickIntuneProfileNext('Wego TalkPad 8');
     if (['disabled', 'ambiguous'].includes(scenario)) expire();
     const result = await pending;
-    assert.equal(result.status, scenario === 'normal' ? 'review' : scenario === 'wrong-category' ? 'category-changed' : 'not-found');
-    assert.deepEqual(clicks, scenario === 'normal' ? ['next'] : []);
+    assert.equal(result.status, ['normal', 'button-review'].includes(scenario) ? 'review' : scenario === 'wrong-category' ? 'category-changed' : 'not-found');
+    assert.deepEqual(clicks, ['normal', 'button-review'].includes(scenario) ? ['next'] : []);
   }
 });
 
 test('profile Save clicks once only for the reviewed serial and exact category', () => {
-  for (const scenario of ['correct', 'wrong-serial', 'wrong-category', 'disabled', 'ambiguous', 'not-review']) {
+  for (const scenario of ['correct', 'button-review', 'wrong-serial', 'wrong-category', 'disabled', 'ambiguous', 'not-review']) {
     const { context } = setup();
     const clicks = [];
     const visible = { isConnected: true, getClientRects: () => [{}] };
     const save = { ...visible, textContent: 'Save', disabled: scenario === 'disabled', getAttribute: () => null, click: () => clicks.push('save') };
     const values = ['Management name', scenario === 'wrong-serial' ? 'OTHER_9_date' : 'FIRST_9_date', 'Device category', scenario === 'wrong-category' ? 'Wego TalkPad 8 - Unrestricted' : 'Wego TalkPad 8'];
     const root = { ...visible, querySelectorAll: selector => selector.startsWith('a,')
-      ? [{ ...visible, textContent: 'Review + save - In progress', getAttribute: () => null }]
+      ? scenario === 'button-review' && !selector.includes('button') ? [] : [{ ...visible, tagName: scenario === 'button-review' ? 'BUTTON' : 'A', textContent: 'Review + save - In progress', getAttribute: () => null }]
       : selector.startsWith('button') ? scenario === 'ambiguous' ? [save, save] : [save]
       : values.map(textContent => ({ ...visible, textContent })) };
     context.document.getElementById = id => id === 'root-container' ? root : scenario === 'not-review' ? {} : null;
     context.getComputedStyle = () => ({ display: 'block', visibility: 'visible' });
     const result = context.saveIntuneProfileCategory('FIRST', 'Wego TalkPad 8');
-    assert.equal(result.status, scenario === 'correct' ? 'clicked' : scenario === 'not-review' ? 'not-review'
+    assert.equal(result.status, ['correct', 'button-review'].includes(scenario) ? 'clicked' : scenario === 'not-review' ? 'not-review'
       : ['wrong-serial', 'wrong-category'].includes(scenario) ? 'review-mismatch' : 'not-ready');
-    assert.deepEqual(clicks, scenario === 'correct' ? ['save'] : []);
+    assert.deepEqual(clicks, ['correct', 'button-review'].includes(scenario) ? ['save'] : []);
   }
 });
 

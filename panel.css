@@ -282,6 +282,15 @@ body[data-theme^="customTheme-"] .container > * {
   color: var(--text-color);
 }
 
+.systems-counters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.systems-counters[hidden] { display: none; }
+.systems-counters > .daily-counter { margin: 8px 0 16px; min-width: 0; }
+.systems-counters .hint-text:empty { display: none; }
+
 .daily-counter {
   margin: 8px auto 16px;
   padding: clamp(6px, 2.4vw, 10px) clamp(8px, 3vw, 12px);
@@ -2408,6 +2417,14 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
   align-self: center;
 }
 
+.lock-down-entry__begin {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
 .lock-down-entry label,
 .lock-down-entry input,
 .lock-down-entry .status-line {
@@ -2442,6 +2459,14 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
 .lock-down-summary {
   min-height: 1.25em;
 }
+
+#deviceScanDetails {
+  display: none;
+}
+
+.device-gipod-code { min-width: 0; width: 100%; box-sizing: border-box; grid-column: 1; }
+.device-gipod-import-dialog textarea { width: 100%; box-sizing: border-box; margin-top: 6px; }
+.device-gipod-import-dialog ol { max-height: 150px; overflow-y: auto; }
 
 .pre-prep-view .lookup-meta {
   display: grid;
@@ -2492,11 +2517,18 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
   overflow-x: hidden;
 }
 
-.pre-prep-table__header,
-.device-wipe-row-actions { display: grid; grid-template-columns: auto auto; align-items: center; gap: 4px 8px; }
-.device-wipe-row-actions .device-row-remove { grid-column: 2; grid-row: 1 / span 2; }
+.device-wipe-row-actions {
+  display: grid;
+  grid-template-columns: 65px 100px minmax(180px, 1fr) 112px 65px;
+  align-items: center;
+  gap: 8px;
+}
+.device-wipe-row-actions > * { margin: 0; }
+.device-wipe-row-actions .device-gipod-code,
+.device-wipe-row-actions .device-row-remove { grid-column: auto; grid-row: auto; }
 .device-wiped-status { display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; }
 .device-wiped-status input[type="checkbox"] { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.pre-prep-table__header,
 .pre-prep-table__row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -2662,10 +2694,14 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
 .audit-lookup-controls { margin-bottom: 12px; padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 12px; }
 #auditLookupControls[hidden], #auditLookupFile[hidden] { display: none !important; }
 #prePrepScanForm[hidden], #internalSerialForm[hidden], #deviceSerialHeading[hidden] { display: none !important; }
+#deviceSidekickTable { display: block; overflow-x: auto; }
+#deviceSidekickTable .pre-prep-table__header { margin-bottom: 8px; padding: 6px; }
+#deviceSidekickTable .pre-prep-table__body { min-width: 1200px; }
+#deviceSidekickTable[data-internal-only="true"] .pre-prep-table__body { min-width: 950px; }
 #deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__header,
-#deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) minmax(110px, .65fr) auto; }
+#deviceSidekickTable[data-mode="wipe"][data-internal-only="true"] .pre-prep-table__row { min-width: 950px; grid-template-columns: minmax(170px, 1fr) 140px 574px; }
 #deviceSidekickTable[data-mode="wipe"] .pre-prep-table__header,
-#deviceSidekickTable[data-mode="wipe"] .pre-prep-table__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(110px, .65fr) auto; }
+#deviceSidekickTable[data-mode="wipe"] .pre-prep-table__row { min-width: 1200px; grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) 140px 574px; box-sizing: border-box; gap: 6px; padding: 6px; }
 .device-category-select { width: 100%; min-width: 0; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: 8px; padding: 7px; }
 .device-row-actions-heading { font-size: 0; }
 .assignment-window h1 { font-size: 22px; margin: 0 0 14px; }

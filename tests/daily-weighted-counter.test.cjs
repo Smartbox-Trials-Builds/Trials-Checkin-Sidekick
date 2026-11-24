@@ -60,12 +60,13 @@ test('rolls over at midnight without changing weekly totals; clear resets today'
 
 test('both optional tiles are independent and limited to the coordinator role', async () => {
   const elements = Object.fromEntries(['dailyCustomCounterItem', 'dailyWeightedCounterItem', 'dailyCounterGrid'].map(id => [id, { style: {}, classList: { toggle(name, on) { this[name] = on; } } }]));
-  let custom = true, weighted = true, role = 'Device Coordinator';
+  let custom = true, weighted = true, role = 'Device Coordinator', coordinatorTools = false;
   const context = {
     Promise, document: { getElementById: id => elements[id] },
     getDailyCustomCounterEnabled: async () => custom,
     getDailyCustomCounterLabel: async () => 'Calls',
     getDailyWeightedCounterEnabled: async () => weighted,
+    getStoredValue: async () => coordinatorTools,
     getUserProfile: async () => ({ role }), updateDailyCustomLabel() {}, refreshDailyWeightedCounter: async () => {}
   };
   vm.createContext(context);
@@ -84,4 +85,7 @@ test('both optional tiles are independent and limited to the coordinator role', 
   weighted = true; role = 'Device Systems Coordinator';
   await context.updateDailyCustomCounterSettings();
   assert.equal(elements.dailyWeightedCounterItem.style.display, 'none');
+  coordinatorTools = true;
+  await context.updateDailyCustomCounterSettings();
+  assert.equal(elements.dailyWeightedCounterItem.style.display, '');
 });

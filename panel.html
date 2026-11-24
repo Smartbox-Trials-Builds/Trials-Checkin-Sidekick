@@ -283,30 +283,6 @@
           <button type="submit" class="toggle-btn landing-crm-nav__btn">Go</button>
         </form>
         </div>
-        <section id="coordinatorQueueSection" class="coordinator-queue" aria-labelledby="coordinatorQueueTitle">
-          <div class="queue-window-actions queue-toolbar">
-            <button id="toggleCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button" aria-expanded="true" aria-controls="coordinatorQueueBody">Hide</button>
-            <button id="popOutCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button" title="Open the live queue in a movable, resizable window">Pop out ↗</button>
-          </div>
-          <div id="coordinatorQueueBody">
-            <h2 id="coordinatorQueueTitle">Device Prep Queue</h2>
-            <div class="queue-actions queue-membership-controls">
-              <button id="joinCoordinatorQueueBtn" class="toggle-btn queue-small-btn queue-membership-btn" type="button" title="Open daily 7 AM–8 PM Central time (including daylight saving). Queue clears at 8 PM." disabled>Join Queue</button>
-<button id="assignDevicesBtn" class="toggle-btn queue-small-btn" type="button" hidden>Assign Devices</button><button id="copyAssignedInitialsBtn" class="toggle-btn queue-small-btn" type="button" hidden>Assignment log</button>
-              <span id="coordinatorQueueIndicator" class="queue-status-light" data-state="disconnected" role="status" aria-label="Queue connecting" title="Queue connecting"></span>
-            </div>
-            <p id="coordinatorQueueStatus" class="hint-text queue-error-status" role="status"></p>
-            <ol id="coordinatorQueueList" class="coordinator-queue__list" aria-label="Active queue"></ol>
-          </div>
-        </section>
-        <div id="coordinatorQueueDetached" class="queue-detached" hidden>
-          <span class="hint-text">Queue is open in its own window.</span>
-          <div class="queue-window-actions">
-            <button id="focusCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Show window</button>
-            <button id="returnCoordinatorQueueBtn" class="toggle-btn queue-small-btn" type="button">Return to Sidekick</button>
-          </div>
-          <div id="queueWindowStatus" class="status-line" role="status"></div>
-        </div>
       </div>
       <div class="landing-section" data-layout-item="checkinTools">
         <button class="toggle-btn landing-btn landing-section__toggle" type="button" data-collapsible="checkin-tools" aria-expanded="false" data-tooltip="Folder housing check-in tools. Click to reveal the Device Lookup tool and the Check-in form.">
@@ -343,7 +319,6 @@
           <span class="landing-section__chevron" aria-hidden="true">▾</span>
         </button>
         <div class="landing-section__content" data-collapsible-content="pre-prep-tools" hidden>
-          <button id="queueBetaAccessBtn" class="toggle-btn landing-btn" type="button">Device Prep Queue · Private access</button>
           <button id="prePrepSidekickBtn" class="toggle-btn landing-btn" type="button" data-tooltip="Build a pre-prep scan list with corrected device serials and internal serial fields.">
             Device Sidekick
           </button>
@@ -435,6 +410,10 @@
         <label class="checkbox-row" for="settingsWeeklyAverageToggle">
           <input type="checkbox" id="settingsWeeklyAverageToggle" />
           Show weekly task average on the landing page
+        </label>
+        <label class="checkbox-row" id="systemsCoordinatorToolsSetting" style="display:none" for="systemsCoordinatorToolsToggle">
+          <input type="checkbox" id="systemsCoordinatorToolsToggle" />
+          Enable Device Coordinator tools
         </label>
         <button id="editUserProfileBtn" class="toggle-btn settings-card__action" type="button">
           Edit user profile
@@ -719,11 +698,11 @@
   <!-- LOCK DOWN SIDEKICK VIEW -->
   <div class="container lock-down-view" id="lockDownView" style="display:none;">
     <h1>Lock down Sidekick</h1>
-    <p class="complete-intro">Add each CRM link beside its device number. Every paired request is tracked separately while the Lost Mode notes are submitted.</p>
+    <p class="complete-intro">Use Bulk import to add devices. Paste one CRM link, device number, and internal serial per line.</p>
     <form id="lockDownForm" class="lock-down-form" novalidate>
       <div class="lock-down-list" id="lockDownList"></div>
       <div class="lock-down-actions">
-        <button type="button" id="lockDownAddBtn" class="toggle-btn">+ Add another device</button>
+        <button type="button" id="lockDownImportBtn" class="toggle-btn">Bulk import</button>
         <button type="submit" id="lockDownSubmitBtn">Submit all</button>
       </div>
       <div id="lockDownStatus" class="status-line lock-down-summary" role="status" aria-live="polite"></div>
@@ -1332,14 +1311,17 @@
   </div>
 
   <!-- Panel logic -->
-  <dialog id="prepAssignmentDialog" class="prep-assignment-dialog" aria-labelledby="prepAssignmentTitle">
-    <form id="prepAssignmentForm">
-      <h2 id="prepAssignmentTitle">Assign Devices</h2>
-      <label for="prepAssignmentCount">How many devices?</label>
-      <input id="prepAssignmentCount" type="number" min="1" max="10" step="1" value="1" required />
-      <p class="hint-text">Assign the next available users in queue order. Their initials will be copied as separate Excel rows.</p>
-      <p id="prepAssignmentStatus" class="status-line" role="status"></p>
-      <div class="queue-actions"><button id="prepAssignmentSubmit" type="submit">Assign</button><button id="prepAssignmentCancel" class="toggle-btn" type="button">Cancel</button></div>
+  <dialog id="lockDownImportDialog" class="prep-assignment-dialog" aria-labelledby="lockDownImportTitle">
+    <form id="lockDownImportForm">
+      <h2 id="lockDownImportTitle">Bulk import Lock Down devices</h2>
+      <label for="lockDownImportText">Paste one device per line</label>
+      <p class="hint-text">CRM link, device number, internal serial. Markdown links and plain URLs both work.</p>
+      <textarea id="lockDownImportText" rows="7" style="width:100%;box-sizing:border-box" required></textarea>
+      <p id="lockDownImportStatus" class="status-line" role="status"></p>
+      <div class="queue-actions">
+        <button type="button" id="lockDownImportCancel" class="toggle-btn">Cancel</button>
+        <button type="submit">Import devices</button>
+      </div>
     </form>
   </dialog>
   <script src="libs/supabase.min.js"></script>
@@ -1347,9 +1329,6 @@
   <script src="workers/role-verification.js"></script>
   <script src="workers/desktop-zip.js"></script>
   <script src="workers/supabase-panel-connection.js"></script>
-  <script src="workers/queue-layout.js"></script>
-  <script src="workers/queue-beta-access.js"></script>
-  <script src="workers/queue.js"></script>
   <script src="workers/crm-links.js"></script>
   <script src="workers/serial-utils.js"></script>
   <script src="workers/device-sidekick.js"></script>

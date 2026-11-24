@@ -4577,7 +4577,7 @@ async function getUserProfile() {
 
 async function saveUserProfile(profile) {
   await setStoredValue(USER_PROFILE_STORAGE_KEY, profile);
-  applyDeviceSystemsTools(profile?.role === "Device Systems Coordinator");
+  await refreshDeviceSystemsTools();
 }
 
 async function getUserMascot() {
@@ -5175,18 +5175,29 @@ async function hasDeviceSystemsRole() {
   return profile?.role === "Device Systems Coordinator";
 }
 
-function applyDeviceSystemsTools(isSystems) {
+function applyDeviceSystemsTools(isSystems, coordinatorEnabled = false) {
   const section = document.getElementById("prePrepToolsSection");
   if (section) section.style.display = isSystems ? "block" : "none";
   for (const id of ["checkinTools", "prepTools", "qaForm", "trialsLinks"]) {
     const tool = document.querySelector('#landingLayout [data-layout-item="' + id + '"]');
-    if (tool) tool.style.display = isSystems ? "none" : "";
+    if (tool) tool.style.display = isSystems && !coordinatorEnabled ? "none" : "";
   }
+  const setting = document.getElementById("systemsCoordinatorToolsSetting");
+  if (setting) setting.style.display = isSystems ? "" : "none";
+  const toggle = document.getElementById("systemsCoordinatorToolsToggle");
+  if (toggle) toggle.checked = isSystems && coordinatorEnabled;
 }
 
 async function refreshDeviceSystemsTools() {
-  applyDeviceSystemsTools(await hasDeviceSystemsRole());
+  applyDeviceSystemsTools(await hasDeviceSystemsRole(), Boolean(await getStoredValue("sidekickSystemsCoordinatorToolsEnabled")));
 }
+
+document.getElementById("systemsCoordinatorToolsToggle")?.addEventListener("change", async event => {
+  if (!(await hasDeviceSystemsRole())) { await refreshDeviceSystemsTools(); return; }
+  await setStoredValue("sidekickSystemsCoordinatorToolsEnabled", event.target.checked);
+  await refreshDeviceSystemsTools();
+  await updateDailyCustomCounterSettings();
+});
 
 
 async function getDailyCounterCollapsed() {
@@ -5317,7 +5328,9 @@ async function updateDailyCustomCounterSettings() {
   const item = document.getElementById("dailyCustomCounterItem");
   if (item) item.style.display = enabled ? "" : "none";
   const weightedItem = document.getElementById("dailyWeightedCounterItem");
-  const showWeighted = weightedEnabled && profile?.role === "Device Coordinator";
+  const coordinatorAccess = profile?.role === "Device Coordinator"
+    || (profile?.role === "Device Systems Coordinator" && Boolean(await getStoredValue("sidekickSystemsCoordinatorToolsEnabled")));
+  const showWeighted = weightedEnabled && coordinatorAccess;
   if (weightedItem) weightedItem.style.display = showWeighted ? "" : "none";
   const grid = document.getElementById("dailyCounterGrid");
   if (grid) grid.classList.toggle("daily-counter__grid--both-extras", enabled && showWeighted);
@@ -7385,37 +7398,46 @@ async function beginLockDownSearch(entry) {
   finally { lockDownSearchRunning = false; button.disabled = false; }
 }
 
-async function lookupLockDownInternalSerial(entry) {
-  const deviceInput = entry.querySelector("[data-lock-down-device-number]");
-  const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
-  const status = entry.querySelector("[data-lock-down-lookup-status]");
-  if (!deviceInput || !serialInput || !status || deviceInput.disabled) return;
-  const raw = deviceInput.value.trim();
-  const device = typeof extractValidSerial === "function" ? extractValidSerial(raw) : raw.toUpperCase();
-  const revision = entry.dataset.lookupRevision;
-  if (!device) { status.textContent = raw ? "Enter a complete device number to look up its internal serial." : ""; return; }
-  const original = serialInput.value;
-  status.textContent = "Looking up the internal serial…";
-  try {
-    const result = await chrome.runtime.sendMessage({ type: "sidekick-audit-lookup", device });
-    if (!entry.isConnected || deviceInput.disabled || deviceInput.value.trim() !== raw
-      || entry.dataset.lookupRevision !== revision || serialInput.value !== original) return;
-    if (!result?.ok) throw new Error(result?.error || "Serial lookup unavailable. Enter the internal serial manually.");
-    if (original.trim()) { status.textContent = "Existing internal serial preserved."; return; }
-    if (!result.internalSerial || result.ambiguous) {
-      status.textContent = result.ambiguous ? "Multiple internal serials found in Audit. Enter the correct serial manually." : "No internal serial found in Audit. Enter it manually.";
-      return;
+function lockDownImportTextFromHtml(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const chunks = [];
+  const blocks = new Set(["P", "DIV", "LI", "TR", "SECTION", "BLOCKQUOTE"]);
+  function read(node) {
+    if (node.nodeType === 3) { chunks.push(node.textContent); return; }
+    if (["SCRIPT", "STYLE", "HEAD"].includes(node.tagName)) return;
+    if (node.tagName === "BR") { chunks.push("\n"); return; }
+    if (node.tagName === "A") {
+      const url = normalizeCrmLink(node.getAttribute("href"));
+      if (url) { chunks.push(url); return; }
     }
-    serialInput.value = result.internalSerial;
-    status.textContent = `Internal serial filled from Audit.${result.stale ? " Using an older cached lookup." : ""}`;
-  } catch (error) {
-    if (entry.isConnected && !deviceInput.disabled && deviceInput.value.trim() === raw && entry.dataset.lookupRevision === revision) {
-      status.textContent = error.message || "Serial lookup unavailable. Enter it manually.";
-    }
+    if (blocks.has(node.tagName)) chunks.push("\n");
+    for (const child of node.childNodes) read(child);
+    if (blocks.has(node.tagName)) chunks.push("\n");
   }
+  read(doc.body);
+  return chunks.join("").replace(/\u00a0/g, " ");
 }
 
-function addLockDownEntry(values = {}) {
+function parseLockDownImport(text) {
+  const rows = [];
+  for (const [index, line] of text.split(/\r?\n/).entries()) {
+    if (!line.trim()) continue;
+    const parts = /^(.*),([^,]*),([^,]*)$/.exec(line.trim());
+    const link = parts?.[1].trim() || "";
+    const markdown = /^\[.*\]\(\s*<?(https:\/\/[^\s>)]+)>?(?:\s+"[^"]*")?\s*\)$/i.exec(link);
+    const crmLink = normalizeCrmLink(markdown?.[1] || link);
+    const deviceNumber = parts?.[2].trim();
+    const internalSerial = parts?.[3].trim();
+    if (!crmLink || !deviceNumber || !internalSerial) {
+      throw new Error(`Line ${index + 1} needs a valid CRM link, device number, and internal serial.`);
+    }
+    rows.push({ crmLink, deviceNumber, internalSerial });
+  }
+  if (!rows.length) throw new Error("Paste at least one device to import.");
+  return rows;
+}
+
+function addLockDownEntry(values) {
   const list = document.getElementById("lockDownList");
   if (!list) return null;
 
@@ -7431,11 +7453,11 @@ function addLockDownEntry(values = {}) {
     <h2 class="lock-down-entry__heading"></h2>
     <button type="button" class="toggle-btn lock-down-entry__remove" data-lock-down-remove>Remove</button>
     <label for="${crmInputId}">CRM link</label>
-    <input type="url" id="${crmInputId}" data-lock-down-crm-link placeholder="https://portal.talktometechnologies.com/…" autocomplete="off" />
+    <input type="url" id="${crmInputId}" data-lock-down-crm-link readonly />
     <label for="${deviceInputId}">Device number</label>
-    <input type="text" id="${deviceInputId}" data-lock-down-device-number placeholder="Enter device number" autocomplete="off" />
+    <input type="text" id="${deviceInputId}" data-lock-down-device-number readonly />
     <label for="${serialInputId}">Internal serial number</label>
-    <input type="text" id="${serialInputId}" data-lock-down-internal-serial placeholder="Filled automatically from Audit" autocomplete="off" />
+    <input type="text" id="${serialInputId}" data-lock-down-internal-serial readonly />
     <button type="button" class="toggle-btn queue-small-btn lock-down-entry__begin" data-lock-down-begin>Begin Lockdown</button>
     <div class="status-line" data-lock-down-lookup-status role="status" aria-live="polite"></div>
     <div class="status-line" data-lock-down-entry-status role="status" aria-live="polite"></div>
@@ -7444,28 +7466,9 @@ function addLockDownEntry(values = {}) {
   entry.querySelector("[data-lock-down-device-number]").value = values.deviceNumber || "";
   const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
   serialInput.value = values.internalSerial || "";
-  const deviceInput = entry.querySelector("[data-lock-down-device-number]");
-  let lookupTimer;
-  entry.dataset.lookupRevision = "0";
-  deviceInput.addEventListener("input", () => {
-    clearTimeout(lookupTimer);
-    entry.dataset.lookupRevision = String(Number(entry.dataset.lookupRevision) + 1);
-    serialInput.value = "";
-    entry.querySelector("[data-lock-down-lookup-status]").textContent = "";
-    lookupTimer = setTimeout(() => void lookupLockDownInternalSerial(entry), 500);
-  });
-  deviceInput.addEventListener("change", () => {
-    clearTimeout(lookupTimer);
-    void lookupLockDownInternalSerial(entry);
-  });
-  serialInput.addEventListener("input", () => {
-    entry.dataset.lookupRevision = String(Number(entry.dataset.lookupRevision) + 1);
-    entry.querySelector("[data-lock-down-lookup-status]").textContent = "";
-  });
   entry.querySelector("[data-lock-down-begin]").addEventListener("click", () => void beginLockDownSearch(entry));
   list.appendChild(entry);
   renumberLockDownEntries();
-  if (values.deviceNumber && !values.internalSerial) void lookupLockDownInternalSerial(entry);
   return entry;
 }
 
@@ -8945,7 +8948,6 @@ async function setCurrentTimecardPunch(field) {
       return;
     }
     setText("lockDownStatus", "");
-    if (!document.querySelector("#lockDownList .lock-down-entry")) addLockDownEntry();
     showLockDownView();
   });
 
@@ -9110,16 +9112,41 @@ async function setCurrentTimecardPunch(field) {
     showLandingView();
   });
 
-  document.getElementById("lockDownAddBtn")?.addEventListener("click", () => {
-    const entry = addLockDownEntry();
-    entry?.querySelector("[data-lock-down-crm-link]")?.focus();
+  const lockDownImportDialog = document.getElementById("lockDownImportDialog");
+  document.getElementById("lockDownImportBtn")?.addEventListener("click", () => {
+    setText("lockDownImportStatus", "");
+    lockDownImportDialog.showModal();
+  });
+  document.getElementById("lockDownImportCancel")?.addEventListener("click", () => lockDownImportDialog.close());
+  document.getElementById("lockDownImportText")?.addEventListener("paste", event => {
+    const html = event.clipboardData?.getData("text/html");
+    if (!html) return;
+    const text = lockDownImportTextFromHtml(html).trim();
+    if (!text) return;
+    event.preventDefault();
+    const input = event.currentTarget;
+    input.setRangeText(text, input.selectionStart, input.selectionEnd, "end");
+  });
+  document.getElementById("lockDownImportForm")?.addEventListener("submit", event => {
+    event.preventDefault();
+    const input = document.getElementById("lockDownImportText");
+    let rows;
+    try {
+      rows = parseLockDownImport(input.value);
+    } catch (error) {
+      setText("lockDownImportStatus", error.message);
+      return;
+    }
+    rows.forEach(row => addLockDownEntry(row));
+    input.value = "";
+    lockDownImportDialog.close();
+    setText("lockDownStatus", `Imported ${rows.length} ${rows.length === 1 ? "device" : "devices"}.`);
   });
 
   document.getElementById("lockDownList")?.addEventListener("click", event => {
     const removeButton = event.target.closest("[data-lock-down-remove]");
     if (!removeButton) return;
     removeButton.closest(".lock-down-entry")?.remove();
-    if (!document.querySelector("#lockDownList .lock-down-entry")) addLockDownEntry();
     renumberLockDownEntries();
   });
 

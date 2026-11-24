@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(require.resolve('../panel.js'),'utf8');
-const search = source.slice(source.indexOf('let lockDownSearchRunning ='),source.indexOf('async function lookupLockDownInternalSerial('));
+const search = source.slice(source.indexOf('let lockDownSearchRunning ='),source.indexOf('function lockDownImportTextFromHtml('));
 const overview = 'https://intune.microsoft.com/#view/Microsoft_Intune_DeviceSettings/DevicesMenu/~/allDevices';
 const lostModeScript = source.slice(source.indexOf('function openIntuneLockDownLostMode('),source.indexOf('let lockDownSearchRunning ='));
 

@@ -1,3 +1,4 @@
+const isLockDownWindow = typeof location !== "undefined" && new URLSearchParams(location.search).get("tool") === "lockdown";
 // panel.js
 
 /* ---------------- CONFIG / XPATHS ---------------- */
@@ -101,7 +102,7 @@ let smartboxRepairTabId = null;
 const DEFAULT_LANDING_LAYOUT_POSITIONS = {};
 
 /* ---------------- Helpers ---------------- */
-const VIEW_IDS = ["welcomeView", "onboardingView", "outlookSetupView", "landingView", "settingsView", "themeBuilderView", "prePrepView", "lockDownView", "timecardView", "deviceLookupView", "gridView", "devicePrepSelectionView", "prepTypeView", "prepSlCrmView", "prepView", "prepChecklistOrderView", "gridPadPrepView", "gridPadChecklistOrderView", "ageCalculatorView", "formView", "completeView", "smartboxRepairView", "inventoryView", "dafRecapView", "emailView", "appOverridesView", "qaCompleteView"];
+const VIEW_IDS = ["welcomeView", "onboardingView", "outlookSetupView", "landingView", "settingsView", "themeBuilderView", "lockDownView", "timecardView", "deviceLookupView", "gridView", "devicePrepSelectionView", "prepTypeView", "prepSlCrmView", "prepView", "prepChecklistOrderView", "gridPadPrepView", "gridPadChecklistOrderView", "ageCalculatorView", "formView", "completeView", "smartboxRepairView", "inventoryView", "dafRecapView", "emailView", "appOverridesView", "qaCompleteView", "intuneLicensesView", "apiWipeTestView"];
 const MULTI_THEME_IDS = new Set([
   "coral",
   "lagoon",
@@ -453,6 +454,7 @@ function clampNumber(value, min, max) {
 }
 
 function showView(targetId) {
+  if (isLockDownWindow) targetId = "lockDownView";
   VIEW_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -464,6 +466,7 @@ function showWelcomeView() { showView("welcomeView"); }
 function showOnboardingView() { showView("onboardingView"); }
 function showOutlookSetupView() { showView("outlookSetupView"); }
 function showLandingView() {
+  if (isLockDownWindow) { showLockDownView(); return; }
   showView("landingView");
   void refreshLandingView();
   void globalThis.sidekickCheckinCount?.refresh();
@@ -473,7 +476,7 @@ function showThemeBuilderView() {
   showView("themeBuilderView");
   refreshThemeBuilderFromActiveTheme();
 }
-function showPrePrepView() { showView("prePrepView"); }
+
 function showLockDownView() { showView("lockDownView"); }
 function showTimecardView() {
   showView("timecardView");
@@ -7185,217 +7188,12 @@ let lockDownEntrySequence = 0;
 function renumberLockDownEntries() {
   document.querySelectorAll("#lockDownList .lock-down-entry").forEach((entry, index) => {
     const heading = entry.querySelector(".lock-down-entry__heading");
-    if (heading) heading.textContent = `Lock down ${index + 1}`;
+    if (heading) heading.textContent = `${entry.dataset.disableOnly === "true" ? "Disable Lost Mode" : "Lock down"} ${index + 1}`;
   });
 }
-
-function fillIntuneLockDownLostMode(serial, action = "discover") {
-  const message = "This device is durable medical equipment, property of Smartbox. If found, please contact 877-392-2299 ext.6 or trials.us@smartboxaac.com";
-  const phone = "877-392-2299 ext.6";
-  const normalize = value => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
-  if (location.origin !== "https://intune.microsoft.com" || !location.hash.includes("/Microsoft_Intune_ManagedDevices/ManagedDeviceMenu.MenuView/") || !normalize(serial)) return { found: false };
-  const visible = element => {
-    const style = getComputedStyle(element);
-    return element.isConnected && element.getClientRects().length && style.display !== "none" && style.visibility === "visible";
-  };
-  const enabled = element => visible(element) && !element.disabled && element.getAttribute("aria-disabled") !== "true";
-  const name = element => normalize(element.getAttribute("aria-label") || (element.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean).map(id => document.getElementById(id)?.textContent || "").join(" ")
-    || [...(element.labels || [])].map(label => label.textContent).join(" ") || element.textContent);
-  const panels = [...document.querySelectorAll('h1, h2, [role="heading"]')]
-    .filter(heading => visible(heading) && normalize(heading.textContent) === "lost mode (supervised only)")
-    .map(heading => heading.closest('[role="region"], section.fxs-blade, [role="dialog"]'))
-    .filter(panel => panel && visible(panel) && normalize(panel.textContent).includes(normalize(serial)));
-  if (panels.length !== 1) return { found: false, ambiguous: panels.length > 1 };
-  const panel = panels[0];
-  const controls = () => {
-    const enable = [...panel.querySelectorAll('input[type="radio"], [role="radio"]')].filter(element => enabled(element) && name(element) === "enable");
-    const fields = [...panel.querySelectorAll('input, textarea')].filter(visible);
-    const messages = fields.filter(element => name(element) === "messages to display on lock screen");
-    const phones = fields.filter(element => name(element) === "phone number to display");
-    const buttons = [...panel.querySelectorAll('button, [role="button"]')].filter(element => enabled(element) && name(element) === "ok");
-    return { enable, messages, phones, buttons };
-  };
-  const selected = element => element.checked === true || element.getAttribute("aria-checked") === "true";
-  const current = controls();
-  if (current.enable.length !== 1 || current.messages.length !== 1 || current.phones.length !== 1) return { found: false };
-  if (action === "discover") return { found: true };
-  const correct = state => state.enable.length === 1 && selected(state.enable[0]) && state.messages.length === 1 && state.phones.length === 1
-    && enabled(state.messages[0]) && enabled(state.phones[0]) && !state.messages[0].readOnly && !state.phones[0].readOnly
-    && state.messages[0].value === message && state.phones[0].value === phone;
-  if (action === "submit") {
-    if (!correct(current) || current.buttons.length !== 1) return { status: "form-changed" };
-    current.buttons[0].click();
-    return { status: "submitted" };
-  }
-  if (action !== "fill") return { status: "invalid-action" };
-  return new Promise(resolve => {
-    let observer, timeout, finished = false, enableClicked = false, wrote = false;
-    const finish = status => { if (finished) return; finished = true; observer?.disconnect(); clearTimeout(timeout); resolve({ status }); };
-    const setValue = (element, value) => {
-      const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-      Object.getOwnPropertyDescriptor(prototype, "value").set.call(element, value);
-      element.dispatchEvent(new Event("input", { bubbles: true }));
-      element.dispatchEvent(new Event("change", { bubbles: true }));
-    };
-    const check = () => {
-      if (finished) return;
-      if (!panel.isConnected || !normalize(panel.textContent).includes(normalize(serial))) { finish("device-changed"); return; }
-      const state = controls();
-      if (state.enable.length !== 1) return;
-      if (!selected(state.enable[0])) {
-        if (!enableClicked) { enableClicked = true; state.enable[0].click(); queueMicrotask(check); }
-        return;
-      }
-      if (state.messages.length !== 1 || state.phones.length !== 1 || !enabled(state.messages[0]) || !enabled(state.phones[0]) || state.messages[0].readOnly || state.phones[0].readOnly) return;
-      if (!wrote) { wrote = true; setValue(state.messages[0], message); setValue(state.phones[0], phone); queueMicrotask(check); return; }
-      if (correct(state) && state.buttons.length === 1) finish("filled");
-    };
-    observer = new MutationObserver(check); observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
-    timeout = setTimeout(() => finish("not-ready"), 10000); check();
-  });
-}
-
-function openIntuneLockDownLostMode(serial, act = false) {
-  if (!location.hostname.endsWith(".reactblade.portal.azure.net") || !String(serial || "").trim()) return { found: false };
-  const normalize = value => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
-  const visible = element => {
-    const style = getComputedStyle(element);
-    return element.isConnected && element.getClientRects().length && style.display !== "none" && style.visibility === "visible";
-  };
-  const enabled = element => visible(element) && !element.disabled && element.getAttribute("aria-disabled") !== "true";
-  const name = element => normalize(element.getAttribute("aria-label") || (element.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean).map(id => document.getElementById(id)?.textContent || "").join(" ") || element.textContent);
-  const verified = () => [...document.querySelectorAll('span, div, p, dd, td, [role="cell"]')]
-    .some(element => visible(element) && normalize(element.textContent) === normalize(serial));
-  const toolbar = document.getElementById("resourceViewToolbar");
-  if (!toolbar || !visible(toolbar) || !verified()) return { found: false };
-  const locate = [...toolbar.querySelectorAll('button, [role="button"]')].filter(button => enabled(button) && name(button) === "locate");
-  if (locate.length !== 1) return { found: false, ambiguous: locate.length > 1 };
-  if (!act) return { found: true };
-  return new Promise(resolve => {
-    let observer, timeout, finished = false, locateClicked = false;
-    const finish = status => {
-      if (finished) return;
-      finished = true; observer?.disconnect(); clearTimeout(timeout); resolve({ status });
-    };
-    const check = () => {
-      if (finished) return;
-      if (!toolbar.isConnected || !verified()) { finish("device-changed"); return; }
-      const menus = [...document.querySelectorAll('[role="menu"]')].filter(menu => visible(menu) && name(menu) === "locate");
-      if (menus.length > 1) { finish("ambiguous-menu"); return; }
-      if (menus.length === 1) {
-        const options = [...menus[0].querySelectorAll('[role="menuitem"]')].filter(option => enabled(option) && name(option) === "lost mode (supervised only)");
-        if (options.length > 1) { finish("ambiguous-option"); return; }
-        if (options.length === 1) { options[0].click(); finish("opened"); }
-        return;
-      }
-      if (!locateClicked && enabled(locate[0])) {
-        locateClicked = true; locate[0].click(); queueMicrotask(check);
-      }
-    };
-    observer = new MutationObserver(check);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
-    timeout = setTimeout(() => finish("not-found"), 10000);
-    check();
-  });
-}
-
-let lockDownSearchRunning = false;
 
 async function beginLockDownSearch(entry) {
-  const button = entry.querySelector("[data-lock-down-begin]");
-  const status = entry.querySelector("[data-lock-down-lookup-status]");
-  const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
-  const deviceInput = entry.querySelector("[data-lock-down-device-number]");
-  const serial = String(serialInput?.value || "").trim();
-  if (!button || !status) return;
-  if (lockDownSearchRunning) { status.textContent = "Another Lock Down device search is running. Try again when it finishes."; return; }
-  if (!serial) { status.textContent = "Wait for the internal serial lookup or enter the internal serial before clicking Begin Lockdown."; return; }
-  const device = deviceInput?.value;
-  const unchanged = () => entry.isConnected && String(serialInput.value || "").trim() === serial && deviceInput?.value === device;
-  lockDownSearchRunning = true;
-  button.disabled = true;
-  try {
-    if (!(await hasDeviceSystemsRole())) throw new Error("Lock Down is available to Device Systems Coordinators.");
-    const tabs = await chrome.tabs.query({ url: "https://intune.microsoft.com/*" });
-    const matching = tabs.filter(tab => isIntuneAllDevices(tab.url) || isIntuneAllDevices(tab.pendingUrl));
-    const existing = matching.find(tab => tab.active) || matching[0];
-    const tab = existing ? await chrome.tabs.update(existing.id, { active: true }) : await chrome.tabs.create({ url: INTUNE_ALL_DEVICES_URL, active: true });
-    if (tab.windowId) await chrome.windows.update(tab.windowId, { focused: true });
-    status.textContent = `Opening Intune device search for ${serial}…`;
-    const deadline = Date.now() + 20000;
-    while (Date.now() < deadline) {
-      if (!unchanged() || !(await hasDeviceSystemsRole())) throw new Error("The device card or role changed. Click Begin Lockdown again for the current device.");
-      const current = await chrome.tabs.get(tab.id);
-      if (!isIntuneAllDevices(current.url) && !isIntuneAllDevices(current.pendingUrl)) throw new Error("The Intune tab changed. Open All devices and try again.");
-      let frames;
-      try {
-        frames = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: "MAIN", func: fillIntuneProfileSearch });
-      } catch (error) {
-        if (/permission|cannot access|not allowed/i.test(error.message || "")) throw new Error("Reload Sidekick and allow access to Intune and its embedded device pages, then try again.");
-        await new Promise(resolve => setTimeout(resolve, 250));
-        continue;
-      }
-      const matches = frames.filter(frame => frame.result?.found);
-      if (matches.length > 1 || frames.some(frame => frame.result?.ambiguous)) throw new Error("More than one Intune device search is available. Close extra views and try again.");
-      if (matches.length === 1) {
-        if (!unchanged() || !(await hasDeviceSystemsRole()) || !isIntuneAllDevices((await chrome.tabs.get(tab.id)).url)) throw new Error("The device card or Intune page changed. No search was submitted.");
-        const results = await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [matches[0].frameId] }, world: "MAIN", func: fillIntuneProfileSearch, args: [serial] });
-        if (!results?.[0]?.result?.entered) throw new Error("Intune did not keep the internal serial in its search field. Try Begin Lockdown again.");
-        if (!unchanged() || !(await hasDeviceSystemsRole()) || !isIntuneAllDevices((await chrome.tabs.get(tab.id)).url)) throw new Error("The device card or Intune page changed. No device result was opened.");
-        status.textContent = `Opening the Intune result for ${serial}…`;
-        const opened = await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [matches[0].frameId] }, world: "MAIN", func: openIntuneProfileDevice, args: [serial] });
-        const resultStatus = opened?.[0]?.result?.status;
-        if (resultStatus === "search-changed") throw new Error("The Intune search changed. No device result was opened.");
-        if (resultStatus !== "opened") throw new Error("No unique matching Intune device result was ready. Check the results and try Begin Lockdown again.");
-        status.textContent = `Opening Locate → Lost mode for ${serial}…`;
-        const deviceDeadline = Date.now() + 20000;
-        let devicePage = null;
-        while (Date.now() < deviceDeadline) {
-          if (!unchanged() || !(await hasDeviceSystemsRole())) throw new Error("The device card or role changed. No Lost Mode option was selected.");
-          const currentTab = await chrome.tabs.get(tab.id);
-          const page = new URL(currentTab.url);
-          if (isIntuneAllDevices(currentTab.url)) { await new Promise(resolve => setTimeout(resolve, 250)); continue; }
-          if (page.origin !== "https://intune.microsoft.com" || !/^#(?:view|blade)\/Microsoft_Intune_ManagedDevices\/ManagedDeviceMenu\.MenuView\/(?:~\/overview\/)?managedDeviceId\/[^/]+/i.test(page.hash)) throw new Error("The Intune device page changed. No Lost Mode option was selected.");
-          if (devicePage && devicePage !== currentTab.url) throw new Error("The Intune device changed. No Lost Mode option was selected.");
-          devicePage = currentTab.url;
-          const deviceFrames = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: "MAIN", func: openIntuneLockDownLostMode, args: [serial] });
-          const verified = deviceFrames.filter(frame => frame.result?.found);
-          if (verified.length > 1 || deviceFrames.some(frame => frame.result?.ambiguous)) throw new Error("Multiple device controls are available. Open Lost Mode manually for the correct device.");
-          if (verified.length === 1) {
-            if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No Lost Mode option was selected.");
-            const lost = await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [verified[0].frameId] }, world: "MAIN", func: openIntuneLockDownLostMode, args: [serial, true] });
-            if (lost?.[0]?.result?.status !== "opened") throw new Error("Could not select Lost mode (supervised only) for the matching device. Check the Locate menu in Intune.");
-            status.textContent = `Enabling Lost Mode and entering the lock screen details for ${serial}…`;
-            const formDeadline = Date.now() + 15000;
-            while (Date.now() < formDeadline) {
-              if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No Lost Mode request was submitted.");
-              const forms = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: "MAIN", func: fillIntuneLockDownLostMode, args: [serial] });
-              const matchingForms = forms.filter(frame => frame.result?.found);
-              if (matchingForms.length > 1 || forms.some(frame => frame.result?.ambiguous)) throw new Error("Multiple Lost Mode forms are open. No request was submitted.");
-              if (matchingForms.length === 1) {
-                const target = { tabId: tab.id, frameIds: [matchingForms[0].frameId] };
-                if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No Lost Mode request was submitted.");
-                const filled = await chrome.scripting.executeScript({ target, world: "MAIN", func: fillIntuneLockDownLostMode, args: [serial, "fill"] });
-                if (filled?.[0]?.result?.status !== "filled") throw new Error("Could not verify Enable, the message and phone number. No OK click was sent.");
-                if (!unchanged() || !(await hasDeviceSystemsRole()) || (await chrome.tabs.get(tab.id)).url !== devicePage) throw new Error("The device changed. No OK click was sent.");
-                const submitted = await chrome.scripting.executeScript({ target, world: "MAIN", func: fillIntuneLockDownLostMode, args: [serial, "submit"] });
-                if (submitted?.[0]?.result?.status !== "submitted") throw new Error("The Lost Mode form changed. No OK click was sent.");
-                status.textContent = `Lost Mode request submitted for ${serial}. Check Intune for its device action status.`;
-                return;
-              }
-              await new Promise(resolve => setTimeout(resolve, 250));
-            }
-            throw new Error("The Lost Mode form was not ready. No request was submitted.");
-          }
-          await new Promise(resolve => setTimeout(resolve, 250));
-        }
-        throw new Error("The matching device's Locate control was not ready. Check the device overview in Intune.");
-      }
-      await new Promise(resolve => setTimeout(resolve, 250));
-    }
-    throw new Error("Intune device search is not ready. Open All devices and click Begin Lockdown again.");
-  } catch (error) { status.textContent = error.message || "Could not search Intune. Please try again."; }
-  finally { lockDownSearchRunning = false; button.disabled = false; }
+  await globalThis.sidekickLockDownApi.begin(entry);
 }
 
 function lockDownImportTextFromHtml(html) {
@@ -7449,6 +7247,7 @@ function addLockDownEntry(values) {
   const entry = document.createElement("section");
   entry.className = "lock-down-entry";
   entry.dataset.state = "ready";
+  entry.dataset.disableOnly = values.disableOnly ? "true" : "false";
   entry.innerHTML = `
     <h2 class="lock-down-entry__heading"></h2>
     <button type="button" class="toggle-btn lock-down-entry__remove" data-lock-down-remove>Remove</button>
@@ -7458,7 +7257,11 @@ function addLockDownEntry(values) {
     <input type="text" id="${deviceInputId}" data-lock-down-device-number readonly />
     <label for="${serialInputId}">Internal serial number</label>
     <input type="text" id="${serialInputId}" data-lock-down-internal-serial readonly />
+    <div class="lock-down-entry-actions">
     <button type="button" class="toggle-btn queue-small-btn lock-down-entry__begin" data-lock-down-begin>Begin Lockdown</button>
+    <button type="button" class="toggle-btn queue-small-btn" data-lock-down-disable>Disable Lost Mode</button>
+    </div>
+    <div class="status-line" data-lock-down-api-status role="status" aria-live="polite"></div>
     <div class="status-line" data-lock-down-lookup-status role="status" aria-live="polite"></div>
     <div class="status-line" data-lock-down-entry-status role="status" aria-live="polite"></div>
   `;
@@ -7467,8 +7270,16 @@ function addLockDownEntry(values) {
   const serialInput = entry.querySelector("[data-lock-down-internal-serial]");
   serialInput.value = values.internalSerial || "";
   entry.querySelector("[data-lock-down-begin]").addEventListener("click", () => void beginLockDownSearch(entry));
+  entry.querySelector("[data-lock-down-disable]")?.addEventListener("click", () => void globalThis.sidekickLockDownApi.begin(entry, "disable"));
   list.appendChild(entry);
   renumberLockDownEntries();
+  if (values.disableOnly) {
+    const crmInput = entry.querySelector("[data-lock-down-crm-link]");
+    crmInput.hidden = true;
+    entry.querySelector(`label[for="${crmInputId}"]`).hidden = true;
+    entry.querySelector("[data-lock-down-begin]").hidden = true;
+    entry.querySelector("[data-lock-down-lookup-status]").textContent = "Audit lookup · Disable Lost Mode only";
+  }
   return entry;
 }
 
@@ -7912,6 +7723,7 @@ async function closeManageInventoryTabs(excludeTabId = null) {
 }
 
 async function syncViewForTab(tab) {
+  if (isLockDownWindow) return;
   if (!tab) return;
   const gridVisible = document.getElementById("gridView")?.style.display === "block";
   if (!isCheckinFlowActive() && !gridVisible) return;
@@ -8706,6 +8518,12 @@ async function setCurrentTimecardPunch(field) {
   isGridChangesLocked = Boolean(await getStoredValue(GRID_LOCK_CHANGES_STORAGE_KEY));
   updateGridLockButtonLabel();
   const profile = await getUserProfile();
+  if (isLockDownWindow) {
+    if (profile?.role !== "Device Systems Coordinator") { window.close(); return; }
+    document.body.classList.add("device-window");
+    document.title = "Lock Down Sidekick";
+    document.getElementById("lockDownReturnBtn").textContent = "Close window";
+  }
   if (profile) {
     showLandingView();
   } else {
@@ -8927,28 +8745,14 @@ async function setCurrentTimecardPunch(field) {
     await refreshDeviceLookupWorkbooksFromHandles();
   });
 
-  document.getElementById("prePrepSidekickBtn")?.addEventListener("click", async () => {
-    if (!(await hasDeviceSystemsRole())) {
-      alert("These tools are available to Device Systems Coordinators.");
-      await refreshDeviceSystemsTools();
-      return;
-    }
-    try {
-      const result = await chrome.runtime.sendMessage({ type: "sidekick-open-device" });
-      if (!result?.ok) throw new Error(result?.error || "Could not open Device Sidekick.");
-    } catch (error) {
-      alert(error.message || "Could not open Device Sidekick.");
-    }
-  });
-
   document.getElementById("lockDownSidekickBtn")?.addEventListener("click", async () => {
     if (!(await hasDeviceSystemsRole())) {
       alert("These tools are available to Device Systems Coordinators.");
       await refreshDeviceSystemsTools();
       return;
     }
-    setText("lockDownStatus", "");
-    showLockDownView();
+    const result = await chrome.runtime.sendMessage({ type: "sidekick-open-lockdown" });
+    if (!result?.ok) alert(result?.error || "Could not open Lock Down.");
   });
 
   document.getElementById("qaFormBtn")?.addEventListener("click", async () => {
@@ -9104,11 +8908,8 @@ async function setCurrentTimecardPunch(field) {
     showLandingView();
   });
 
-  document.getElementById("prePrepReturnBtn")?.addEventListener("click", () => {
-    showLandingView();
-  });
-
   document.getElementById("lockDownReturnBtn")?.addEventListener("click", () => {
+    if (isLockDownWindow) { window.close(); return; }
     showLandingView();
   });
 
@@ -9154,7 +8955,7 @@ async function setCurrentTimecardPunch(field) {
     event.preventDefault();
     const submitButton = document.getElementById("lockDownSubmitBtn");
     const pendingEntries = [...document.querySelectorAll("#lockDownList .lock-down-entry")]
-      .filter(entry => entry.dataset.state !== "success");
+      .filter(entry => entry.dataset.state !== "success" && entry.dataset.disableOnly !== "true");
     const requests = [];
 
     pendingEntries.forEach(entry => {

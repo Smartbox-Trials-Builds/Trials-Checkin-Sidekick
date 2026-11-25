@@ -25,17 +25,20 @@
     return { width, height, left: Math.round(area.left + (area.width - width) / 2), top: Math.round(area.top + (area.height - height) / 2) };
   }
   const handlers = {
-    "sidekick-open-device": async () => {
+    "sidekick-open-lockdown": async () => {
       const stored = await chrome.storage.local.get("ttmtSidekickUserProfile");
-      if (stored.ttmtSidekickUserProfile?.role !== "Device Systems Coordinator") {
-        throw new Error("Device Sidekick is available to Device Systems Coordinators.");
-      }
-      const win = await findWindow("device-window.html");
-      if (win) {
-        await chrome.windows.update(win.id, { focused: true, ...(win.state === "minimized" ? { state: "normal" } : {}) });
-      } else {
-        await chrome.windows.create({ url: chrome.runtime.getURL("device-window.html"), type: "popup", focused: true, ...await centeredBounds(620, 680) });
-      }
+      if (stored.ttmtSidekickUserProfile?.role !== "Device Systems Coordinator") throw new Error("Lock Down is available to Device Systems Coordinators.");
+      const page = "panel.html?tool=lockdown";
+      const win = await findWindow(page);
+      if (win) await chrome.windows.update(win.id, { focused: true, ...(win.state === "minimized" ? { state: "normal" } : {}) });
+      else await chrome.windows.create({ url: chrome.runtime.getURL(page), type: "popup", focused: true, ...await centeredBounds(1000, 760) });
+    },
+    "sidekick-open-new-device": async () => {
+      const stored = await chrome.storage.local.get("ttmtSidekickUserProfile");
+      if (stored.ttmtSidekickUserProfile?.role !== "Device Systems Coordinator") throw new Error("Device Sidekick is available to Device Systems Coordinators.");
+      const win = await findWindow("device-new-window.html");
+      if (win) await chrome.windows.update(win.id, { focused: true, ...(win.state === "minimized" ? { state: "normal" } : {}) });
+      else await chrome.windows.create({ url: chrome.runtime.getURL("device-new-window.html"), type: "popup", focused: true, ...await centeredBounds(1180, 760) });
     },
   };
   chrome.runtime.onMessage.addListener((message, sender, respond) => {

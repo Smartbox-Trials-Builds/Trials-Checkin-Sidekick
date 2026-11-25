@@ -1,5 +1,16 @@
 # Trials Check-in Sidekick
 
+## Device Systems update (3.1.0)
+
+Device Sidekick (new) replaces the old browser-driven Device Sidekick. It opens in a reusable popout and uses Microsoft Graph for individual or bulk wipe workflows, device category updates, group membership and device sync. Confirmations and per-device results distinguish accepted requests from verified outcomes. The wipe workflow includes optional Entra deletion after confirmed wipe; it does not delete the Intune management record. Uncertain requests are not repeated automatically.
+
+Scanning uses the read-only Audit lookup and Missing DTP Stickers checks. GIPOD bulk import, Dashboard Note clipboard buttons and Loan Library Search are included. Connect Microsoft in the tool after reloading the extension; administrator-consented delegated permissions are required for the selected actions.
+
+Lock Down also opens in a reusable popout, with matching horizontal buttons, individual and bulk enable/disable Lost Mode actions, and the existing message and phone number. Scan or enter device numbers to look up internal serials in Audit for disabling Lost Mode. These scanned cards are excluded from enable actions and CRM note submission. Disable requests are sent after confirmation even when Intune reports disabled; check the physical device screen with the device online. CRM bulk import and note submission remain separate.
+
+The app license monitor shows the selected AAC apps, displays unlimited licenses clearly, and refreshes only on open or request. No Desktop Zipper update is required.
+
+
 ## Audit serial and category lookup (3.0.8)
 
 For Device Systems Coordinators, scanning a device now looks up its internal serial and category in **Audit.xlsm**, using the saved **query** worksheet values in columns A (TTMT Serial Number), B (Title/internal serial), and D (Device Type). Sidekick downloads the shared SharePoint workbook with a read-only GET, caches the lookup locally, and fills blank internal serial and category fields after a unique match. Column D mappings include Talk Pad 10 / Wego 10 / Wego 10s → Talkpad 10, Talk Pad 8 / Wego 7 → Talkpad 8, Wego 13 / Wego 13a → Wego 13, and Wego 5 / Wego 5a → Wego 5. It does not edit the workbook, refresh Excel queries, or run its macros. Existing manual entries and completed or locked rows are preserved. Unknown or conflicting categories stay blank for manual selection. An older serial-only cache is refreshed automatically to load column D.

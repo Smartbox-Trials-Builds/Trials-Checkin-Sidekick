@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Device Sidekick (new)</title>
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="themes.css" />
+</head>
+<body class="device-window">
+  <div class="container" id="apiWipeTestView" style="display:block;">
+    <h1>Device Sidekick (new)</h1>
+    <p class="hint-text">Separate test list and connection. Bulk processes all unfinished devices with one group confirmation per stage. Uses live device actions.</p>
+    <button id="apiWipeConnect" class="toggle-btn" type="button">Connect Microsoft account</button>
+    <button id="apiWipeDisconnect" class="toggle-btn" type="button">Disconnect</button>
+    <p><a href="https://intune.microsoft.com/#view/Microsoft_Intune_DeviceSettings/DevicesMenu/~/allDevices" target="_blank" rel="noopener noreferrer">Open Intune devices</a></p>
+    <p><a href="https://entra.microsoft.com/#view/Microsoft_AAD_Devices/DevicesMenuBlade/~/Devices/menuId/Overview" target="_blank" rel="noopener noreferrer">Open Entra All devices</a></p>
+    <label class="checkbox-row"><input id="apiWipeInternalOnly" type="checkbox" /> Internal serial numbers only</label>
+    <form id="apiWipeAddForm">
+      <label for="apiWipeScan">Scan device number</label>
+      <input id="apiWipeScan" type="text" autocomplete="off" />
+      <button type="submit" class="toggle-btn">Add device</button>
+    </form>
+    <div class="api-wipe-action-row">
+    <div class="api-wipe-start-control">
+      <button id="apiWipeBegin" class="toggle-btn" type="button">Begin wipe</button>
+      <select id="apiWipeMode" aria-label="Wipe mode">
+        <option value="bulk" selected>All unfinished devices</option>
+        <option value="single">Next device only</option>
+      </select>
+    </div>
+    <button id="apiWipeProfilesBegin" class="toggle-btn" type="button">Begin Adding Profiles — Bulk</button>
+    <button id="apiWipeSyncAll" class="toggle-btn" type="button">Sync all devices</button>
+    <button id="apiWipeLoanSearch" class="toggle-btn" type="button">Get Loan Library Search</button>
+    <button id="apiWipeGipodImport" class="toggle-btn" type="button">Bulk import GIPOD codes</button>
+    <button id="apiWipeClear" class="toggle-btn" type="button">Remove all</button>
+    <button id="apiWipeReturn" class="toggle-btn" type="button">Close window</button>
+    </div>
+    <div class="api-wipe-action-row" aria-label="Bulk device group selection">
+      <button id="apiWipeGroupsLoad" class="toggle-btn" type="button">Refresh groups</button>
+      <input id="apiWipeGroupsSearch" type="search" placeholder="Search group names" aria-label="Search all groups" />
+      <select id="apiWipeGroupsSelect" aria-label="Group for all devices"><option value="">Load groups first</option></select>
+      <button id="apiWipeGroupsApply" class="toggle-btn" type="button">Select group for all</button>
+      <button id="apiWipeGroupsBegin" class="toggle-btn" type="button">Add devices to groups</button>
+    </div>
+    <div class="table-scroll"><table class="intune-license-table">
+      <thead><tr><th>Device</th><th>Internal serial</th><th>Category</th><th>Wiped</th><th>Profile added</th><th>GIPOD code</th><th>Dashboard Note</th><th>Group</th><th>Sync</th><th></th></tr></thead>
+      <tbody id="apiWipeRows"></tbody>
+    </table></div>
+    <p id="apiWipeStickerStatus" class="status-line" role="status" aria-live="polite"></p>
+    <a id="apiWipeStickerLink" href="https://smartboxassistivetnam.sharepoint.com/:x:/r/sites/TrialsSharePoint.us/_layouts/15/Doc.aspx?sourcedoc=%7B0EA98517-551F-426A-BFB3-8EB6A8125B17%7D&amp;file=Missing%20DTP%20Stickers.xlsx&amp;action=default" target="_blank" rel="noopener noreferrer" hidden>Open Missing DTP Stickers</a>
+    <p id="apiWipeStatus" class="status-line" role="status" aria-live="polite"></p>
+    <section id="apiWipeReview" hidden>
+      <h2>Device progress</h2>
+      <p id="apiWipeDevice"></p>
+      <p class="hint-text">All matching AAC apps below are selected automatically for removal from this device. No manual app selection is needed.</p>
+      <div id="apiWipeApps"></div>
+      <p id="apiWipeProgress"></p>
+      <div id="apiWipeBulkResults" class="table-scroll" hidden>
+        <table class="intune-license-table"><thead><tr><th>Internal serial</th><th>Result</th><th>Details</th></tr></thead><tbody id="apiWipeBulkRows"></tbody></table>
+      </div>
+      <div class="api-wipe-action-row">
+      <button id="apiWipePrepare" class="toggle-btn" type="button">Continue workflow</button>
+      <button id="apiWipeCheck" class="toggle-btn" type="button">Check device status</button>
+      <button id="apiWipeStop" class="toggle-btn" type="button">Stop / complete manually</button>
+      </div>
+    </section>
+    <section id="apiWipeProfilesReview" hidden>
+      <h2>Profile progress</h2>
+      <p id="apiWipeProfilesProgress"></p>
+      <div class="table-scroll"><table class="intune-license-table"><thead><tr><th>Internal serial</th><th>Category</th><th>Result</th><th>Details</th></tr></thead><tbody id="apiWipeProfilesRows"></tbody></table></div>
+      <div class="api-wipe-action-row">
+      <button id="apiWipeProfilesContinue" class="toggle-btn" type="button">Continue profiles</button>
+      <button id="apiWipeProfilesCheck" class="toggle-btn" type="button">Check profile status</button>
+      <button id="apiWipeProfilesStop" class="toggle-btn" type="button">Stop profiles</button>
+      </div>
+    </section>
+    <section id="apiWipeGroupsReview" hidden>
+      <h2>Group progress</h2>
+      <p id="apiWipeGroupsProgress"></p>
+      <div class="table-scroll"><table class="intune-license-table"><thead><tr><th>Internal serial</th><th>Group</th><th>Result</th><th>Details</th></tr></thead><tbody id="apiWipeGroupsRows"></tbody></table></div>
+      <div class="api-wipe-action-row">
+        <button id="apiWipeGroupsContinue" class="toggle-btn" type="button">Continue groups</button>
+        <button id="apiWipeGroupsCheck" class="toggle-btn" type="button">Check group status</button>
+        <button id="apiWipeGroupsStop" class="toggle-btn" type="button">Stop groups</button>
+      </div>
+    </section>
+    <section id="apiWipeSyncReview" hidden>
+      <h2>Sync requests</h2>
+      <p id="apiWipeSyncProgress"></p>
+      <div class="table-scroll"><table class="intune-license-table"><thead><tr><th>Internal serial</th><th>Result</th><th>Details</th></tr></thead><tbody id="apiWipeSyncRows"></tbody></table></div>
+      <div class="api-wipe-action-row">
+        <button id="apiWipeSyncContinue" class="toggle-btn" type="button">Continue sync</button>
+        <button id="apiWipeSyncStop" class="toggle-btn" type="button">Stop sync</button>
+      </div>
+    </section>
+  </div>
+
+<script src="workers/window-theme.js"></script>
+<script src="workers/serial-utils.js"></script>
+<script src="workers/device-new-window.js"></script>
+<script src="workers/api-wipe-test-panel.js"></script>
+</body>
+</html>

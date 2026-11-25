@@ -6,7 +6,6 @@ const path = require('node:path');
 const JSZip = require('../libs/jszip.min.js');
 const reader = require('../workers/audit-workbook.js');
 const workerSource = fs.readFileSync(path.join(__dirname, '../workers/audit-lookup-worker.js'), 'utf8');
-const deviceSource = fs.readFileSync(path.join(__dirname, '../workers/device-sidekick.js'), 'utf8');
 
 async function fixture() {
   const zip = new JSZip();
@@ -100,57 +99,6 @@ test('lookup access is restricted to Device Systems; missing device is left unma
   assert.equal(denied.fetches.length, 0);
   const normal = await workerSetup();
   assert.equal((await normal.send({ type: 'sidekick-audit-lookup', device: 'UNKNOWN' })).internalSerial, null);
-});
-
-test('scan autofill never overwrites manual edits, removed rows, locked edits, or changed device numbers', async () => {
-  for (const scenario of ['fill', 'manual', 'manual-category', 'existing-category', 'removed', 'locked', 'changed', 'ambiguous']) {
-    let deliver;
-    const context = { console, crypto: { randomUUID: () => 'test' }, URL,
-      document: { getElementById: () => null, querySelectorAll: () => [] },
-      chrome: { storage: { local: { get: async () => ({ ttmtSidekickUserProfile: { role: 'Device Systems Coordinator' } }) }, session: { get: async () => ({}) }, onChanged: { addListener() {} } },
-        runtime: { sendMessage: () => new Promise(resolve => { deliver = resolve; }) } } };
-    vm.createContext(context); vm.runInContext(deviceSource, context);
-    await new Promise(resolve => setImmediate(resolve));
-    let saves = 0;
-    context.saveDeviceDraft = async () => { saves++; };
-    context.renderPrePrepRows = () => {};
-    vm.runInContext('prePrepRows = [{ id: "row", deviceSerial: "DTP8.0001", internalSerial: "" }]', context);
-    if (scenario === 'existing-category') vm.runInContext('prePrepRows[0].category = "Wego 13"', context);
-    const pending = context.populateAuditInternalSerial('row', 'DTP8.0001');
-    await new Promise(resolve => setImmediate(resolve));
-    if (scenario === 'manual') vm.runInContext('prePrepRows[0].internalSerial = "MANUAL"; prePrepRows[0].auditLookupRevision = 1', context);
-    if (scenario === 'manual-category') vm.runInContext('prePrepRows[0].category = "Wego 5"; prePrepRows[0].auditLookupRevision = 1', context);
-    if (scenario === 'removed') vm.runInContext('prePrepRows = []', context);
-    if (scenario === 'locked') vm.runInContext('prePrepEditsLocked = true', context);
-    if (scenario === 'changed') vm.runInContext('prePrepRows[0].deviceSerial = "OTHER"', context);
-    deliver({ ok: true, internalSerial: scenario === 'ambiguous' ? null : 'AUTO', category: scenario === 'ambiguous' ? null : 'Talkpad 10', ambiguous: scenario === 'ambiguous' });
-    await pending;
-    assert.equal(saves, ['fill', 'existing-category'].includes(scenario) ? 1 : 0);
-    if (scenario === 'manual') assert.equal(vm.runInContext('prePrepRows[0].internalSerial', context), 'MANUAL');
-    if (scenario === 'fill') assert.equal(vm.runInContext('prePrepRows[0].internalSerial', context), 'AUTO');
-    if (scenario === 'fill') assert.equal(vm.runInContext('prePrepRows[0].category', context), 'Talkpad 10');
-    if (scenario === 'manual-category') assert.equal(vm.runInContext('prePrepRows[0].category', context), 'Wego 5');
-    if (scenario === 'existing-category') assert.equal(vm.runInContext('prePrepRows[0].category', context), 'Wego 13');
-  }
-});
-
-test('adding a scanned device requests its corrected device number and fills the matching row', async () => {
-  const requests = [];
-  const context = { console, crypto: { randomUUID: () => 'test' }, URL,
-    document: { getElementById: () => null, querySelectorAll: () => [] },
-    extractValidSerial: () => 'DTP8.0001',
-    chrome: { storage: { local: { get: async () => ({ ttmtSidekickUserProfile: { role: 'Device Systems Coordinator' } }) }, session: { get: async () => ({}), set: async () => {} }, onChanged: { addListener() {} } },
-      runtime: { sendMessage: async message => { requests.push(message); return { ok: true, internalSerial: 'AUTO', category: 'Talkpad 8' }; } } } };
-  vm.createContext(context); vm.runInContext(deviceSource, context);
-  await new Promise(resolve => setImmediate(resolve));
-  assert.equal(context.addPrePrepScan('(21)dtp8-0001'), true);
-  await new Promise(resolve => setImmediate(resolve));
-  const auditRequests = requests.filter(message => message.type === 'sidekick-audit-lookup');
-  assert.equal(auditRequests.length, 1);
-  assert.equal(auditRequests[0].device, 'DTP8.0001');
-  assert.equal(requests.filter(message => message.type === 'sidekick-sticker-lookup').length, 1);
-  assert.equal(vm.runInContext('prePrepRows[0].internalSerial', context), 'AUTO');
-  assert.equal(vm.runInContext('prePrepRows[0].category', context), 'Talkpad 8');
 });
 
 test('column D aliases map exactly, including Wego 10s and Wego 7, without accepting unrestricted or unknown models', () => {

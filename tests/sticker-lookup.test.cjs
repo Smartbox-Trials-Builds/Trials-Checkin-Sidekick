@@ -35,32 +35,3 @@ test('worker reads each scan with GET and credentials, restricts access, and rep
   role='Device Coordinator'; assert.equal((await request('DTP8.0033')).ok,false); assert.equal(calls,3);
   assert.equal(handle({type:'sidekick-sticker-lookup'},{id:'other'},()=>{}),undefined);
 });
-async function uiSetup(result) {
-  const dialogs = [], tabs = [], messages = [];
-  const element = () => ({children:[],listeners:{},append(...items){this.children.push(...items);},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;},showModal(){},focus(){},close(){this.listeners.close?.();},remove(){}});
-  const context = { console,URL,crypto:{randomUUID:()=> 'test'},
-    document:{getElementById:()=>null,querySelectorAll:()=>[],createElement:element,body:{append:dialog=>dialogs.push(dialog)}},
-    chrome:{storage:{local:{get:async()=>({ttmtSidekickUserProfile:{role:'Device Systems Coordinator'}})},session:{get:async()=>({})},onChanged:{addListener(){}}},runtime:{sendMessage:async message=>{messages.push(message);return result;}},tabs:{create:async tab=>tabs.push(tab)}}
-  };
-  vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../workers/device-sidekick.js'),'utf8'),context);
-  await new Promise(setImmediate);
-  vm.runInContext('prePrepRows=[{id:"one",deviceSerial:"DTP8.0033"}]',context);
-  return {context,dialogs,tabs,messages};
-}
-test('matching scan shows sticker reminder with row and opens only the supplied workbook; no matches open nothing', async () => {
-  for(const matches of [[],[{sheet:'Sheet1',row:7,cell:'E7'}]]) {
-    const {context,dialogs,tabs}=await uiSetup({ok:true,matches});
-    await context.checkDeviceSticker('one','DTP8.0033');
-    assert.equal(dialogs.length,matches.length);assert.equal(tabs.length,matches.length);
-    if(matches.length){assert.match(dialogs[0].children[1].textContent,/Replace the Serial Number sticker.*Sheet1, row 7 \(E7\)/);assert.match(tabs[0].url,/0EA98517-551F-426A-BFB3-8EB6A8125B17/);assert.equal(tabs[0].active,false);}
-  }
-});
-test('removed or edited device suppresses delayed match notifications and tab opening',async()=>{
-  for(const change of ['prePrepRows=[]','prePrepRows[0].deviceSerial="OTHER"']) {
-    const {context,dialogs,tabs}=await uiSetup({ok:true,matches:[{sheet:'Sheet1',row:7,cell:'E7'}]});
-    let complete;context.chrome.runtime.sendMessage=()=>new Promise(resolve=>{complete=resolve;});
-    const pending=context.checkDeviceSticker('one','DTP8.0033');await new Promise(setImmediate);
-    vm.runInContext(change,context);complete({ok:true,matches:[{sheet:'Sheet1',row:7,cell:'E7'}]});await pending;
-    assert.equal(dialogs.length,0);assert.equal(tabs.length,0);
-  }
-});

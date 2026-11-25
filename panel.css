@@ -2464,6 +2464,33 @@ body[data-theme="sciFiCommand"] .landing-settings-btn::after {
   display: none;
 }
 
+.intune-license-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#apiWipeTestView .table-scroll { overflow-x: auto; }
+#apiWipeTestView .intune-license-table input[type="text"] { width: 140px; min-width: 110px; }
+#apiWipeTestView .intune-license-table input.api-gipod-code { width: 205px; }
+#apiWipeTestView .intune-license-table button { white-space: nowrap; }
+#apiWipeReview { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--input-border); }
+.api-wipe-group-list { max-height: 40vh; overflow-y: auto; margin: 10px 0; }
+.api-wipe-start-control { display: flex; align-items: stretch; gap: 0; margin-top: 7px; }
+#apiWipeTestView .api-wipe-action-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin: 10px 0; }
+#apiWipeTestView .api-wipe-action-row > .toggle-btn { width: auto; flex: 0 0 auto; margin: 0; }
+#apiWipeTestView .api-wipe-action-row > .api-wipe-start-control { flex: 0 0 auto; margin: 0; }
+#apiWipeTestView .api-wipe-start-control > button { margin-top: 0; border-radius: 8px 0 0 8px; }
+#apiWipeTestView .api-wipe-start-control > select { width: auto; flex: 1; min-width: 0; margin-top: 0; border-radius: 0 8px 8px 0; }
+#apiWipeBulkResults td { white-space: normal; overflow-wrap: anywhere; }
+#apiWipeProfilesRows td:last-child { white-space: normal; overflow-wrap: anywhere; }
+#apiWipeGroupsRows td:last-child { white-space: normal; overflow-wrap: anywhere; }
+#apiWipeSyncRows td:last-child { white-space: normal; overflow-wrap: anywhere; }
+#apiWipeTestView .api-manual-wipe-warning td { background-color: rgba(245, 158, 11, .2); }
+#apiWipeTestView .api-manual-wipe-warning td:first-child { box-shadow: inset 4px 0 #f59e0b; }
+#apiWipeTestView .api-group-picker { display: flex; align-items: center; gap: 5px; min-width: 310px; }
+#apiWipeTestView .api-group-picker input[type="search"] { width: 115px; margin: 0; }
+#apiWipeTestView .api-group-picker select { width: 190px; margin: 0; }
+#apiWipeTestView .api-wipe-action-row > input[type="search"], #apiWipeTestView .api-wipe-action-row > select { width: 240px; margin: 0; }
+.intune-license-table th, .intune-license-table td { padding: 8px; border-bottom: 1px solid var(--input-border); text-align: left; }
+.intune-license-table td:not(:first-child) { white-space: nowrap; }
+#intuneLicenseRedirect { width: 100%; box-sizing: border-box; }
+
 .device-gipod-code { min-width: 0; width: 100%; box-sizing: border-box; grid-column: 1; }
 .device-gipod-import-dialog textarea { width: 100%; box-sizing: border-box; margin-top: 6px; }
 .device-gipod-import-dialog ol { max-height: 150px; overflow-y: auto; }
@@ -2980,3 +3007,24 @@ body { padding: 12px; }
 .container input[type="file"] { max-width: 100%; min-width: 0; font-size: 11px; }
 
 #landingView #coordinatorQueueSection, #landingView #coordinatorQueueDetached { display: none !important; }
+
+/* Lock Down uses matching horizontal action rows in both panel and popout. */
+#lockDownView .lock-down-form { display: flex; flex-direction: column; align-items: stretch; }
+#lockDownView .lock-down-actions, #lockDownView .lock-down-entry-actions, #lockDownView .lock-down-scan-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px;
+}
+#lockDownView .lock-down-actions { order: -1; }
+#lockDownView button.toggle-btn {
+  width: auto; min-height: 36px; margin: 0; padding: 8px 12px;
+  border: 1px solid var(--input-border); border-radius: 8px;
+  background: var(--input-bg); color: var(--text-color); font-size: 13px; font-weight: 600; line-height: 1.2;
+}
+#lockDownView button.toggle-btn:hover:not(:disabled) { border-color: var(--accent); }
+#lockDownView .lock-down-entry-actions { grid-column: 1 / -1; }
+#lockDownView .lock-down-entry__begin { grid-column: auto; }
+#lockDownView .lock-down-entry__remove { justify-self: end; }
+#lockDownView .lock-down-scan-section { border: 1px solid var(--note-border); border-radius: 10px; padding: 10px; background: var(--note-bg); }
+#lockDownView .lock-down-scan-section summary { cursor: pointer; font-weight: 600; }
+#lockDownView .lock-down-scan-form { margin-top: 10px; }
+#lockDownView .lock-down-scan-row input { flex: 1 1 220px; min-width: 0; margin: 0; }
+#lockDownView [hidden] { display: none !important; }
